@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { secureFetch } from '@/lib/fetchClient';
 
 interface Log {
   id: string;
@@ -47,9 +48,8 @@ function ForceRevokePopover({ log, onSuccess }: { log: Log; onSuccess: () => voi
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch('/api/force-revoke', {
+      const res = await secureFetch('/api/force-revoke', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ logId: log.id, type: log.type, username: log.username, vpnIp: ip }),
       });
       const data = await res.json();

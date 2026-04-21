@@ -1,6 +1,8 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
+import { getSshCredentials } from './ssh';
+import { sanitizeForShell } from './sanitize';
 
 const execAsync = promisify(exec);
 
@@ -24,12 +26,14 @@ export async function sendNotification(
   title: string,
   message: string,
 ): Promise<boolean> {
+  const safeTitle = sanitizeForShell(title);
+  const safeMessage = sanitizeForShell(message);
   const local = isLocalIp(ip);
 
   if (local) {
     try {
       await execAsync(
-        `osascript -e 'display notification "${message}" with title "${title}" sound name "Glass"'`,
+        `osascript -e 'display notification "${safeMessage}" with title "${safeTitle}" sound name "Glass"'`,
         { timeout: 5000 }
       );
       return true;
@@ -38,15 +42,14 @@ export async function sendNotification(
     }
   }
 
-  // Remote: try SSH with both passwords
-  const passwords = ["Tc$@April2026", "tcs123"];
+  const { user, passwords } = getSshCredentials();
   for (const password of passwords) {
     try {
       await execAsync(
-        `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 tcsadmin@${ip} "
+        `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${user}@${ip} "
           CONSOLE_USER=\\$(stat -f%Su /dev/console)
           USER_ID=\\$(id -u \\$CONSOLE_USER)
-          sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display notification \\\"${message}\\\" with title \\\"${title}\\\" sound name \\\"Glass\\\"'
+          sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display notification \\\"${safeMessage}\\\" with title \\\"${safeTitle}\\\" sound name \\\"Glass\\\"'
         "`,
         { timeout: 15000 }
       );

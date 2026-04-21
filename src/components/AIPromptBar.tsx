@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { secureFetch } from '@/lib/fetchClient';
 
 interface AIPromptBarProps {
   onResult: (result: {
@@ -36,9 +37,8 @@ export default function AIPromptBar({ onResult }: AIPromptBarProps) {
     setLoading(true);
     setShowSuggestions(false);
     try {
-      const res = await fetch('/api/ai-prompt', {
+      const res = await secureFetch('/api/ai-prompt', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
       });
       const data = await res.json();

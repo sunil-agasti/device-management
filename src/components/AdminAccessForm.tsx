@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import ProgressTracker, { Step } from './ProgressTracker';
 import AccessLogs from './AccessLogs';
 import { motion } from 'framer-motion';
+import { secureFetch } from '@/lib/fetchClient';
 
 interface Props {
   initialData?: {
@@ -110,9 +111,8 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
       await advance(0);
       await advance(1);
 
-      const res = await fetch('/api/admin-access', {
+      const res = await secureFetch('/api/admin-access', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, requestedBy }),
       });
       const data = await res.json();

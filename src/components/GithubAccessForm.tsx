@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ProgressTracker, { Step } from './ProgressTracker';
 import AccessLogs from './AccessLogs';
 import { motion } from 'framer-motion';
+import { secureFetch } from '@/lib/fetchClient';
 
 interface Props {
   initialData?: {
@@ -92,9 +93,8 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
     try {
       await advance(0);
 
-      const res = await fetch('/api/github-access', {
+      const res = await secureFetch('/api/github-access', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, requestedBy }),
       });
       const data = await res.json();
