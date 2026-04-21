@@ -46,5 +46,7 @@ certs/*.pem
 data/*.json
 !data/.gitkeep
 
-# Claude config
+# Claude / OMC config
 .claude/
+.omc/
+AGENTS.md
