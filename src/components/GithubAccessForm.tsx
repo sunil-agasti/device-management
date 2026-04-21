@@ -71,11 +71,10 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
     setMessage(null);
 
     const progressSteps: Step[] = [
-      { id: 'verify', label: 'Verifying connection', status: 'active' },
-      { id: 'user', label: 'Checking user exists', status: 'pending' },
-      { id: 'grant', label: 'Unblocking GitHub', status: 'pending' },
-      { id: 'daemon', label: 'Setting up revoke daemon', status: 'pending' },
-      { id: 'notify', label: 'Sending notification', status: 'pending' },
+      { id: 'verify', label: 'Verifying hostname', status: 'active' },
+      { id: 'unblock', label: 'Unblocking GitHub', status: 'pending' },
+      { id: 'jamf', label: 'Running JAMF Commands', status: 'pending' },
+      { id: 'schedule', label: 'Scheduling auto-revoke', status: 'pending' },
     ];
     setSteps([...progressSteps]);
 
@@ -92,7 +91,6 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
 
     try {
       await advance(0);
-      await advance(1);
 
       const res = await fetch('/api/github-access', {
         method: 'POST',
@@ -102,12 +100,12 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
       const data = await res.json();
 
       if (!res.ok) {
-        await advance(2, true);
+        await advance(1, true);
         setMessage({ type: 'error', text: data.error || 'Failed to grant access' });
       } else {
+        await advance(1);
         await advance(2);
         await advance(3);
-        await advance(4);
         setMessage({ type: 'success', text: data.message });
         setLogRefreshKey(prev => prev + 1);
       }

@@ -31,6 +31,14 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; o
     await sendNotification('127.0.0.1', 'GitHub Access Granted',
       `GitHub access granted for ${duration} minutes.`);
 
+    // Run JAMF commands
+    try {
+      await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
+      await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
+      await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
+      output += 'JAMF manage+policy+recon completed\n';
+    } catch { output += 'JAMF skipped (not available)\n'; }
+
     // Schedule revoke
     const revokeScript = `/tmp/github_revoke_${Date.now()}.sh`;
     const revokeContent = `#!/bin/bash
