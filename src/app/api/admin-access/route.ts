@@ -6,6 +6,7 @@ import os from 'os';
 import { addLog, updateLogStatus, upsertUser, findUserByUsername } from '@/lib/db';
 import { validateVpnIp, validateHostname, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
+import { detectDevice } from '@/lib/device';
 
 const execAsync = promisify(exec);
 
@@ -107,6 +108,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { employeeId, email, hostname, vpnIp, username, duration = 60, requestedBy } = body;
 
+    const userAgent = req.headers.get('user-agent') || '';
+    const device = detectDevice(userAgent);
+
     const checks = [
       validateVpnIp(vpnIp), validateHostname(hostname),
       validateEmployeeId(employeeId), validateEmail(email), validateDuration(duration),
@@ -121,7 +125,7 @@ export async function POST(req: NextRequest) {
     addLog({
       id: logId, hostname, username, employeeId, email, vpnIp,
       grantedAt: new Date().toISOString(), duration, revokedAt: null,
-      status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'admin',
+      status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'admin', device,
     });
 
     const local = isLocalIp(vpnIp);

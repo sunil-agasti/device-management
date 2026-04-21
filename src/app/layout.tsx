@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import AuthGuard from "@/components/AuthGuard";
+import SessionTimeout from "@/components/SessionTimeout";
 
 export const metadata: Metadata = {
   title: "TCS Admin Portal - AI-Powered MacBook Management",
@@ -18,6 +19,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors font-sans">
         <ThemeProvider>
           <AuthGuard>
+            <SessionTimeout />
             {children}
           </AuthGuard>
         </ThemeProvider>

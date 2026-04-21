@@ -16,6 +16,7 @@ interface Log {
   revokedAt: string | null;
   status: string;
   requestedBy: string;
+  device?: string;
 }
 
 type SortKey = 'hostname' | 'username' | 'vpnIp' | 'grantedAt' | 'status' | 'requestedBy' | 'duration';
@@ -377,6 +378,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                   </th>
                 ))}
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Time Left</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Device</th>
                 <th
                   onClick={() => handleSort('status')}
                   className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none"
@@ -405,6 +407,12 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                       {log.status === 'GRANTED' ? (
                         <span className="text-blue-600 dark:text-blue-400 font-medium">{getTimeRemaining(log)}</span>
                       ) : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
+                      {log.device === 'Mac' && <span title="Mac">&#128187; Mac</span>}
+                      {log.device === 'iPhone' && <span title="iPhone">&#128241; iPhone</span>}
+                      {log.device === 'iPad' && <span title="iPad">&#128242; iPad</span>}
+                      {(!log.device || log.device === 'Unknown') && <span title="Unknown">&#128421; Unknown</span>}
                     </td>
                     <td className="px-4 py-3">{getStatusBadge(log.status)}</td>
                     <td className="px-4 py-3">

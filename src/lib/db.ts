@@ -99,10 +99,10 @@ export function getAllLogs(): AccessLog[] {
 
 export function logsToCSV(logs: AccessLog[]): string {
   if (logs.length === 0) return '';
-  const headers = ['ID', 'Type', 'Employee ID', 'Email', 'Hostname', 'Username', 'VPN IP', 'Granted At', 'Duration (min)', 'Revoked At', 'Status', 'Requested By'];
+  const headers = ['ID', 'Type', 'Employee ID', 'Email', 'Hostname', 'Username', 'VPN IP', 'Granted At', 'Duration (min)', 'Revoked At', 'Status', 'Requested By', 'Device'];
   const rows = logs.map(l => [
     l.id, l.type, l.employeeId, l.email, l.hostname, l.username, l.vpnIp,
-    l.grantedAt, l.duration.toString(), l.revokedAt || '', l.status, l.requestedBy
+    l.grantedAt, l.duration.toString(), l.revokedAt || '', l.status, l.requestedBy, l.device || 'Unknown'
   ]);
   return [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
 }

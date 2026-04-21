@@ -5,6 +5,7 @@ import path from 'path';
 import { addLog, updateLogStatus, upsertUser, findUserByUsername } from '@/lib/db';
 import { validateVpnIp, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
+import { detectDevice } from '@/lib/device';
 
 const execAsync = promisify(exec);
 
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { employeeId, email, hostname, vpnIp, username, duration = 30, requestedBy } = body;
 
+    const userAgent = req.headers.get('user-agent') || '';
+    const device = detectDevice(userAgent);
+
     const checks = [validateVpnIp(vpnIp), validateEmployeeId(employeeId), validateEmail(email), validateDuration(duration)];
     for (const c of checks) {
       if (!c.valid) return NextResponse.json({ error: c.message }, { status: 400 });
@@ -75,7 +79,7 @@ export async function POST(req: NextRequest) {
     addLog({
       id: logId, hostname: hostname || '', username: username || '', employeeId, email, vpnIp,
       grantedAt: new Date().toISOString(), duration, revokedAt: null,
-      status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'github',
+      status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'github', device,
     });
 
     // Determine if target is local machine or remote

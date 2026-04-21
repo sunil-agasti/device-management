@@ -21,6 +21,7 @@ export interface AccessLog {
   status: 'GRANTED' | 'REVOKED' | 'FAILED' | 'EXPIRED';
   requestedBy: string;
   type: 'admin' | 'github';
+  device: 'Mac' | 'iPhone' | 'iPad' | 'Unknown';
 }
 
 export interface SystemInfo {
