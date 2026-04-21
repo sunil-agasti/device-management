@@ -31,6 +31,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const [autoPopulated, setAutoPopulated] = useState(false);
+  const [logRefreshKey, setLogRefreshKey] = useState(0);
 
   useEffect(() => {
     if (initialData) {
@@ -124,6 +125,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
         await advance(3);
         await advance(4);
         setMessage({ type: 'success', text: data.message });
+        setLogRefreshKey(prev => prev + 1);
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Request failed: ' + String(err) });
@@ -219,7 +221,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
         </motion.div>
       )}
 
-      <AccessLogs type="admin" />
+      <AccessLogs type="admin" key={logRefreshKey} />
     </div>
   );
 }

@@ -30,6 +30,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
+  const [logRefreshKey, setLogRefreshKey] = useState(0);
 
   useEffect(() => {
     if (initialData) setForm(prev => ({ ...prev, ...initialData }));
@@ -108,6 +109,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
         await advance(3);
         await advance(4);
         setMessage({ type: 'success', text: data.message });
+        setLogRefreshKey(prev => prev + 1);
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Request failed: ' + String(err) });
@@ -197,7 +199,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
         </motion.div>
       )}
 
-      <AccessLogs type="github" />
+      <AccessLogs type="github" key={logRefreshKey} />
     </div>
   );
 }
