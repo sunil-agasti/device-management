@@ -41,8 +41,9 @@ async function grantAdminLocal(username: string, duration: number): Promise<{ su
     // Run JAMF
     try {
       await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
+      await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
       await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
-      output += 'JAMF manage+recon completed\n';
+      output += 'JAMF manage+policy+recon completed\n';
     } catch { output += 'JAMF skipped (not available)\n'; }
 
     // Schedule local revoke

@@ -90,7 +90,9 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
       { id: 'verify', label: 'Verifying hostname', status: 'active' },
       { id: 'user', label: 'Checking user exists', status: 'pending' },
       { id: 'grant', label: 'Granting admin access', status: 'pending' },
-      { id: 'jamf', label: 'Running JAMF Commands', status: 'pending' },
+      { id: 'jamf-manage', label: 'JAMF Manage', status: 'pending' },
+      { id: 'jamf-policy', label: 'JAMF Policy', status: 'pending' },
+      { id: 'jamf-recon', label: 'JAMF Recon', status: 'pending' },
       { id: 'schedule', label: 'Scheduling auto-revoke', status: 'pending' },
     ];
     setSteps([...progressSteps]);
@@ -124,6 +126,8 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
         await advance(2);
         await advance(3);
         await advance(4);
+        await advance(5);
+        await advance(6);
         setMessage({ type: 'success', text: data.message });
         setLogRefreshKey(prev => prev + 1);
       }

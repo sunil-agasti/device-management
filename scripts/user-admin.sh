@@ -67,6 +67,9 @@ sudo launchctl asuser \$USER_ID sudo -u \$CONSOLE_USER osascript -e 'display not
 echo '$PASSWORD' | sudo -S /usr/local/bin/jamf manage
 echo \"JAMF_MANAGE:\$?\"
 
+echo '$PASSWORD' | sudo -S /usr/local/bin/jamf policy
+echo \"JAMF_POLICY:\$?\"
+
 echo '$PASSWORD' | sudo -S /usr/local/bin/jamf recon
 echo \"JAMF_RECON:\$?\"
 ")
