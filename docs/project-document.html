@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCS Admin Portal - Project Documentation</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #334155;
+    --border: #475569;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --accent: #3b82f6;
+    --accent2: #8b5cf6;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+  /* Header */
+  .header { text-align: center; padding: 60px 0 40px; position: relative; }
+  .header::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 300px; height: 300px; background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%); pointer-events: none; }
+  .logo { width: 72px; height: 72px; margin: 0 auto 20px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 40px rgba(59,130,246,0.3); }
+  .logo svg { width: 40px; height: 40px; color: white; }
+  h1 { font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .subtitle { color: var(--text-muted); font-size: 1.1rem; }
+  .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); margin: 16px 4px 0; }
+
+  /* TOC */
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; margin: 40px 0; }
+  .toc h2 { font-size: 1.1rem; margin-bottom: 16px; color: var(--accent); }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .toc a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; padding: 6px 12px; border-radius: 8px; display: block; transition: all 0.2s; }
+  .toc a:hover { background: var(--surface2); color: var(--text); }
+  .toc a .num { color: var(--accent); font-weight: 600; margin-right: 8px; }
+
+  /* Sections */
+  section { margin: 48px 0; }
+  h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--surface2); display: flex; align-items: center; gap: 12px; }
+  h2 .icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 24px 0 12px; color: var(--cyan); }
+  h4 { font-size: 0.95rem; font-weight: 600; margin: 16px 0 8px; color: var(--text); }
+  p, li { color: var(--text-muted); font-size: 0.95rem; }
+  p { margin-bottom: 12px; }
+  ul, ol { padding-left: 24px; margin-bottom: 16px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--text); }
+  code { background: var(--surface2); padding: 2px 8px; border-radius: 6px; font-size: 0.85rem; font-family: 'SF Mono', monospace; color: var(--cyan); }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin: 20px 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; transition: all 0.3s; }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .card-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 14px; }
+  .card h4 { margin: 0 0 8px; color: var(--text); font-size: 1rem; }
+  .card p { font-size: 0.85rem; margin: 0; }
+
+  /* Architecture Diagram */
+  .diagram { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin: 24px 0; overflow-x: auto; }
+  .diagram pre { font-family: 'SF Mono', monospace; font-size: 0.8rem; line-height: 1.5; color: var(--text); white-space: pre; }
+  .diagram-label { font-size: 0.75rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+
+  /* Flow */
+  .flow { display: flex; flex-direction: column; gap: 2px; margin: 20px 0; }
+  .flow-step { display: flex; align-items: flex-start; gap: 16px; padding: 14px 20px; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; }
+  .flow-step:nth-child(even) { border-left-color: var(--accent2); }
+  .flow-step:nth-child(3n) { border-left-color: var(--green); }
+  .flow-num { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+  .flow-content { flex: 1; }
+  .flow-content strong { display: block; color: var(--text); font-size: 0.9rem; }
+  .flow-content span { font-size: 0.82rem; color: var(--text-muted); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9rem; }
+  thead th { background: var(--surface); color: var(--text); font-weight: 600; text-align: left; padding: 12px 16px; border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  tbody td { padding: 10px 16px; border-bottom: 1px solid var(--surface2); color: var(--text-muted); }
+  tbody tr:hover { background: var(--surface); }
+  tbody td code { font-size: 0.8rem; }
+
+  /* Code Block */
+  .code-block { background: #0d1117; border: 1px solid var(--surface2); border-radius: 12px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+  .code-block pre { font-family: 'SF Mono', monospace; font-size: 0.82rem; line-height: 1.6; color: #c9d1d9; }
+  .code-block .comment { color: #8b949e; }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .fn { color: #d2a8ff; }
+
+  /* Tech Stack */
+  .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 20px 0; }
+  .tech-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+  .tech-item .name { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+  .tech-item .role { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; }
+  .stat .value { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .stat .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--surface2); margin-top: 60px; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 1.8rem; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+  </div>
+  <h1>TCS Admin Portal</h1>
+  <p class="subtitle">AI-Powered MacBook Management &amp; Access Control</p>
+  <span class="badge">v1.0.0</span>
+  <span class="badge">Next.js 16</span>
+  <span class="badge">TypeScript</span>
+  <span class="badge">Tailwind CSS v4</span>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="value">38+</div><div class="label">Source Files</div></div>
+  <div class="stat"><div class="value">9</div><div class="label">API Endpoints</div></div>
+  <div class="stat"><div class="value">10</div><div class="label">React Components</div></div>
+  <div class="stat"><div class="value">3</div><div class="label">Shell Scripts</div></div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <div class="toc-grid">
+    <a href="#overview"><span class="num">01</span> System Overview</a>
+    <a href="#features"><span class="num">02</span> Features</a>
+    <a href="#architecture"><span class="num">03</span> Architecture</a>
+    <a href="#tech-stack"><span class="num">04</span> Tech Stack</a>
+    <a href="#components"><span class="num">05</span> Component Tree</a>
+    <a href="#data-flow"><span class="num">06</span> Data Flows</a>
+    <a href="#api"><span class="num">07</span> API Reference</a>
+    <a href="#database"><span class="num">08</span> Database Schema</a>
+    <a href="#scripts"><span class="num">09</span> Shell Scripts</a>
+    <a href="#security"><span class="num">10</span> Security</a>
+    <a href="#validation"><span class="num">11</span> Validation Rules</a>
+    <a href="#setup"><span class="num">12</span> Setup &amp; Deployment</a>
+  </div>
+</div>
+
+<!-- 01 OVERVIEW -->
+<section id="overview">
+  <h2><span class="icon" style="background:rgba(59,130,246,0.2)">01</span> System Overview</h2>
+  <p>The TCS Admin Portal is a <strong>full-stack web application</strong> that provides a modern, AI-powered interface for managing temporary access privileges on Apple-managed MacBooks. It replaces manual SSH terminal operations with a centralized web portal featuring <strong>natural language commands</strong>, automated workflows, and real-time access tracking.</p>
+  <p>The portal runs locally on the admin's machine, authenticated via Apple VPN (17.x.x.x range), and executes bash scripts over SSH to manage remote MacBooks. A keepalive service ensures the system stays awake, VPN stays connected, and the server auto-restarts.</p>
+</section>
+
+<!-- 02 FEATURES -->
+<section id="features">
+  <h2><span class="icon" style="background:rgba(139,92,246,0.2)">02</span> Features</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)">&#9889;</div>
+      <h4>AI Command Bar</h4>
+      <p>Natural language prompts like "grant admin to 17.233.8.2" with auto-parsing and smart routing</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">&#128274;</div>
+      <h4>Temporary Admin Access</h4>
+      <p>Grant/revoke admin privileges via SSH with JAMF integration and auto-revoke timers</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#8b5cf6,#a855f7)">&#128187;</div>
+      <h4>GitHub Access</h4>
+      <p>Unblock GitHub via /etc/hosts modification with LaunchDaemon auto-revoke</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#22c55e,#14b8a6)">&#128421;</div>
+      <h4>Update Hostname</h4>
+      <p>Remotely update ComputerName and LocalHostName with validation</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">&#128295;</div>
+      <h4>Cleanup Utility</h4>
+      <p>Fix orphaned logs, update expired records, maintain database integrity</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#06b6d4,#3b82f6)">&#128269;</div>
+      <h4>Smart Auto-Populate</h4>
+      <p>SSH to IP to get username/hostname, DB lookup for employee ID and email</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#ec4899,#f43f5e)">&#128276;</div>
+      <h4>Expiry Warnings</h4>
+      <p>5-minute portal notifications + macOS system notifications before access revoke</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#64748b,#475569)">&#127769;</div>
+      <h4>Dark &amp; Light Theme</h4>
+      <p>Persistent theme toggle with smooth transitions and gradient accents</p>
+    </div>
+  </div>
+</section>
+
+<!-- 03 ARCHITECTURE -->
+<section id="architecture">
+  <h2><span class="icon" style="background:rgba(6,182,212,0.2)">03</span> System Architecture</h2>
+  <div class="diagram">
+    <div class="diagram-label">High-Level Architecture</div>
+    <pre>
+  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+  &#9474;                    USER BROWSER                          &#9474;
+  &#9474;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488; &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488; &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488; &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9474;
+  &#9474;  &#9474;Dashboard &#9474; &#9474;  Admin   &#9474; &#9474;  GitHub  &#9474; &#9474;  Hostname  &#9474;  &#9474;
+  &#9474;  &#9474;+ AI Bar  &#9474; &#9474;  Access  &#9474; &#9474;  Access  &#9474; &#9474;  / Cleanup &#9474;  &#9474;
+  &#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496; &#9492;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496; &#9492;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496; &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9474;
+  &#9474;       &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;       &#9474;
+  &#9474;                         &#9474;                               &#9474;
+  &#9474;               HTTPS (port 3000)                          &#9474;
+  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+                          &#9474;
+  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+  &#9474;                   NEXT.JS SERVER                          &#9474;
+  &#9474;                                                           &#9474;
+  &#9474;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;   &#9474;
+  &#9474;  &#9474;  API ROUTES        &#9474; AUTH (IDMS/VPN)          &#9474;   &#9474;
+  &#9474;  &#9474;  /system-info      &#9474; /auth/callback           &#9474;   &#9474;
+  &#9474;  &#9474;  /user             &#9474; /auth/session            &#9474;   &#9474;
+  &#9474;  &#9474;  /admin-access     &#9474; /ai-prompt               &#9474;   &#9474;
+  &#9474;  &#9474;  /github-access    &#9474; /logs (JSON + CSV)       &#9474;   &#9474;
+  &#9474;  &#9474;  /update-hostname  &#9474; /cleanup                 &#9474;   &#9474;
+  &#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;   &#9474;
+  &#9474;          &#9474;              &#9474;                              &#9474;
+  &#9474;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;                &#9474;
+  &#9474;  &#9474; Shell Scripts  &#9474;  &#9474; JSON Database &#9474;                &#9474;
+  &#9474;  &#9474; child_process  &#9474;  &#9474; fs read/write &#9474;                &#9474;
+  &#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;                &#9474;
+  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+           &#9474;             &#9474;
+   &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9484;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+   &#9474; SSH (sshpass)&#9474;  &#9474; data/*.json &#9474;
+   &#9474; to target Mac&#9474;  &#9474; (NoSQL DB)  &#9474;
+   &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+          &#9474;
+   &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+   &#9474;         TARGET MACBOOK                 &#9474;
+   &#9474;  dseditgroup  &#183; /etc/hosts &#183; scutil  &#9474;
+   &#9474;  jamf &#183; osascript &#183; LaunchDaemon       &#9474;
+   &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</pre>
+  </div>
+</section>
+
+<!-- 04 TECH STACK -->
+<section id="tech-stack">
+  <h2><span class="icon" style="background:rgba(34,197,94,0.2)">04</span> Tech Stack</h2>
+  <div class="tech-grid">
+    <div class="tech-item"><div class="name">React 19</div><div class="role">UI Framework</div></div>
+    <div class="tech-item"><div class="name">Next.js 16</div><div class="role">Full-Stack Framework</div></div>
+    <div class="tech-item"><div class="name">TypeScript</div><div class="role">Type Safety</div></div>
+    <div class="tech-item"><div class="name">Tailwind CSS v4</div><div class="role">Styling</div></div>
+    <div class="tech-item"><div class="name">Framer Motion</div><div class="role">Animations</div></div>
+    <div class="tech-item"><div class="name">JSON Files</div><div class="role">NoSQL Database</div></div>
+    <div class="tech-item"><div class="name">Node.js</div><div class="role">Server Runtime</div></div>
+    <div class="tech-item"><div class="name">Bash / SSH</div><div class="role">System Management</div></div>
+    <div class="tech-item"><div class="name">OpenSSL</div><div class="role">HTTPS Certs</div></div>
+    <div class="tech-item"><div class="name">Apple IDMS</div><div class="role">SSO Auth</div></div>
+  </div>
+</section>
+
+<!-- 05 COMPONENT TREE -->
+<section id="components">
+  <h2><span class="icon" style="background:rgba(236,72,153,0.2)">05</span> Component Architecture</h2>
+  <div class="diagram">
+    <div class="diagram-label">React Component Tree</div>
+    <pre>
+RootLayout (layout.tsx)
+  &#9500;&#9472;&#9472; ThemeProvider (dark/light context)
+  &#9492;&#9472;&#9472; AuthGuard (VPN + IDMS check)
+       &#9492;&#9472;&#9472; Page Content
+            &#9474;
+            &#9500;&#9472;&#9472; <strong>Home</strong> (page.tsx)
+            &#9474;   &#9500;&#9472;&#9472; Navbar (system info + theme toggle)
+            &#9474;   &#9500;&#9472;&#9472; ExpiryWarning (floating notifications)
+            &#9474;   &#9500;&#9472;&#9472; AIPromptBar (NL command input + suggestions)
+            &#9474;   &#9500;&#9472;&#9472; Dashboard (4 feature cards)
+            &#9474;   &#9492;&#9472;&#9472; AccessLogs (search + sort + lazy-load)
+            &#9474;
+            &#9500;&#9472;&#9472; <strong>Admin Access</strong> (admin-access/page.tsx)
+            &#9474;   &#9500;&#9472;&#9472; Navbar
+            &#9474;   &#9492;&#9472;&#9472; AdminAccessForm
+            &#9474;       &#9500;&#9472;&#9472; Form fields (auto-populated from IP)
+            &#9474;       &#9500;&#9472;&#9472; ProgressTracker (5 animated steps)
+            &#9474;       &#9500;&#9472;&#9472; Success/Error message
+            &#9474;       &#9492;&#9472;&#9472; AccessLogs (admin type)
+            &#9474;
+            &#9500;&#9472;&#9472; <strong>GitHub Access</strong> (github-access/page.tsx)
+            &#9474;   &#9500;&#9472;&#9472; Navbar
+            &#9474;   &#9492;&#9472;&#9472; GithubAccessForm
+            &#9474;       &#9500;&#9472;&#9472; Form fields + ProgressTracker
+            &#9474;       &#9492;&#9472;&#9472; AccessLogs (github type)
+            &#9474;
+            &#9500;&#9472;&#9472; <strong>Update Hostname</strong> (update-hostname/page.tsx)
+            &#9474;   &#9492;&#9472;&#9472; Hostname form + validation
+            &#9474;
+            &#9492;&#9472;&#9472; <strong>Cleanup</strong> (cleanup/page.tsx)
+                &#9492;&#9472;&#9472; Cleanup button + results</pre>
+  </div>
+</section>
+
+<!-- 06 DATA FLOWS -->
+<section id="data-flow">
+  <h2><span class="icon" style="background:rgba(245,158,11,0.2)">06</span> Data Flows</h2>
+
+  <h3>Grant Admin Access</h3>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>AI Prompt or Form Submit</strong><span>User types "grant admin to 17.233.8.2" or fills form manually</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Parse &amp; Route</strong><span>AI parser extracts IP, action, duration &#8594; redirects to /admin-access with pre-filled params</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Auto-Populate</strong><span>SSH to IP &#8594; get username + hostname &#8594; DB lookup &#8594; fill employee ID + email</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Validate</strong><span>Check IP (17.x), hostname prefix, employee ID, @apple.com email, duration (5-180m)</span></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Execute</strong><span>Run user-admin.sh &#8594; SSH &#8594; dseditgroup grant &#8594; JAMF manage/recon &#8594; notify user</span></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Log &amp; Schedule</strong><span>Write to admin_logs.json (GRANTED) &#8594; schedule 5-min warning &#8594; schedule revoke</span></div></div>
+    <div class="flow-step"><div class="flow-num">7</div><div class="flow-content"><strong>Revoke</strong><span>Re-resolve latest IP from DB &#8594; SSH &#8594; dseditgroup remove &#8594; verify &#8594; notify &#8594; update log</span></div></div>
+  </div>
+
+  <h3>Dynamic IP Handling</h3>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Every Page Visit</strong><span>Detect current VPN IP from request headers</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>SSH Probe</strong><span>SSH to current IP &#8594; get username (primary key) + hostname</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>DB Update</strong><span>upsertUser() updates the user's stored IP to the new one</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Revoke Uses Latest</strong><span>At revoke time, re-reads DB for user's current IP, falls back to original grant IP</span></div></div>
+  </div>
+</section>
+
+<!-- 07 API REFERENCE -->
+<section id="api">
+  <h2><span class="icon" style="background:rgba(59,130,246,0.2)">07</span> API Reference</h2>
+  <table>
+    <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET</code></td><td><code>/api/system-info</code></td><td>Client IP, server hostname/username, remote user info</td><td>VPN</td></tr>
+      <tr><td><code>GET</code></td><td><code>/api/user?username=X</code></td><td>Look up user by username, employee ID, or IP</td><td>VPN</td></tr>
+      <tr><td><code>POST</code></td><td><code>/api/user</code></td><td>Create or update user record</td><td>VPN</td></tr>
+      <tr><td><code>POST</code></td><td><code>/api/admin-access</code></td><td>Grant temporary admin access + schedule revoke</td><td>VPN</td></tr>
+      <tr><td><code>POST</code></td><td><code>/api/github-access</code></td><td>Grant temporary GitHub access + LaunchDaemon revoke</td><td>VPN</td></tr>
+      <tr><td><code>POST</code></td><td><code>/api/update-hostname</code></td><td>Update remote machine hostname via SSH</td><td>VPN</td></tr>
+      <tr><td><code>POST</code></td><td><code>/api/cleanup</code></td><td>Run database cleanup for expired entries</td><td>VPN</td></tr>
+      <tr><td><code>POST</code></td><td><code>/api/ai-prompt</code></td><td>Parse natural language command, return action + data</td><td>VPN</td></tr>
+      <tr><td><code>GET</code></td><td><code>/api/logs?type=admin&amp;format=csv</code></td><td>Get access logs as JSON or CSV download</td><td>VPN</td></tr>
+      <tr><td><code>GET</code></td><td><code>/api/auth/session</code></td><td>Check IDMS session status</td><td>IDMS</td></tr>
+      <tr><td><code>GET</code></td><td><code>/api/auth/callback</code></td><td>IDMS OAuth callback handler</td><td>-</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 08 DATABASE -->
+<section id="database">
+  <h2><span class="icon" style="background:rgba(139,92,246,0.2)">08</span> Database Schema</h2>
+  <p>JSON file-based NoSQL storage. No external database required. Three collections stored in <code>data/</code> directory.</p>
+
+  <h3>users.json</h3>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>username</code></td><td>string</td><td><strong>Primary key.</strong> Console username from target Mac</td></tr>
+      <tr><td><code>employeeId</code></td><td>string</td><td>TCS employee ID (numeric)</td></tr>
+      <tr><td><code>email</code></td><td>string</td><td>Apple email (@apple.com)</td></tr>
+      <tr><td><code>hostname</code></td><td>string</td><td>Last known hostname</td></tr>
+      <tr><td><code>vpnIp</code></td><td>string</td><td>Last known VPN IP (updated on every visit)</td></tr>
+      <tr><td><code>lastSeen</code></td><td>ISO 8601</td><td>Last interaction timestamp</td></tr>
+      <tr><td><code>createdAt</code></td><td>ISO 8601</td><td>First seen timestamp</td></tr>
+    </tbody>
+  </table>
+
+  <h3>admin_logs.json / github_logs.json</h3>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>UUID</td><td>Unique log entry ID</td></tr>
+      <tr><td><code>type</code></td><td>"admin" | "github"</td><td>Access type</td></tr>
+      <tr><td><code>username</code></td><td>string</td><td>Target user</td></tr>
+      <tr><td><code>hostname</code></td><td>string</td><td>Target machine</td></tr>
+      <tr><td><code>employeeId</code></td><td>string</td><td>Employee ID</td></tr>
+      <tr><td><code>email</code></td><td>string</td><td>Apple email</td></tr>
+      <tr><td><code>vpnIp</code></td><td>string</td><td>VPN IP at grant time</td></tr>
+      <tr><td><code>grantedAt</code></td><td>ISO 8601</td><td>Grant timestamp</td></tr>
+      <tr><td><code>duration</code></td><td>number</td><td>Duration in minutes</td></tr>
+      <tr><td><code>revokedAt</code></td><td>ISO 8601 | null</td><td>Revoke timestamp</td></tr>
+      <tr><td><code>status</code></td><td>string</td><td>GRANTED | REVOKED | EXPIRED | FAILED</td></tr>
+      <tr><td><code>requestedBy</code></td><td>string</td><td>Admin who made the request</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 09 SCRIPTS -->
+<section id="scripts">
+  <h2><span class="icon" style="background:rgba(6,182,212,0.2)">09</span> Shell Scripts</h2>
+
+  <h3>user-admin.sh</h3>
+  <p>Grants temporary admin access to a remote MacBook user via SSH.</p>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>SSH Auth</strong><span>Try primary password, fallback to backup</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Get User Info</strong><span>stat -f%Su /dev/console &#8594; username, scutil &#8594; hostname, dscl &#8594; email</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Grant Admin</strong><span>dseditgroup -o edit -a $USER -t user admin</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>JAMF</strong><span>jamf manage + jamf recon</span></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Notify User</strong><span>osascript display notification "Admin access granted"</span></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Revoke (background)</strong><span>sleep DURATION &#8594; dseditgroup remove &#8594; verify &#8594; force retry if needed &#8594; notify</span></div></div>
+  </div>
+
+  <h3>github-access.sh</h3>
+  <p>Unblocks GitHub by removing /etc/hosts entries, creates LaunchDaemon for auto-revoke.</p>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>SSH Auth</strong><span>Try primary password, fallback to backup</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Unblock GitHub</strong><span>Remove github.com entries from /etc/hosts</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Notify User</strong><span>osascript "GitHub access granted"</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Create Revoke Script</strong><span>/usr/local/bin/github_revoke.sh - re-adds hosts entries after duration</span></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Install LaunchDaemon</strong><span>com.github.revoke.plist &#8594; runs revoke script at load &#8594; self-cleaning</span></div></div>
+  </div>
+
+  <h3>keepalive.sh</h3>
+  <p>Background service that keeps the portal running reliably.</p>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">&#9749;</div><div class="flow-content"><strong>Caffeinate</strong><span>Prevents system sleep (display, idle, disk, user switch)</span></div></div>
+    <div class="flow-step"><div class="flow-num">&#128260;</div><div class="flow-content"><strong>VPN Watchdog</strong><span>Checks every 30s, auto-reconnects via AnyConnect/GlobalProtect</span></div></div>
+    <div class="flow-step"><div class="flow-num">&#128203;</div><div class="flow-content"><strong>IP Tracker</strong><span>Detects VPN IP changes, sends macOS notification to update at.apple.com</span></div></div>
+    <div class="flow-step"><div class="flow-num">&#128640;</div><div class="flow-content"><strong>Server Monitor</strong><span>Auto-restarts Next.js server if it crashes</span></div></div>
+  </div>
+</section>
+
+<!-- 10 SECURITY -->
+<section id="security">
+  <h2><span class="icon" style="background:rgba(239,68,68,0.2)">10</span> Security</h2>
+  <table>
+    <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Unauthorized access</td><td>VPN IP check (17.x range) + optional Apple IDMS SSO</td></tr>
+      <tr><td>SSH credentials</td><td>Stored in shell scripts (internal tool, not public repo)</td></tr>
+      <tr><td>Command injection</td><td>IP and hostname validated with strict patterns before shell execution</td></tr>
+      <tr><td>Data integrity</td><td>Synchronous JSON file writes (single-user tool)</td></tr>
+      <tr><td>Transport security</td><td>HTTPS with self-signed certificate</td></tr>
+      <tr><td>Session management</td><td>HTTP-only secure cookies for IDMS sessions (8-hour expiry)</td></tr>
+      <tr><td>CORS</td><td>Next.js same-origin policy by default</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 11 VALIDATION -->
+<section id="validation">
+  <h2><span class="icon" style="background:rgba(245,158,11,0.2)">11</span> Validation Rules</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Rule</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td>VPN IP</td><td>Must start with <code>17.</code> (Apple VPN range)</td><td><code>17.233.8.2</code></td></tr>
+      <tr><td>Hostname</td><td>Must start with <code>02HW0</code>, <code>01HW0</code>, <code>34HW0</code>, <code>3HW0</code>, or <code>4HW0</code></td><td><code>02HW062504</code></td></tr>
+      <tr><td>Employee ID</td><td>Numeric only, mandatory for first-time users</td><td><code>1255389</code></td></tr>
+      <tr><td>Email</td><td>Must end with <code>@apple.com</code></td><td><code>name@apple.com</code></td></tr>
+      <tr><td>Duration</td><td>5&#8211;180 minutes (default: 60 admin, 30 github)</td><td><code>60</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 12 SETUP -->
+<section id="setup">
+  <h2><span class="icon" style="background:rgba(34,197,94,0.2)">12</span> Setup &amp; Deployment</h2>
+
+  <h3>Prerequisites</h3>
+  <ul>
+    <li>Node.js 18+ and npm</li>
+    <li><code>sshpass</code> installed (<code>brew install hudochenkov/sshpass/sshpass</code>)</li>
+    <li>Apple VPN connection (IP starting with 17.)</li>
+  </ul>
+
+  <h3>Quick Start</h3>
+  <div class="code-block"><pre><span class="comment"># Clone and install</span>
+<span class="keyword">git clone</span> https://github.pie.apple.com/s-agasti/system-admin-portal.git
+<span class="keyword">cd</span> system-admin-portal
+<span class="keyword">npm</span> install
+
+<span class="comment"># Generate SSL certs</span>
+<span class="keyword">mkdir -p</span> certs
+<span class="keyword">openssl</span> req -x509 -newkey rsa:2048 \
+  -keyout certs/key.pem -out certs/cert.pem \
+  -days 365 -nodes -subj <span class="string">'/CN=localhost'</span>
+
+<span class="comment"># Initialize database</span>
+<span class="keyword">mkdir -p</span> data
+<span class="keyword">echo</span> <span class="string">'[]'</span> > data/users.json
+<span class="keyword">echo</span> <span class="string">'[]'</span> > data/admin_logs.json
+<span class="keyword">echo</span> <span class="string">'[]'</span> > data/github_logs.json
+
+<span class="comment"># Run</span>
+<span class="keyword">npm run</span> dev          <span class="comment"># HTTP dev server</span>
+<span class="keyword">npm run</span> dev:https    <span class="comment"># HTTPS dev server</span>
+<span class="keyword">npm run</span> build &amp;&amp; npm start  <span class="comment"># Production HTTPS</span>
+
+<span class="comment"># Install as background service</span>
+<span class="keyword">bash</span> scripts/install-service.sh</pre>
+  </div>
+
+  <h3>at.apple.com Setup</h3>
+  <ol>
+    <li>Get your VPN IP: <code>ifconfig | grep "inet 17." | awk '{print $2}'</code></li>
+    <li>Go to <strong>at.apple.com</strong> &#8594; enter <code>http://&lt;your-ip&gt;:3000</code> as URL</li>
+    <li>Check <strong>Custom Slug</strong> &#8594; enter <code>tcs-is-admin-p0rtal</code></li>
+    <li>Click <strong>Shorten</strong></li>
+    <li>Share <code>https://at.apple.com/tcs-is-admin-p0rtal</code> with your team</li>
+  </ol>
+</section>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p><strong>TCS Admin Portal</strong> &middot; Secure MacBook Management &amp; Access Control</p>
+  <p>Built with Next.js, TypeScript, Tailwind CSS &middot; TCS Apple Operations Team</p>
+  <p style="margin-top:8px; font-size:0.75rem">Last updated: April 2026</p>
+</div>
+
+</div>
+</body>
+</html>

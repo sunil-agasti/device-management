@@ -2,6 +2,45 @@
 
 A modern, AI-powered web portal for managing temporary admin access, GitHub access, hostname updates, and system cleanup on managed Apple MacBooks. Built with Next.js, TypeScript, and Tailwind CSS.
 
+> **Full project documentation**: Open [docs/project-document.html](docs/project-document.html) in a browser for the complete interactive architecture guide with diagrams, data flows, API reference, and setup instructions.
+
+## Architecture
+
+```
+  USER BROWSER (React + Tailwind + Framer Motion)
+  ┌────────────┬────────────┬────────────┬──────────────┐
+  │ Dashboard  │   Admin    │   GitHub   │   Hostname   │
+  │ + AI Bar   │   Access   │   Access   │   / Cleanup  │
+  └─────┬──────┴─────┬──────┴─────┬──────┴──────┬───────┘
+        └────────────┴────────────┴─────────────┘
+                           │
+                    HTTPS (port 3000)
+                           │
+  NEXT.JS SERVER (Node.js + TypeScript)
+  ┌──────────────────────────────────────────────────────┐
+  │  API Routes          │  Auth (IDMS / VPN)            │
+  │  /system-info        │  /auth/callback               │
+  │  /user               │  /auth/session                │
+  │  /admin-access       │  /ai-prompt                   │
+  │  /github-access      │  /logs (JSON + CSV)           │
+  │  /update-hostname    │  /cleanup                     │
+  ├──────────────────────┼───────────────────────────────┤
+  │  Shell Scripts       │  JSON Database                │
+  │  (child_process)     │  (fs read/write)              │
+  └──────────┬───────────┴──────────┬────────────────────┘
+             │                      │
+     SSH (sshpass)           data/*.json
+     to target Mac           (NoSQL DB)
+             │
+  TARGET MACBOOK
+  ├── dseditgroup (admin grant/revoke)
+  ├── /etc/hosts (GitHub block/unblock)
+  ├── scutil (hostname update)
+  ├── jamf (MDM manage + recon)
+  ├── osascript (user notifications)
+  └── LaunchDaemon (auto-revoke)
+```
+
 ## Features
 
 ### AI Command Bar
