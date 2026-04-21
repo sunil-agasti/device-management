@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProgressTracker, { Step } from './ProgressTracker';
 import AccessLogs from './AccessLogs';
 import { motion } from 'framer-motion';
@@ -33,9 +33,14 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
   const [steps, setSteps] = useState<Step[]>([]);
   const [logRefreshKey, setLogRefreshKey] = useState(0);
 
+  const formRef = useRef(form);
   useEffect(() => {
-    if (initialData) setForm(prev => ({ ...prev, ...initialData }));
-  }, [initialData]);
+    if (initialData) {
+      const updated = { ...formRef.current, ...initialData };
+      formRef.current = updated;
+      setForm(updated);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleIpBlur = async () => {
     if (!form.vpnIp.startsWith('17.')) return;

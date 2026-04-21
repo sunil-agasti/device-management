@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ProgressTracker, { Step } from './ProgressTracker';
 import AccessLogs from './AccessLogs';
 import { motion } from 'framer-motion';
@@ -34,11 +34,14 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const [autoPopulated, setAutoPopulated] = useState(false);
   const [logRefreshKey, setLogRefreshKey] = useState(0);
 
+  const formRef = useRef(form);
   useEffect(() => {
     if (initialData) {
-      setForm(prev => ({ ...prev, ...initialData }));
+      const updated = { ...formRef.current, ...initialData };
+      formRef.current = updated;
+      setForm(updated);
     }
-  }, [initialData]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lookupByIp = useCallback(async (ip: string) => {
     if (!ip.startsWith('17.') || autoPopulated) return;

@@ -1,8 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { secureFetch } from '@/lib/fetchClient';
+
+type SortKey = 'hostname' | 'username' | 'vpnIp' | 'grantedAt' | 'status' | 'requestedBy' | 'duration';
+type SortDir = 'asc' | 'desc';
+
+function SortIndicator({ active, direction }: { active: boolean; direction: SortDir }) {
+  if (!active) return <svg className="w-3 h-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
+  return (
+    <svg className="w-3 h-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={direction === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+    </svg>
+  );
+}
 
 interface Log {
   id: string;
@@ -20,9 +32,6 @@ interface Log {
   device?: string;
 }
 
-type SortKey = 'hostname' | 'username' | 'vpnIp' | 'grantedAt' | 'status' | 'requestedBy' | 'duration';
-type SortDir = 'asc' | 'desc';
-
 const PAGE_SIZE = 15;
 
 function ForceRevokePopover({ log, onSuccess }: { log: Log; onSuccess: () => void }) {
@@ -30,6 +39,7 @@ function ForceRevokePopover({ log, onSuccess }: { log: Log; onSuccess: () => voi
   const [ip, setIp] = useState(log.vpnIp);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [now] = useState(() => Date.now());
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,7 +77,7 @@ function ForceRevokePopover({ log, onSuccess }: { log: Log; onSuccess: () => voi
   };
 
   const isExpiredGranted = log.status === 'GRANTED' &&
-    (new Date(log.grantedAt).getTime() + log.duration * 60 * 1000) < Date.now();
+    (new Date(log.grantedAt).getTime() + log.duration * 60 * 1000) < now;
   const isFailed = log.status === 'FAILED';
 
   if (!isFailed && !isExpiredGranted) return null;
@@ -183,6 +193,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
   const [sortKey, setSortKey] = useState<SortKey>('grantedAt');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [tick, setTick] = useState(() => Date.now());
   const loaderRef = useRef<HTMLDivElement>(null);
 
   const fetchLogs = useCallback(async () => {
@@ -195,14 +206,19 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
     } catch { /* ignore */ } finally { setLoading(false); }
   }, [type]);
 
-  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+  useEffect(() => { startTransition(() => { fetchLogs(); }); }, [fetchLogs]);
 
   useEffect(() => {
-    const interval = setInterval(fetchLogs, 30000);
+    const interval = setInterval(() => {
+      fetchLogs();
+      setTick(Date.now());
+    }, 30000);
     return () => clearInterval(interval);
   }, [fetchLogs]);
 
   useEffect(() => {
+    const node = loaderRef.current;
+    if (!node) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -211,11 +227,12 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
       },
       { threshold: 0.1 }
     );
-    if (loaderRef.current) observer.observe(loaderRef.current);
+    observer.observe(node);
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, sortKey, sortDir]);
+  const resetVisibleCount = useCallback(() => { startTransition(() => setVisibleCount(PAGE_SIZE)); }, []);
+  useEffect(() => { resetVisibleCount(); }, [search, sortKey, sortDir, resetVisibleCount]);
 
   const filtered = allLogs.filter(log => {
     if (!search.trim()) return true;
@@ -280,36 +297,27 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
     );
   };
 
-  const getTimeRemaining = (log: Log) => {
+  const getTimeRemaining = useCallback((log: Log) => {
     if (log.status !== 'GRANTED') return null;
     const expiry = new Date(log.grantedAt).getTime() + log.duration * 60 * 1000;
-    const remaining = expiry - Date.now();
+    const remaining = expiry - tick;
     if (remaining <= 0) return 'Expiring...';
     const mins = Math.floor(remaining / 60000);
     return `${mins}m remaining`;
-  };
+  }, [tick]);
 
   const formatDate = (d: string) => {
     if (!d) return '-';
     return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <svg className="w-3 h-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
-    return (
-      <svg className="w-3 h-3 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sortDir === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
-      </svg>
-    );
-  };
-
-  const sortableHeaders: { key: SortKey; label: string }[] = [
+  const sortableHeaders: { key: SortKey; label: string }[] = useMemo(() => [
     { key: 'hostname', label: 'Hostname' },
     { key: 'username', label: 'Username' },
     { key: 'vpnIp', label: 'VPN IP' },
     { key: 'grantedAt', label: 'Granted' },
     { key: 'duration', label: 'Duration' },
-  ];
+  ], []);
 
   return (
     <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden">
@@ -373,7 +381,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                   >
                     <span className="flex items-center gap-1">
                       {h.label}
-                      <SortIcon col={h.key} />
+                      <SortIndicator active={sortKey === h.key} direction={sortDir} />
                     </span>
                   </th>
                 ))}
@@ -383,7 +391,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                   onClick={() => handleSort('status')}
                   className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none"
                 >
-                  <span className="flex items-center gap-1">Status <SortIcon col="status" /></span>
+                  <span className="flex items-center gap-1">Status <SortIndicator active={sortKey === 'status'} direction={sortDir} /></span>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
               </tr>

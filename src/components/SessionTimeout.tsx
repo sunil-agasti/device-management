@@ -7,7 +7,7 @@ const IDLE_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 const WARNING_BEFORE = 2 * 60 * 1000; // Show warning 2 min before
 
 export default function SessionTimeout() {
-  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [lastActivity, setLastActivity] = useState(() => Date.now());
   const [showWarning, setShowWarning] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [countdown, setCountdown] = useState(120);

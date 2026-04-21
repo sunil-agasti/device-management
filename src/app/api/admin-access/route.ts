@@ -2,24 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
-import os from 'os';
 import { addLog, updateLogStatus, upsertUser, findUserByUsername } from '@/lib/db';
 import { validateVpnIp, validateHostname, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
 
 const execAsync = promisify(exec);
-
-function getLocalIps(): string[] {
-  const interfaces = os.networkInterfaces();
-  const ips: string[] = ['127.0.0.1', '::1'];
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name] || []) {
-      ips.push(iface.address);
-    }
-  }
-  return ips;
-}
 
 async function grantAdminLocal(username: string, duration: number): Promise<{ success: boolean; output: string }> {
   try {
@@ -28,7 +16,7 @@ async function grantAdminLocal(username: string, duration: number): Promise<{ su
     try {
       const r = await execAsync(`dseditgroup -o edit -a ${username} -t user admin`, { timeout: 10000 });
       output += r.stdout;
-    } catch (e) {
+    } catch {
       // Try with sudo
       try {
         const r = await execAsync(`sudo dseditgroup -o edit -a ${username} -t user admin`, { timeout: 10000 });
