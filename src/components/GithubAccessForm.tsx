@@ -148,7 +148,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Access Duration (minutes) *</label>
-            <input type="number" value={form.duration} onChange={e => setForm({...form, duration: parseInt(e.target.value) || 30})} min={5} max={180} className={fieldClass('duration')} />
+            <input type="text" inputMode="numeric" value={form.duration} onChange={e => setForm({...form, duration: e.target.value === '' ? '' as unknown as number : parseInt(e.target.value) || 0})} className={fieldClass('duration')} />
             <p className="mt-1 text-xs text-slate-400">Default: 30 min. Max: 180 min (3 hours)</p>
             {errors.duration && <p className="mt-1 text-xs text-red-500">{errors.duration}</p>}
           </div>

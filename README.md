@@ -68,9 +68,11 @@ Natural language interface for quick actions:
 - Hostname validation (must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0)
 
 ### Cleanup Utility
-- Fix orphaned log entries
-- Update expired access records
-- Database integrity maintenance
+Automated database maintenance that performs 4 tasks:
+1. **Fix Stuck Entries** - Finds access logs still marked "GRANTED" whose timer has expired (e.g. server restarted mid-session) and updates them to "EXPIRED"
+2. **Detect Incomplete Users** - Identifies users missing their Employee ID or Apple Email (auto-created via SSH probe but never completed profile)
+3. **Remove Duplicates** - Cleans up duplicate log entries caused by double-clicks or network retries
+4. **Archive Old Logs** - Moves logs older than 90 days to archive files, keeping active database fast while preserving audit history
 
 ### Smart Auto-Population
 - Detects user VPN IP on page load
