@@ -23,6 +23,158 @@ type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE = 15;
 
+function ForceRevokePopover({ log, onSuccess }: { log: Log; onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [ip, setIp] = useState(log.vpnIp);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleRevoke = async () => {
+    if (!ip.startsWith('17.') && ip !== '127.0.0.1') {
+      setResult({ success: false, message: 'IP must start with 17.' });
+      return;
+    }
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch('/api/force-revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logId: log.id, type: log.type, username: log.username, vpnIp: ip }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setResult({ success: true, message: data.message || 'Revoked successfully' });
+        setTimeout(() => { setOpen(false); onSuccess(); }, 1500);
+      } else {
+        setResult({ success: false, message: data.error || 'Revoke failed' });
+      }
+    } catch (err) {
+      setResult({ success: false, message: 'Request failed: ' + String(err) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isExpiredGranted = log.status === 'GRANTED' &&
+    (new Date(log.grantedAt).getTime() + log.duration * 60 * 1000) < Date.now();
+  const isFailed = log.status === 'FAILED';
+
+  if (!isFailed && !isExpiredGranted) return null;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => { setOpen(!open); setResult(null); setIp(log.vpnIp); }}
+        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 ${
+          isFailed
+            ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/30'
+            : 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30'
+        }`}
+      >
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+        {isFailed ? 'Make Standard' : 'Force Revoke'}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -5, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -5, scale: 0.95 }}
+            className="absolute right-0 top-full mt-2 z-50 w-72 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xl p-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isFailed ? 'bg-red-100 dark:bg-red-500/20' : 'bg-amber-100 dark:bg-amber-500/20'}`}>
+                <svg className={`w-4 h-4 ${isFailed ? 'text-red-500' : 'text-amber-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                  {isFailed ? 'Retry: Make Standard User' : 'Force Revoke Access'}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {log.type === 'admin' ? 'Remove admin privileges' : 'Re-block GitHub access'}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">User: <strong className="text-slate-700 dark:text-slate-300">{log.username || '-'}</strong> on <strong className="text-slate-700 dark:text-slate-300">{log.hostname || '-'}</strong></p>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
+                  VPN IP (update if changed)
+                </label>
+                <input
+                  type="text"
+                  value={ip}
+                  onChange={e => setIp(e.target.value)}
+                  placeholder="17.x.x.x"
+                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                />
+                {ip !== log.vpnIp && (
+                  <p className="text-xs text-blue-500 mt-1">Changed from {log.vpnIp}</p>
+                )}
+              </div>
+
+              <button
+                onClick={handleRevoke}
+                disabled={loading || !ip}
+                className={`w-full py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
+                  isFailed
+                    ? 'bg-red-500 hover:bg-red-600 text-white disabled:opacity-50'
+                    : 'bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50'
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Revoking...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    {isFailed ? 'Make Standard Now' : 'Force Revoke Now'}
+                  </>
+                )}
+              </button>
+
+              {result && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className={`p-2 rounded-lg text-xs ${
+                    result.success
+                      ? 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
+                      : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400'
+                  }`}
+                >
+                  {result.message}
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
   const [allLogs, setAllLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,7 +201,6 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
     return () => clearInterval(interval);
   }, [fetchLogs]);
 
-  // Lazy load via IntersectionObserver
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -63,7 +214,6 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
     return () => observer.disconnect();
   }, []);
 
-  // Reset visible count when search/sort changes
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, sortKey, sortDir]);
 
   const filtered = allLogs.filter(log => {
@@ -174,7 +324,6 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
           )}
         </h3>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          {/* Search bar */}
           <div className="relative flex-1 sm:flex-initial">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input
@@ -228,19 +377,13 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                   </th>
                 ))}
                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Time Left</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Revoked</th>
                 <th
                   onClick={() => handleSort('status')}
                   className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none"
                 >
                   <span className="flex items-center gap-1">Status <SortIcon col="status" /></span>
                 </th>
-                <th
-                  onClick={() => handleSort('requestedBy')}
-                  className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors select-none"
-                >
-                  <span className="flex items-center gap-1">Requested By <SortIcon col="requestedBy" /></span>
-                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -263,16 +406,16 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                         <span className="text-blue-600 dark:text-blue-400 font-medium">{getTimeRemaining(log)}</span>
                       ) : '-'}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{log.revokedAt ? formatDate(log.revokedAt) : '-'}</td>
                     <td className="px-4 py-3">{getStatusBadge(log.status)}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 max-w-[150px] truncate">{log.requestedBy}</td>
+                    <td className="px-4 py-3">
+                      <ForceRevokePopover log={log} onSuccess={fetchLogs} />
+                    </td>
                   </motion.tr>
                 ))}
               </AnimatePresence>
             </tbody>
           </table>
 
-          {/* Lazy load trigger */}
           {hasMore && (
             <div ref={loaderRef} className="py-4 text-center">
               <div className="inline-flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
