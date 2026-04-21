@@ -4,6 +4,23 @@ A modern, AI-powered web portal for managing temporary admin access, GitHub acce
 
 > **Full project documentation**: Open [docs/project-document.html](docs/project-document.html) in a browser for the complete interactive architecture guide with diagrams, data flows, API reference, and setup instructions.
 
+## Why This Portal - Old vs New
+
+| Area | Old System | New AI Portal |
+|------|-----------|---------------|
+| **Data Entry** | Every field manual every time, even for repeat users | Auto-populates from DB after first use via SSH + IP lookup |
+| **Intelligence** | Zero AI. Pure form-based, navigate multiple pages | AI command bar: "grant admin to 17.233.8.2 for 60 min" |
+| **User Lookup** | No database, no memory of previous users | JSON DB stores all users. Search by ID, username, or IP |
+| **Revoke Failures** | No UI retry. Had to SSH manually to fix | "Make Standard" button with editable IP retry |
+| **VPN IP Changes** | No handling. Revoke fails silently | Username is primary key, IP re-resolved at revoke time |
+| **Notifications** | None. Users unaware of access status | macOS notifications: granted, 5-min warning, revoked |
+| **Logs** | Basic static table, no search/sort/export | Search, sort, lazy-load, CSV export, device tracking |
+| **UI** | Dated 2015 look, no dark mode | Modern dark/light theme, animations, glassmorphism |
+| **Validation** | Minimal. Could submit invalid data | Strict: IP 17.x, hostname prefix, @apple.com, 5-180 min |
+| **Security** | No session timeout, no VPN gate, HTTP only | VPN + IDMS SSO, HTTPS, 15-min idle timeout, device audit |
+| **Maintenance** | No cleanup. Orphaned entries accumulate | 4-task cleanup: fix expired, dedup, archive, detect orphans |
+| **Uptime** | Portal dies on sleep/VPN drop | Keepalive: caffeinate + VPN watchdog + server auto-restart |
+
 ## Architecture
 
 ```
