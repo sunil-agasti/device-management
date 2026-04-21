@@ -2,26 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
-import os from 'os';
 import { addLog, updateLogStatus, upsertUser, findUserByUsername } from '@/lib/db';
 import { validateVpnIp, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
+import { sendNotification, isLocalIp } from '@/lib/notify';
 
 const execAsync = promisify(exec);
-
-function getLocalIps(): string[] {
-  const interfaces = os.networkInterfaces();
-  const ips: string[] = ['127.0.0.1', '::1'];
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name] || []) {
-      ips.push(iface.address);
-    }
-  }
-  return ips;
-}
-
-function isLocalIp(ip: string): boolean {
-  return getLocalIps().includes(ip);
-}
 
 async function grantGithubLocal(duration: number): Promise<{ success: boolean; output: string }> {
   try {
@@ -42,13 +27,8 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; o
     }
 
     // Send notification to current user
-    const username = os.userInfo().username;
-    try {
-      await execAsync(
-        `osascript -e 'display notification "GitHub access granted for ${duration} minutes." with title "GitHub Access Granted"'`,
-        { timeout: 5000 }
-      );
-    } catch { /* best effort */ }
+    await sendNotification('127.0.0.1', 'GitHub Access Granted',
+      `GitHub access granted for ${duration} minutes.`);
 
     // Schedule revoke
     const revokeScript = `/tmp/github_revoke_${Date.now()}.sh`;
@@ -63,7 +43,7 @@ rm -f "${revokeScript}"
 `;
     await execAsync(`echo '${revokeContent.replace(/'/g, "'\\''")}' > "${revokeScript}" && chmod +x "${revokeScript}" && nohup bash "${revokeScript}" &>/dev/null &`);
 
-    return { success: true, output: `GitHub unblocked locally for ${username}. DNS cache flushed.\n${output}` };
+    return { success: true, output: `GitHub unblocked locally. DNS cache flushed.\n${output}` };
   } catch (err) {
     return { success: false, output: String(err) };
   }
@@ -112,23 +92,19 @@ export async function POST(req: NextRequest) {
       }, { status: 500 });
     }
 
-    // 5 min before expiry: send warning notification
+    // NOTIFY: Access Granted (for remote targets)
+    if (!local) {
+      await sendNotification(vpnIp, 'GitHub Access Granted',
+        `GitHub access granted for ${duration} minutes.`);
+    }
+
+    // 5 min before expiry: warning notification
     if (duration > 5) {
       setTimeout(async () => {
-        try {
-          if (local) {
-            await execAsync(`osascript -e 'display notification "GitHub access will expire in 5 minutes." with title "Access Expiring Soon"'`, { timeout: 5000 });
-          } else {
-            const user = findUserByUsername(username || '');
-            const ip = user?.vpnIp || vpnIp;
-            await execAsync(
-              `sshpass -p 'Tc\$@April2026' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 tcsadmin@${ip} "
-                CONSOLE_USER=\\$(stat -f%Su /dev/console)
-                USER_ID=\\$(id -u \\$CONSOLE_USER)
-                sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display notification \\\"GitHub access will expire in 5 minutes.\\\" with title \\\"Access Expiring Soon\\\"'
-              "`, { timeout: 15000 });
-          }
-        } catch { /* best effort */ }
+        const user = findUserByUsername(username || '');
+        const ip = user?.vpnIp || vpnIp;
+        await sendNotification(ip, 'Access Expiring Soon',
+          `Your GitHub access will expire in 5 minutes.`);
       }, (duration - 5) * 60 * 1000);
     }
 
