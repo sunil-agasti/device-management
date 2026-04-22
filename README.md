@@ -91,6 +91,24 @@ Automated database maintenance that performs 4 tasks:
 3. **Remove Duplicates** - Cleans up duplicate log entries caused by double-clicks or network retries
 4. **Archive Old Logs** - Moves logs older than 90 days to archive files, keeping active database fast while preserving audit history
 
+### Leadership Reports (New)
+Analytics dashboard for management visibility:
+- **Summary metrics**: Total requests, registered users, active sessions, avg duration, success rate
+- **Admin vs GitHub breakdown**: Granted/revoked/expired/failed counts with progress bars
+- **Monthly trend chart**: 12-month bar chart showing admin vs GitHub requests
+- **Top requesters**: Who is making the most access requests
+- **Most accessed users**: Which users are receiving access most frequently
+- **Device breakdown**: Mac vs iPhone vs iPad usage with percentage bars
+- **Time filtering**: Today, This Week, This Month, This Quarter, This Year, All Time
+
+### Human-Readable Error Messages (New)
+All SSH and system errors are mapped to clear, actionable messages:
+- Connection refused: "The remote machine may be offline or SSH is not enabled"
+- Timeout: "The device may be unreachable. Check that the VPN IP is correct"
+- Auth failed: "The configured credentials may be incorrect"
+- sshpass missing: "Run: brew install hudochenkov/sshpass/sshpass"
+- JAMF errors: "The JAMF agent may not be installed or the device is not enrolled"
+
 ### Smart Auto-Population
 - Detects user VPN IP on page load
 - SSHs to target IP to retrieve username and hostname
@@ -266,6 +284,7 @@ system-admin-portal/
 | POST | `/api/cleanup` | Run database cleanup |
 | POST | `/api/ai-prompt` | Parse natural language command |
 | GET | `/api/logs?type=admin&format=csv` | Get access logs (JSON or CSV) |
+| GET | `/api/reports?period=month` | Analytics report with trends, top users, devices |
 
 ## Database Schema
 

@@ -44,11 +44,21 @@ const cards = [
     gradient: 'from-orange-500 to-amber-500',
     shadow: 'shadow-orange-500/20',
   },
+  {
+    title: 'Leadership Reports',
+    description: 'Analytics dashboard with monthly trends, top users, device breakdown, and success metrics',
+    href: '/reports',
+    icon: (
+      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+    ),
+    gradient: 'from-pink-500 to-rose-500',
+    shadow: 'shadow-pink-500/20',
+  },
 ];
 
 export default function Dashboard() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
       {cards.map((card, i) => (
         <motion.div
           key={card.href}
