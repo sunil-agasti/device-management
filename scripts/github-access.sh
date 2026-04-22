@@ -3,40 +3,70 @@
 ############################################
 # INPUTS
 ############################################
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 IP="$1"
 DURATION="${2:-1800}"
 
+############################################
+# LOAD CREDENTIALS (shared with ssh-connect.sh)
+############################################
 PRIMARY_PASS="${SSH_PRIMARY_PASS:-}"
 BACKUP_PASS="${SSH_BACKUP_PASS:-}"
+SSH_USER="${SSH_USER:-tcsadmin}"
 
 if [ -z "$PRIMARY_PASS" ]; then
-  SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-  if [ -f "$SCRIPT_DIR/.env" ]; then
-    PRIMARY_PASS=$(grep SSH_PRIMARY_PASS "$SCRIPT_DIR/.env" | cut -d'=' -f2-)
-    BACKUP_PASS=$(grep SSH_BACKUP_PASS "$SCRIPT_DIR/.env" | cut -d'=' -f2-)
-  elif [ -f "$SCRIPT_DIR/.env.local" ]; then
-    PRIMARY_PASS=$(grep SSH_PRIMARY_PASS "$SCRIPT_DIR/.env.local" | cut -d'=' -f2-)
-    BACKUP_PASS=$(grep SSH_BACKUP_PASS "$SCRIPT_DIR/.env.local" | cut -d'=' -f2-)
+  PROJ_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+  if [ -f "$PROJ_DIR/.env" ]; then
+    eval "$(grep -E '^SSH_PRIMARY_PASS=|^SSH_BACKUP_PASS=|^SSH_USER=' "$PROJ_DIR/.env" | sed "s/^/export /")"
+    PRIMARY_PASS="${SSH_PRIMARY_PASS:-}"
+    BACKUP_PASS="${SSH_BACKUP_PASS:-}"
   fi
 fi
 
 if [ -z "$PRIMARY_PASS" ]; then
-  echo "ERROR: SSH_PRIMARY_PASS not set. Configure .env or .env.local"
+  echo "ERROR: SSH_PRIMARY_PASS not set. Configure .env"
   exit 1
 fi
 
 LOCAL_LOG="$HOME/Desktop/github_access_log.csv"
 
 ############################################
-# PICK PASSWORD
+# USE SHARED SSH TO GET USER INFO
 ############################################
-sshpass -p "$PRIMARY_PASS" ssh -o StrictHostKeyChecking=no tcsadmin@$IP "exit" 2>/dev/null
-if [ $? -eq 0 ]; then
-    PASSWORD="$PRIMARY_PASS"
+log() { echo "[ $(date '+%H:%M:%S') ] $1"; }
+
+log "Fetching user info via ssh-connect.sh..."
+CONNECT_RESULT=$(bash "$SCRIPT_DIR/ssh-connect.sh" "$IP")
+
+if echo "$CONNECT_RESULT" | grep -q "^SUCCESS:"; then
+  DATA=$(echo "$CONNECT_RESULT" | sed 's/SUCCESS://')
+  REMOTE_USER=$(echo "$DATA" | cut -d'|' -f1)
+  HOSTNAME=$(echo "$DATA" | cut -d'|' -f2)
+  log "✅ Connected: $REMOTE_USER @ $HOSTNAME"
 else
-    echo "Primary failed, using backup..."
-    PASSWORD="$BACKUP_PASS"
+  log "❌ SSH connection failed: $CONNECT_RESULT"
+  exit 1
 fi
+
+############################################
+# SSH HELPER (reuses expect for auth)
+############################################
+try_ssh() {
+  expect -c "
+    set timeout 30
+    log_user 0
+    spawn ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${SSH_USER}@${IP}
+    expect -re \".*assword.*\" { send \"$1\r\" }
+    expect -re \"\\\\\$|%|>|#\" {}
+    log_user 1
+    send \"$2\r\"
+    expect -re \"\\\\\$|%|>|#\" {}
+    send \"exit\r\"
+    expect eof
+  " 2>/dev/null
+}
+
+PASSWORD="$PRIMARY_PASS"
 
 ############################################
 # TIME
