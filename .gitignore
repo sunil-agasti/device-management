@@ -44,7 +44,9 @@ certs/*.pem
 
 # Runtime data (keep structure, ignore contents)
 data/*.json
+data/backup/*.json
 !data/.gitkeep
+!data/backup/.gitkeep
 
 # Claude / OMC config
 .claude/

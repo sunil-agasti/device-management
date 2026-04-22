@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllLogs, getAdminLogs, getGithubLogs, getUsers } from '@/lib/db';
+import { getAllLogs, getAdminLogs, getGithubLogs, getUsers, getAllBackupLogs, getBackupAdminLogs, getBackupGithubLogs } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const period = searchParams.get('period') || 'all';
 
-    const adminLogs = getAdminLogs();
-    const githubLogs = getGithubLogs();
-    const allLogs = getAllLogs();
+    const useBackup = period === 'all' || period === 'year';
+    const adminLogs = useBackup ? getBackupAdminLogs() : getAdminLogs();
+    const githubLogs = useBackup ? getBackupGithubLogs() : getGithubLogs();
+    const allLogs = useBackup ? getAllBackupLogs() : getAllLogs();
     const users = getUsers();
 
     const now = new Date();

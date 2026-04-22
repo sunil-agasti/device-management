@@ -3,23 +3,43 @@ import path from 'path';
 import { User, AccessLog } from './types';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
+const BACKUP_DIR = path.join(process.cwd(), 'data', 'backup');
+
+function ensureDir(dir: string) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
 
 function ensureFile(filePath: string) {
+  const dir = path.dirname(filePath);
+  ensureDir(dir);
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, '[]', 'utf-8');
   }
 }
 
-function readJson<T>(filename: string): T[] {
-  const filePath = path.join(DATA_DIR, filename);
+function readJson<T>(filename: string, dir = DATA_DIR): T[] {
+  const filePath = path.join(dir, filename);
   ensureFile(filePath);
   const raw = fs.readFileSync(filePath, 'utf-8');
   return JSON.parse(raw);
 }
 
-function writeJson<T>(filename: string, data: T[]) {
-  const filePath = path.join(DATA_DIR, filename);
+function writeJson<T>(filename: string, data: T[], dir = DATA_DIR) {
+  const filePath = path.join(dir, filename);
+  ensureDir(dir);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function appendToBackup(log: AccessLog) {
+  const filename = log.type === 'admin' ? 'admin_logs_backup.json' : 'github_logs_backup.json';
+  const logs = readJson<AccessLog>(filename, BACKUP_DIR);
+  const idx = logs.findIndex(l => l.id === log.id);
+  if (idx >= 0) {
+    logs[idx] = log;
+  } else {
+    logs.unshift(log);
+  }
+  writeJson(filename, logs, BACKUP_DIR);
 }
 
 export function getUsers(): User[] {
@@ -76,6 +96,7 @@ export function addLog(log: AccessLog) {
   const logs = readJson<AccessLog>(filename);
   logs.unshift(log);
   writeJson(filename, logs);
+  appendToBackup(log);
 }
 
 export function updateLogStatus(id: string, type: 'admin' | 'github', status: AccessLog['status']) {
@@ -86,6 +107,7 @@ export function updateLogStatus(id: string, type: 'admin' | 'github', status: Ac
     logs[idx].status = status;
     logs[idx].revokedAt = new Date().toISOString();
     writeJson(filename, logs);
+    appendToBackup(logs[idx]);
   }
 }
 
@@ -95,6 +117,22 @@ export function getAllLogs(): AccessLog[] {
   return [...admin, ...github].sort((a, b) =>
     new Date(b.grantedAt).getTime() - new Date(a.grantedAt).getTime()
   );
+}
+
+export function getAllBackupLogs(): AccessLog[] {
+  const admin = readJson<AccessLog>('admin_logs_backup.json', BACKUP_DIR);
+  const github = readJson<AccessLog>('github_logs_backup.json', BACKUP_DIR);
+  return [...admin, ...github].sort((a, b) =>
+    new Date(b.grantedAt).getTime() - new Date(a.grantedAt).getTime()
+  );
+}
+
+export function getBackupAdminLogs(): AccessLog[] {
+  return readJson<AccessLog>('admin_logs_backup.json', BACKUP_DIR);
+}
+
+export function getBackupGithubLogs(): AccessLog[] {
+  return readJson<AccessLog>('github_logs_backup.json', BACKUP_DIR);
 }
 
 export function logsToCSV(logs: AccessLog[]): string {
