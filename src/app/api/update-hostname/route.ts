@@ -5,6 +5,7 @@ import { validateVpnIp, validateHostname } from '@/lib/validation';
 import { sanitizeIp, sanitizeHostname } from '@/lib/sanitize';
 import { getSshCredentials } from '@/lib/ssh';
 import { isLocalIp } from '@/lib/notify';
+import { formatSSHError } from '@/lib/errors';
 
 const execAsync = promisify(exec);
 
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
         break;
       } catch { continue; }
     }
-    if (!password) return NextResponse.json({ error: 'SSH authentication failed' }, { status: 500 });
+    if (!password) return NextResponse.json({ error: `SSH authentication failed for ${safeIp}. Verify the device is online and SSH credentials are correct in your .env configuration.` }, { status: 500 });
 
     const output = execSync(
       `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no ${user}@${safeIp} "
@@ -70,6 +71,6 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: 'Failed to update hostname' }, { status: 500 });
   } catch (err) {
-    return NextResponse.json({ error: 'Hostname update failed: ' + String(err) }, { status: 500 });
+    return NextResponse.json({ error: formatSSHError('target', String(err)) }, { status: 500 });
   }
 }

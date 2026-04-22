@@ -7,6 +7,7 @@ import { validateVpnIp, validateHostname, validateEmployeeId, validateEmail, val
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
 import { getSshCredentials } from '@/lib/ssh';
+import { formatSSHError } from '@/lib/errors';
 
 const execAsync = promisify(exec);
 
@@ -155,6 +156,6 @@ export async function POST(req: NextRequest) {
       message: `Admin access granted to ${username} on ${hostname}. Will auto-revoke in ${duration} minutes.`,
     });
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to grant admin access: ' + String(err) }, { status: 500 });
+    return NextResponse.json({ error: formatSSHError('target', String(err)) }, { status: 500 });
   }
 }

@@ -6,6 +6,7 @@ import { addLog, updateLogStatus, upsertUser, findUserByUsername } from '@/lib/d
 import { validateVpnIp, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
+import { formatSSHError } from '@/lib/errors';
 
 const execAsync = promisify(exec);
 
@@ -128,6 +129,6 @@ export async function POST(req: NextRequest) {
       output: result.output,
     });
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to grant GitHub access: ' + String(err) }, { status: 500 });
+    return NextResponse.json({ error: formatSSHError('target', String(err)) }, { status: 500 });
   }
 }

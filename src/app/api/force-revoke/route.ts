@@ -6,6 +6,7 @@ import { validateVpnIp } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { sanitizeIp, sanitizeUsername } from '@/lib/sanitize';
 import { getSshCredentials } from '@/lib/ssh';
+import { formatSSHError } from '@/lib/errors';
 
 const execAsync = promisify(exec);
 
@@ -109,6 +110,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: false, error: result.output }, { status: 500 });
   } catch (err) {
-    return NextResponse.json({ error: 'Force revoke failed: ' + String(err) }, { status: 500 });
+    return NextResponse.json({ error: formatSSHError('target', String(err)) }, { status: 500 });
   }
 }
