@@ -247,7 +247,7 @@ npm start
 npm run start:http
 ```
 
-Access the portal at `https://localhost:3000`
+Access the portal at `http://localhost:3000` or via `https://at.apple.com/tcs-device-management-portal`
 
 ## Project Structure
 
