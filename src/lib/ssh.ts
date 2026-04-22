@@ -15,8 +15,18 @@ export function getSshCredentials(): { user: string; passwords: string[] } {
   const passwords = [SSH_PRIMARY_PASS, SSH_BACKUP_PASS].filter(Boolean);
   if (passwords.length === 0) {
     console.warn('SSH passwords not configured. Set SSH_PRIMARY_PASS and SSH_BACKUP_PASS in .env or .env.local');
+    console.warn('If password contains $ or special chars, wrap in single quotes: SSH_PRIMARY_PASS=\'Pa$$word\'');
   }
   return { user: SSH_USER, passwords };
+}
+
+export function debugCredentials(): { user: string; passwordCount: number; primaryLength: number; backupLength: number } {
+  return {
+    user: SSH_USER,
+    passwordCount: [SSH_PRIMARY_PASS, SSH_BACKUP_PASS].filter(Boolean).length,
+    primaryLength: SSH_PRIMARY_PASS.length,
+    backupLength: SSH_BACKUP_PASS.length,
+  };
 }
 
 export function getSshpassPath(): string {

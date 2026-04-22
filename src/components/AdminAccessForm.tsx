@@ -54,6 +54,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
     const log = (msg: string) => { logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`); setSshLogs([...logs]); };
 
     log(`Initiating SSH connection to ${ip}...`);
+    log(`Using sshpass at auto-detected path with env credentials`);
     log(`Running: ssh tcsadmin@${ip} "stat -f%Su /dev/console && scutil --get ComputerName"`);
     try {
       const res = await fetch(`/api/system-info?ip=${ip}`);
