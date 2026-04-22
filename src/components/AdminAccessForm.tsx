@@ -33,6 +33,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const [steps, setSteps] = useState<Step[]>([]);
   const [logRefreshKey, setLogRefreshKey] = useState(0);
   const [sshLoading, setSshLoading] = useState(false);
+  const [sshError, setSshError] = useState('');
 
   const formRef = useRef(form);
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const lookupByIp = useCallback(async (ip: string) => {
     if (!ip.startsWith('17.')) return;
     setSshLoading(true);
+    setSshError('');
     try {
       const res = await fetch(`/api/system-info?ip=${ip}`);
       const info = await res.json();
@@ -73,9 +75,13 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
             employeeId: userData.user.employeeId || prev.employeeId,
             email: userData.user.email || prev.email,
           }));
+        } else {
+          setSshError(`Unable to connect to ${ip}. Verify the device is online and SSH credentials are correct.`);
         }
       }
-    } catch { /* ignore */ } finally {
+    } catch {
+      setSshError(`Connection failed to ${ip}. Check VPN IP and try again.`);
+    } finally {
       setSshLoading(false);
     }
   }, []);
@@ -184,6 +190,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">VPN IP *</label>
             <input type="text" value={form.vpnIp} onChange={e => setForm({...form, vpnIp: e.target.value})} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
             {errors.vpnIp && <p className="mt-1 text-xs text-red-500">{errors.vpnIp}</p>}
+            {sshError && <p className="mt-1 text-xs text-red-500 bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Username to Promote * <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
@@ -208,7 +215,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
         </div>
 
         <div className="mt-6 flex justify-center">
-          <button type="submit" disabled={loading}
+          <button type="submit" disabled={loading || sshLoading || (!form.username && !form.hostname)}
             className="px-8 py-3 bg-gradient-to-r from-blue-500 to-violet-600 text-white font-medium rounded-xl hover:from-blue-600 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center gap-2"
           >
             {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (

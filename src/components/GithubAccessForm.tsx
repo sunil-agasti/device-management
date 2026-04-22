@@ -32,6 +32,8 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const [logRefreshKey, setLogRefreshKey] = useState(0);
+  const [sshLoading, setSshLoading] = useState(false);
+  const [sshError, setSshError] = useState('');
 
   const formRef = useRef(form);
   useEffect(() => {
@@ -44,6 +46,8 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
 
   const handleIpBlur = async () => {
     if (!form.vpnIp.startsWith('17.')) return;
+    setSshLoading(true);
+    setSshError('');
     try {
       // SSH probe to get username and hostname from target machine
       const sysRes = await fetch(`/api/system-info?ip=${form.vpnIp}`);
@@ -79,8 +83,14 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
           employeeId: data.user.employeeId || prev.employeeId,
           email: data.user.email || prev.email,
         }));
+      } else {
+        setSshError(`Unable to connect to ${form.vpnIp}. Verify the device is online and SSH credentials are correct.`);
       }
-    } catch { /* ignore */ }
+    } catch {
+      setSshError(`Connection failed to ${form.vpnIp}. Check VPN IP and try again.`);
+    } finally {
+      setSshLoading(false);
+    }
   };
 
   const validate = () => {
@@ -172,6 +182,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">VPN IP *</label>
             <input type="text" value={form.vpnIp} onChange={e => setForm({...form, vpnIp: e.target.value})} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
             {errors.vpnIp && <p className="mt-1 text-xs text-red-500">{errors.vpnIp}</p>}
+            {sshError && <p className="mt-1 text-xs text-red-500 bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Access Duration (minutes) *</label>
@@ -188,7 +199,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
         </div>
 
         <div className="mt-6 flex justify-center">
-          <button type="submit" disabled={loading}
+          <button type="submit" disabled={loading || sshLoading}
             className="px-8 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium rounded-xl hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 flex items-center gap-2"
           >
             {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (
