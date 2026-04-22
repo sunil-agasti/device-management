@@ -5,6 +5,9 @@ import { getSshCredentials } from '@/lib/ssh';
 
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const targetIp = searchParams.get('ip');
+
     const forwarded = req.headers.get('x-forwarded-for');
     const rawIp = forwarded?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || '127.0.0.1';
     const clientIp = sanitizeIp(rawIp) || '127.0.0.1';
@@ -19,12 +22,14 @@ export async function GET(req: NextRequest) {
     let remoteUsername: string | undefined;
     let remoteHostname: string | undefined;
 
-    if (clientIp.startsWith('17.')) {
+    const probeIp = targetIp ? sanitizeIp(targetIp) : clientIp;
+
+    if (probeIp && probeIp.startsWith('17.')) {
       const { user, passwords } = getSshCredentials();
       for (const password of passwords) {
         try {
           const output = execSync(
-            `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${user}@${clientIp} "echo \\$(stat -f%Su /dev/console)|\\$(scutil --get ComputerName)" 2>/dev/null`,
+            `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${user}@${probeIp} "echo \\$(stat -f%Su /dev/console)|\\$(scutil --get ComputerName)" 2>/dev/null`,
             { encoding: 'utf-8', timeout: 10000 }
           ).trim();
           const parts = output.split('|');

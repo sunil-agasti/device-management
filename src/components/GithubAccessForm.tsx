@@ -45,6 +45,30 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
   const handleIpBlur = async () => {
     if (!form.vpnIp.startsWith('17.')) return;
     try {
+      // SSH probe to get username and hostname from target machine
+      const sysRes = await fetch(`/api/system-info?ip=${form.vpnIp}`);
+      const sysData = await sysRes.json();
+      if (sysData.remoteUsername) {
+        setForm(prev => ({
+          ...prev,
+          username: sysData.remoteUsername || prev.username,
+          hostname: sysData.remoteHostname || prev.hostname,
+        }));
+
+        // Then check DB for employee ID and email
+        const userRes = await fetch(`/api/user?username=${sysData.remoteUsername}`);
+        const userData = await userRes.json();
+        if (userData.found && userData.user) {
+          setForm(prev => ({
+            ...prev,
+            employeeId: userData.user.employeeId || prev.employeeId,
+            email: userData.user.email || prev.email,
+          }));
+        }
+        return;
+      }
+
+      // Fallback: check DB by IP
       const res = await fetch(`/api/user?ip=${form.vpnIp}`);
       const data = await res.json();
       if (data.found && data.user) {
