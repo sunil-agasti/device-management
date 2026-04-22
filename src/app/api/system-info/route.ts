@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 import { sanitizeIp } from '@/lib/sanitize';
-import { getSshCredentials } from '@/lib/ssh';
+import { getSshCredentials, getSshpassPath } from '@/lib/ssh';
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,10 +26,12 @@ export async function GET(req: NextRequest) {
 
     if (probeIp && probeIp.startsWith('17.')) {
       const { user, passwords } = getSshCredentials();
+      const sshpass = getSshpassPath();
       for (const password of passwords) {
         try {
+          const escapedPass = password.replace(/'/g, "'\\''");
           const output = execSync(
-            `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${user}@${probeIp} "CONSOLE_USER=\\$(stat -f%Su /dev/console); HOSTNAME=\\$(scutil --get ComputerName); echo \\$CONSOLE_USER|\\$HOSTNAME"`,
+            `${sshpass} -p '${escapedPass}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${user}@${probeIp} "CONSOLE_USER=\\$(stat -f%Su /dev/console); HOSTNAME=\\$(scutil --get ComputerName); echo \\$CONSOLE_USER|\\$HOSTNAME"`,
             { encoding: 'utf-8', timeout: 15000 }
           ).trim();
           const lastLine = output.split('\n').pop() || '';
