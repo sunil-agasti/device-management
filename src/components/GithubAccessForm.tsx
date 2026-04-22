@@ -155,18 +155,18 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
       <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">TCS Employee ID *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">TCS Employee ID * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
             <input type="text" value={form.employeeId} onChange={e => setForm({...form, employeeId: e.target.value})} placeholder="e.g. 1255389" className={fieldClass('employeeId')} />
             {errors.employeeId && <p className="mt-1 text-xs text-red-500">{errors.employeeId}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Apple Email *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Apple Email * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
             <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="name@apple.com" className={fieldClass('email')} />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Hostname</label>
-            <input type="text" value={form.hostname} onChange={e => setForm({...form, hostname: e.target.value})} placeholder="e.g. 02HW062504" className={fieldClass('hostname')} />
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Hostname <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
+            <input type="text" value={form.hostname} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('hostname')} bg-slate-100 dark:bg-slate-700/70 cursor-not-allowed`} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">VPN IP *</label>
