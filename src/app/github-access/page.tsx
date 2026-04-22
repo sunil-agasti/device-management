@@ -16,7 +16,7 @@ export default function GithubAccessPage() {
       .then(r => r.json())
       .then(data => {
         setSystemInfo(data);
-        setRequestedBy(`${data.serverUsername} (${data.serverHostname})`);
+        setRequestedBy(`${data.clientUsername || data.serverUsername} (${data.clientHostname || data.serverHostname})`);
       })
       .catch(() => setRequestedBy('system'));
   }, []);

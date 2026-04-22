@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 import { sanitizeIp } from '@/lib/sanitize';
 import { sshFetchUserInfo } from '@/lib/ssh';
+import { findUserByIp } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -32,8 +33,38 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ clientIp, serverHostname, serverUsername, remoteUsername, remoteHostname });
+    // Detect the connecting user's identity from their client IP
+    let clientUsername = serverUsername;
+    let clientHostname = serverHostname;
+
+    const isLocal = clientIp === '127.0.0.1' || clientIp === '::1';
+
+    if (!isLocal && clientIp.startsWith('17.')) {
+      // Try DB first (fast)
+      const dbUser = findUserByIp(clientIp);
+      if (dbUser && dbUser.username) {
+        clientUsername = dbUser.username;
+        clientHostname = dbUser.hostname || clientHostname;
+      } else if (!probeIp) {
+        // SSH to client IP to get their identity (only if no target probe running)
+        const clientInfo = sshFetchUserInfo(clientIp);
+        if (clientInfo.success) {
+          clientUsername = clientInfo.username;
+          clientHostname = clientInfo.hostname;
+        }
+      }
+    }
+
+    return NextResponse.json({
+      clientIp,
+      serverHostname,
+      serverUsername,
+      clientUsername,
+      clientHostname,
+      remoteUsername,
+      remoteHostname,
+    });
   } catch {
-    return NextResponse.json({ clientIp: '127.0.0.1', serverHostname: 'unknown', serverUsername: 'unknown' });
+    return NextResponse.json({ clientIp: '127.0.0.1', serverHostname: 'unknown', serverUsername: 'unknown', clientUsername: 'unknown', clientHostname: 'unknown' });
   }
 }
