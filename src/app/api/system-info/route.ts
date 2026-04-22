@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     let remoteUsername: string | undefined;
     let remoteHostname: string | undefined;
 
-    const probeIp = targetIp ? sanitizeIp(targetIp) : clientIp;
+    const probeIp = targetIp ? sanitizeIp(targetIp) : null;
 
     if (probeIp && probeIp.startsWith('17.')) {
       const result = sshFetchUserInfo(probeIp);
