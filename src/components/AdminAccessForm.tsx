@@ -31,8 +31,8 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
-  const [autoPopulated, setAutoPopulated] = useState(false);
   const [logRefreshKey, setLogRefreshKey] = useState(0);
+  const [sshLoading, setSshLoading] = useState(false);
 
   const formRef = useRef(form);
   useEffect(() => {
@@ -44,7 +44,8 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const lookupByIp = useCallback(async (ip: string) => {
-    if (!ip.startsWith('17.') || autoPopulated) return;
+    if (!ip.startsWith('17.')) return;
+    setSshLoading(true);
     try {
       const res = await fetch(`/api/system-info?ip=${ip}`);
       const info = await res.json();
@@ -60,10 +61,24 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
             email: userData.user.email || prev.email,
           }));
         }
-        setAutoPopulated(true);
+      } else {
+        // SSH failed, try DB by IP
+        const userRes = await fetch(`/api/user?ip=${ip}`);
+        const userData = await userRes.json();
+        if (userData.found && userData.user) {
+          setForm(prev => ({
+            ...prev,
+            username: userData.user.username || prev.username,
+            hostname: userData.user.hostname || prev.hostname,
+            employeeId: userData.user.employeeId || prev.employeeId,
+            email: userData.user.email || prev.email,
+          }));
+        }
       }
-    } catch { /* ignore */ }
-  }, [autoPopulated]);
+    } catch { /* ignore */ } finally {
+      setSshLoading(false);
+    }
+  }, []);
 
   const handleIpBlur = () => {
     if (form.vpnIp.startsWith('17.')) lookupByIp(form.vpnIp);
@@ -158,8 +173,11 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Hostname * <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
-            <input type="text" value={form.hostname} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('hostname')} bg-slate-100 dark:bg-slate-700/70 cursor-not-allowed`} />
-            {!form.hostname && <p className="mt-1 text-xs text-blue-500">Enter VPN IP to auto-detect</p>}
+            <div className="relative">
+              <input type="text" value={form.hostname} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('hostname')} bg-slate-100 dark:bg-slate-700/70 cursor-not-allowed`} />
+              {sshLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />}
+            </div>
+            {!form.hostname && !sshLoading && <p className="mt-1 text-xs text-blue-500">Enter VPN IP to auto-detect</p>}
             {errors.hostname && <p className="mt-1 text-xs text-red-500">{errors.hostname}</p>}
           </div>
           <div>
@@ -169,7 +187,10 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Username to Promote * <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
-            <input type="text" value={form.username} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('username')} bg-slate-100 dark:bg-slate-700/70 cursor-not-allowed`} />
+            <div className="relative">
+              <input type="text" value={form.username} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('username')} bg-slate-100 dark:bg-slate-700/70 cursor-not-allowed`} />
+              {sshLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />}
+            </div>
             {errors.username && <p className="mt-1 text-xs text-red-500">{errors.username}</p>}
           </div>
           <div>
