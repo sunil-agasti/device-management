@@ -34,6 +34,8 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const [logRefreshKey, setLogRefreshKey] = useState(0);
   const [sshLoading, setSshLoading] = useState(false);
   const [sshError, setSshError] = useState('');
+  const [sshLogs, setSshLogs] = useState<string[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
 
   const formRef = useRef(form);
   useEffect(() => {
@@ -48,26 +50,38 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
     if (!ip.startsWith('17.')) return;
     setSshLoading(true);
     setSshError('');
+    const logs: string[] = [];
+    const log = (msg: string) => { logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`); setSshLogs([...logs]); };
+
+    log(`Initiating SSH connection to ${ip}...`);
+    log(`Running: ssh tcsadmin@${ip} "stat -f%Su /dev/console && scutil --get ComputerName"`);
     try {
       const res = await fetch(`/api/system-info?ip=${ip}`);
       const info = await res.json();
       if (info.remoteUsername) {
+        log(`SSH connected. Username: ${info.remoteUsername}, Hostname: ${info.remoteHostname}`);
         setForm(prev => ({ ...prev, username: info.remoteUsername, hostname: info.remoteHostname || prev.hostname }));
 
+        log(`Looking up ${info.remoteUsername} in database...`);
         const userRes = await fetch(`/api/user?username=${info.remoteUsername}`);
         const userData = await userRes.json();
         if (userData.found && userData.user) {
+          log(`User found. Employee ID: ${userData.user.employeeId}, Email: ${userData.user.email}`);
           setForm(prev => ({
             ...prev,
             employeeId: userData.user.employeeId || prev.employeeId,
             email: userData.user.email || prev.email,
           }));
+        } else {
+          log('User not in database. Please enter Employee ID and Email manually.');
         }
+        log('Auto-populate complete.');
       } else {
-        // SSH failed, try DB by IP
+        log(`SSH connection failed. Trying database lookup by IP...`);
         const userRes = await fetch(`/api/user?ip=${ip}`);
         const userData = await userRes.json();
         if (userData.found && userData.user) {
+          log(`Found user in DB: ${userData.user.username} (${userData.user.hostname})`);
           setForm(prev => ({
             ...prev,
             username: userData.user.username || prev.username,
@@ -76,10 +90,12 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
             email: userData.user.email || prev.email,
           }));
         } else {
+          log('No user found in database either.');
           setSshError(`Unable to connect to ${ip}. Verify the device is online and SSH credentials are correct.`);
         }
       }
     } catch {
+      log(`Connection error to ${ip}.`);
       setSshError(`Connection failed to ${ip}. Check VPN IP and try again.`);
     } finally {
       setSshLoading(false);
@@ -191,6 +207,20 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
             <input type="text" value={form.vpnIp} onChange={e => setForm({...form, vpnIp: e.target.value})} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
             {errors.vpnIp && <p className="mt-1 text-xs text-red-500">{errors.vpnIp}</p>}
             {sshError && <p className="mt-1 text-xs text-red-500 bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
+            {(sshLoading || sshLogs.length > 0) && (
+              <div className="mt-2">
+                <button type="button" onClick={() => setShowLogs(!showLogs)} className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                  <svg className={`w-3 h-3 transition-transform ${showLogs ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  {showLogs ? 'Hide' : 'View'} Connection Logs
+                </button>
+                {showLogs && (
+                  <div className="mt-1.5 max-h-32 overflow-y-auto bg-slate-900 dark:bg-black rounded-lg p-3 font-mono text-[11px] text-green-400 space-y-0.5">
+                    {sshLogs.map((l, i) => <div key={i}>{l}</div>)}
+                    {sshLoading && <div className="text-blue-400 animate-pulse">Connecting...</div>}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Username to Promote * <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
