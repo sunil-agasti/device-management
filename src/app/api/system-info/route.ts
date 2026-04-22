@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 import { sanitizeIp } from '@/lib/sanitize';
-import { getSshCredentials, sshExecSimple } from '@/lib/ssh';
+import { sshFetchUserInfo } from '@/lib/ssh';
 
 export async function GET(req: NextRequest) {
   try {
@@ -25,22 +25,10 @@ export async function GET(req: NextRequest) {
     const probeIp = targetIp ? sanitizeIp(targetIp) : clientIp;
 
     if (probeIp && probeIp.startsWith('17.')) {
-      const { passwords } = getSshCredentials();
-      for (const password of passwords) {
-        try {
-          const output = sshExecSimple(
-            probeIp,
-            'CONSOLE_USER=$(stat -f%Su /dev/console); HOSTNAME=$(scutil --get ComputerName); echo __RESULT__:$CONSOLE_USER\\|$HOSTNAME',
-            password,
-            15000
-          );
-          const match = output.match(/__RESULT__:(.+)\|(.+)/);
-          if (match) {
-            remoteUsername = match[1].trim();
-            remoteHostname = match[2].trim();
-          }
-          break;
-        } catch { continue; }
+      const result = sshFetchUserInfo(probeIp);
+      if (result.success) {
+        remoteUsername = result.username;
+        remoteHostname = result.hostname;
       }
     }
 

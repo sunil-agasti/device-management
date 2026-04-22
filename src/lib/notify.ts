@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
-import { getSshCredentials, sshExecSimple } from './ssh';
+import { sshRunCommand } from './ssh';
 import { sanitizeForShell } from './sanitize';
 
 const execAsync = promisify(exec);
@@ -42,17 +42,8 @@ export async function sendNotification(
     }
   }
 
-  const { passwords } = getSshCredentials();
-  for (const password of passwords) {
-    try {
-      sshExecSimple(
-        ip,
-        `CONSOLE_USER=$(stat -f%Su /dev/console); USER_ID=$(id -u $CONSOLE_USER); sudo launchctl asuser $USER_ID sudo -u $CONSOLE_USER osascript -e 'display notification "${safeMessage}" with title "${safeTitle}" sound name "Glass"'`,
-        password,
-        15000
-      );
-      return true;
-    } catch { continue; }
-  }
-  return false;
+  const result = sshRunCommand(ip,
+    `CONSOLE_USER=$(stat -f%Su /dev/console); USER_ID=$(id -u $CONSOLE_USER); sudo launchctl asuser $USER_ID sudo -u $CONSOLE_USER osascript -e 'display notification "${safeMessage}" with title "${safeTitle}" sound name "Glass"'`
+  );
+  return result.success;
 }

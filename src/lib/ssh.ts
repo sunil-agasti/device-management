@@ -1,13 +1,17 @@
 import { execSync } from 'child_process';
+import path from 'path';
 
 const SSH_USER = process.env.SSH_USER || 'tcsadmin';
 const SSH_PRIMARY_PASS = process.env.SSH_PRIMARY_PASS || '';
 const SSH_BACKUP_PASS = process.env.SSH_BACKUP_PASS || '';
 
+const SCRIPTS_DIR = path.join(process.cwd(), 'scripts');
+const SSH_SCRIPT = path.join(SCRIPTS_DIR, 'ssh-connect.sh');
+
 export function getSshCredentials(): { user: string; passwords: string[] } {
   const passwords = [SSH_PRIMARY_PASS, SSH_BACKUP_PASS].filter(Boolean);
   if (passwords.length === 0) {
-    console.warn('SSH passwords not configured. Set SSH_PRIMARY_PASS and SSH_BACKUP_PASS in .env or .env.local');
+    console.warn('SSH passwords not configured. Set SSH_PRIMARY_PASS and SSH_BACKUP_PASS in .env');
   }
   return { user: SSH_USER, passwords };
 }
@@ -21,79 +25,44 @@ export function debugCredentials(): { user: string; passwordCount: number; prima
   };
 }
 
-export function sshCommand(ip: string, command: string, password: string): string {
-  const escapedPass = password.replace(/"/g, '\\"').replace(/\$/g, '\\$');
-  return `expect -c '
-    set timeout 15
-    spawn ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${SSH_USER}@${ip} "${command}"
-    expect {
-      "*assword*" { send "${escapedPass}\\r"; exp_continue }
-      "*\\$*" { }
-      eof { }
-      timeout { exit 1 }
-    }
-    expect eof
-    catch wait result
-    exit [lindex \\$result 3]
-  '`;
-}
-
-export function sshExec(ip: string, command: string, password: string, timeout = 15000): string {
-  const escapedPass = password.replace(/"/g, '\\"').replace(/\$/g, '\\$');
-  const expectScript = `
-set timeout ${Math.floor(timeout / 1000)}
-log_user 1
-spawn ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${SSH_USER}@${ip}
-expect {
-  "*assword*" { send "${escapedPass}\\r" }
-  timeout { puts "TIMEOUT"; exit 1 }
-  eof { puts "EOF"; exit 1 }
-}
-expect {
-  "*\\$*" {}
-  "*%*" {}
-  "*>*" {}
-  "*#*" {}
-  timeout { puts "TIMEOUT_PROMPT"; exit 1 }
-}
-send "${command.replace(/"/g, '\\"')}\\r"
-expect {
-  "*\\$*" {}
-  "*%*" {}
-  "*>*" {}
-  "*#*" {}
-  eof {}
-  timeout {}
-}
-send "exit\\r"
-expect eof
-`;
-
-  return execSync(`expect -c '${expectScript.replace(/'/g, "'\\''")}'`, {
-    encoding: 'utf-8',
-    timeout,
-  }).trim();
-}
-
-export function sshExecSimple(ip: string, remoteCmd: string, password: string, timeout = 15000): string {
-  const escapedPass = password.replace(/'/g, "'\\''").replace(/\$/g, '\\$');
-  const script = `#!/usr/bin/expect -f
-set timeout ${Math.floor(timeout / 1000)}
-spawn ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${SSH_USER}@${ip} {${remoteCmd}}
-expect {
-  -re ".*assword.*" { send "${escapedPass}\\r"; exp_continue }
-  eof
-}
-lassign [wait] pid spawnid os_error value
-exit $value
-`;
-
-  const tmpFile = `/tmp/ssh_expect_${Date.now()}.exp`;
+export function sshFetchUserInfo(ip: string): { success: boolean; username: string; hostname: string; error?: string } {
   try {
-    execSync(`cat > ${tmpFile} << 'EXPECTEOF'\n${script}\nEXPECTEOF\nchmod +x ${tmpFile}`);
-    const output = execSync(`expect ${tmpFile}`, { encoding: 'utf-8', timeout }).trim();
-    return output;
-  } finally {
-    try { execSync(`rm -f ${tmpFile}`); } catch { /* ignore */ }
+    const output = execSync(`bash "${SSH_SCRIPT}" "${ip}"`, {
+      encoding: 'utf-8',
+      timeout: 20000,
+      env: { ...process.env, SSH_PRIMARY_PASS, SSH_BACKUP_PASS, SSH_USER },
+    }).trim();
+
+    if (output.startsWith('SUCCESS:')) {
+      const data = output.replace('SUCCESS:', '');
+      const parts = data.split('|');
+      return { success: true, username: parts[0] || '', hostname: parts[1] || '' };
+    }
+
+    const error = output.replace('ERROR:', '');
+    return { success: false, username: '', hostname: '', error };
+  } catch (err) {
+    return { success: false, username: '', hostname: '', error: String(err) };
+  }
+}
+
+export function sshRunCommand(ip: string, command: string): { success: boolean; output: string } {
+  const wrappedCmd = `${command}; echo __SSHDATA__:DONE`;
+  try {
+    const output = execSync(`bash "${SSH_SCRIPT}" "${ip}" "${wrappedCmd.replace(/"/g, '\\"')}"`, {
+      encoding: 'utf-8',
+      timeout: 120000,
+      env: { ...process.env, SSH_PRIMARY_PASS, SSH_BACKUP_PASS, SSH_USER },
+    }).trim();
+
+    if (output.includes('__SSHDATA__:DONE') || output.startsWith('SUCCESS:')) {
+      return { success: true, output };
+    }
+    if (output.startsWith('ERROR:')) {
+      return { success: false, output: output.replace('ERROR:', '') };
+    }
+    return { success: true, output };
+  } catch (err) {
+    return { success: false, output: String(err) };
   }
 }
