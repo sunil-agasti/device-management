@@ -75,16 +75,16 @@ export default function ReportsPage() {
             <div className="w-12 h-12 mx-auto mb-4 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
             <p className="text-sm text-slate-500">Generating report...</p>
           </div>
-        ) : data ? (
+        ) : data && data.summary ? (
           <>
             {/* Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               {[
-                { label: 'Total Requests', value: data.summary.totalRequests, color: 'from-blue-500 to-violet-500' },
-                { label: 'Registered Users', value: data.summary.totalUsers, color: 'from-violet-500 to-purple-500' },
-                { label: 'Active Now', value: data.summary.activeNow, color: 'from-green-500 to-emerald-500' },
-                { label: 'Avg Duration', value: `${data.summary.avgDuration}m`, color: 'from-amber-500 to-orange-500' },
-                { label: 'Success Rate', value: `${data.summary.successRate}%`, color: 'from-cyan-500 to-blue-500' },
+                { label: 'Total Requests', value: data.summary?.totalRequests ?? 0, color: 'from-blue-500 to-violet-500' },
+                { label: 'Registered Users', value: data.summary?.totalUsers ?? 0, color: 'from-violet-500 to-purple-500' },
+                { label: 'Active Now', value: data.summary?.activeNow ?? 0, color: 'from-green-500 to-emerald-500' },
+                { label: 'Avg Duration', value: `${data.summary?.avgDuration ?? 0}m`, color: 'from-amber-500 to-orange-500' },
+                { label: 'Success Rate', value: `${data.summary?.successRate ?? 100}%`, color: 'from-cyan-500 to-blue-500' },
               ].map((card, i) => (
                 <motion.div key={card.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                   className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5"
@@ -98,8 +98,8 @@ export default function ReportsPage() {
             {/* Admin vs GitHub Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { title: 'Admin Access', data: data.admin, gradient: 'from-blue-500 to-cyan-500', icon: '\uD83D\uDD12' },
-                { title: 'GitHub Access', data: data.github, gradient: 'from-violet-500 to-purple-500', icon: '\uD83D\uDCBB' },
+                { title: 'Admin Access', data: data.admin || { total: 0, granted: 0, revoked: 0, expired: 0, failed: 0 }, gradient: 'from-blue-500 to-cyan-500', icon: '\uD83D\uDD12' },
+                { title: 'GitHub Access', data: data.github || { total: 0, granted: 0, revoked: 0, expired: 0, failed: 0 }, gradient: 'from-violet-500 to-purple-500', icon: '\uD83D\uDCBB' },
               ].map((section) => (
                 <motion.div key={section.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6"
