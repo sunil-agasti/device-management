@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 
 const CSRF_COOKIE = 'csrf_token';
 const CSRF_HEADER = 'x-csrf-token';
 
 export function generateCsrfToken(): string {
-  return crypto.randomBytes(32).toString('hex');
+  const bytes = new Uint8Array(32);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function setCsrfCookie(response: NextResponse, token: string): NextResponse {
@@ -27,8 +28,11 @@ export function validateCsrf(req: NextRequest): boolean {
   const headerToken = req.headers.get(CSRF_HEADER);
 
   if (!cookieToken || !headerToken) return false;
-  return crypto.timingSafeEqual(
-    Buffer.from(cookieToken),
-    Buffer.from(headerToken)
-  );
+  if (cookieToken.length !== headerToken.length) return false;
+
+  let mismatch = 0;
+  for (let i = 0; i < cookieToken.length; i++) {
+    mismatch |= cookieToken.charCodeAt(i) ^ headerToken.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
