@@ -4,8 +4,24 @@ IP="$1"
 TIME_MIN="${2:-5}"
 TIME_SEC=$((TIME_MIN*60))
 
-PRIMARY_PASS='Tc$@April2026'
-BACKUP_PASS='tcs123'
+PRIMARY_PASS="${SSH_PRIMARY_PASS:-}"
+BACKUP_PASS="${SSH_BACKUP_PASS:-}"
+
+if [ -z "$PRIMARY_PASS" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+  if [ -f "$SCRIPT_DIR/.env" ]; then
+    PRIMARY_PASS=$(grep SSH_PRIMARY_PASS "$SCRIPT_DIR/.env" | cut -d'=' -f2-)
+    BACKUP_PASS=$(grep SSH_BACKUP_PASS "$SCRIPT_DIR/.env" | cut -d'=' -f2-)
+  elif [ -f "$SCRIPT_DIR/.env.local" ]; then
+    PRIMARY_PASS=$(grep SSH_PRIMARY_PASS "$SCRIPT_DIR/.env.local" | cut -d'=' -f2-)
+    BACKUP_PASS=$(grep SSH_BACKUP_PASS "$SCRIPT_DIR/.env.local" | cut -d'=' -f2-)
+  fi
+fi
+
+if [ -z "$PRIMARY_PASS" ]; then
+  echo "ERROR: SSH_PRIMARY_PASS not set. Configure .env or .env.local"
+  exit 1
+fi
 
 LOCAL_CSV="$HOME/Desktop/admin_access.csv"
 

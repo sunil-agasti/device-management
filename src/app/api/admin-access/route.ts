@@ -6,6 +6,7 @@ import { addLog, updateLogStatus, upsertUser, findUserByUsername } from '@/lib/d
 import { validateVpnIp, validateHostname, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
+import { getSshCredentials } from '@/lib/ssh';
 
 const execAsync = promisify(exec);
 
@@ -63,7 +64,7 @@ async function revokeAdminAccess(username: string, logId: string, originalIp: st
     } catch { /* fall through to SSH */ }
   }
 
-  const passwords = ["Tc$@April2026", "tcs123"];
+  const { passwords } = getSshCredentials();
   for (const password of passwords) {
     try {
       await execAsync(

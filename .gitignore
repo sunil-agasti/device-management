@@ -29,9 +29,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
+# env files (contains SSH credentials - NEVER commit)
 .env*
-!.env.example
 
 # vercel
 .vercel
