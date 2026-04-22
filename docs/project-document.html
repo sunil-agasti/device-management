@@ -294,7 +294,7 @@
     <div class="card">
       <div class="card-icon" style="background:linear-gradient(135deg,#06b6d4,#3b82f6)">&#128269;</div>
       <h4>Smart Auto-Populate</h4>
-      <p>SSH to IP to get username/hostname, DB lookup for employee ID and email</p>
+      <p>SSH fetches username/hostname (read-only). DB lookup fills employee ID and email (editable, overridable if outdated)</p>
     </div>
     <div class="card">
       <div class="card-icon" style="background:linear-gradient(135deg,#ec4899,#f43f5e)">&#128276;</div>
@@ -422,7 +422,7 @@ RootLayout (layout.tsx)
   <div class="flow">
     <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>AI Prompt or Form Submit</strong><span>User types "grant admin to 17.233.8.2" or fills form manually</span></div></div>
     <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Parse &amp; Route</strong><span>AI parser extracts IP, action, duration &#8594; redirects to /admin-access with pre-filled params</span></div></div>
-    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Auto-Populate</strong><span>SSH to IP &#8594; get username + hostname &#8594; DB lookup &#8594; fill employee ID + email</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Auto-Populate</strong><span>SSH to IP &#8594; get username + hostname (read-only) &#8594; DB lookup &#8594; fill employee ID + email (editable, user can override if outdated)</span></div></div>
     <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Validate</strong><span>Check IP (17.x), hostname prefix, employee ID, @apple.com email, duration (5-180m)</span></div></div>
     <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Execute</strong><span>Run user-admin.sh &#8594; SSH &#8594; dseditgroup grant &#8594; JAMF manage/recon &#8594; notify user</span></div></div>
     <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Log &amp; Schedule</strong><span>Write to admin_logs.json (GRANTED) &#8594; schedule 5-min warning &#8594; schedule revoke</span></div></div>

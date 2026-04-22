@@ -120,9 +120,12 @@ Every log entry is automatically saved to a permanent backup that is never clean
 
 ### Smart Auto-Population
 - Detects user VPN IP on page load
-- SSHs to target IP to retrieve username and hostname
-- Checks database for existing users to auto-fill employee ID and email
+- SSHs to target IP to retrieve username and hostname (read-only, cannot be edited)
+- Checks database for existing users to auto-fill employee ID and email (editable, can override if outdated)
 - First-time users must enter employee ID and Apple email (mandatory)
+- Field behavior:
+  - **Hostname / Username**: SSH only, read-only (locked after auto-detect)
+  - **Employee ID / Email**: DB lookup, editable (user can update if data is stale)
 
 ### Access Logs
 - Real-time log table with auto-refresh (30s)
