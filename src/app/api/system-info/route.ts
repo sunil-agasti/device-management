@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 import { sanitizeIp } from '@/lib/sanitize';
-import { getSshCredentials, getSshpassPath, getSshOpts } from '@/lib/ssh';
+import { getSshCredentials, sshExecSimple } from '@/lib/ssh';
 
 export async function GET(req: NextRequest) {
   try {
@@ -25,21 +25,19 @@ export async function GET(req: NextRequest) {
     const probeIp = targetIp ? sanitizeIp(targetIp) : clientIp;
 
     if (probeIp && probeIp.startsWith('17.')) {
-      const { user, passwords } = getSshCredentials();
-      const sshpass = getSshpassPath();
-      const sshOpts = getSshOpts();
+      const { passwords } = getSshCredentials();
       for (const password of passwords) {
         try {
-          const escapedPass = password.replace(/'/g, "'\\''");
-          const output = execSync(
-            `${sshpass} -p '${escapedPass}' ssh ${sshOpts} ${user}@${probeIp} "CONSOLE_USER=\\$(stat -f%Su /dev/console); HOSTNAME=\\$(scutil --get ComputerName); echo \\$CONSOLE_USER|\\$HOSTNAME"`,
-            { encoding: 'utf-8', timeout: 15000 }
-          ).trim();
-          const lastLine = output.split('\n').pop() || '';
-          const parts = lastLine.split('|');
-          if (parts.length === 2 && parts[0] && parts[1]) {
-            remoteUsername = parts[0].trim();
-            remoteHostname = parts[1].trim();
+          const output = sshExecSimple(
+            probeIp,
+            'CONSOLE_USER=$(stat -f%Su /dev/console); HOSTNAME=$(scutil --get ComputerName); echo __RESULT__:$CONSOLE_USER\\|$HOSTNAME',
+            password,
+            15000
+          );
+          const match = output.match(/__RESULT__:(.+)\|(.+)/);
+          if (match) {
+            remoteUsername = match[1].trim();
+            remoteHostname = match[2].trim();
           }
           break;
         } catch { continue; }
