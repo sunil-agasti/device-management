@@ -29,13 +29,14 @@ export async function GET(req: NextRequest) {
       for (const password of passwords) {
         try {
           const output = execSync(
-            `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${user}@${probeIp} "echo \\$(stat -f%Su /dev/console)|\\$(scutil --get ComputerName)" 2>/dev/null`,
-            { encoding: 'utf-8', timeout: 10000 }
+            `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${user}@${probeIp} "CONSOLE_USER=\\$(stat -f%Su /dev/console); HOSTNAME=\\$(scutil --get ComputerName); echo \\$CONSOLE_USER|\\$HOSTNAME"`,
+            { encoding: 'utf-8', timeout: 15000 }
           ).trim();
-          const parts = output.split('|');
-          if (parts.length === 2) {
-            remoteUsername = parts[0];
-            remoteHostname = parts[1];
+          const lastLine = output.split('\n').pop() || '';
+          const parts = lastLine.split('|');
+          if (parts.length === 2 && parts[0] && parts[1]) {
+            remoteUsername = parts[0].trim();
+            remoteHostname = parts[1].trim();
           }
           break;
         } catch { continue; }
