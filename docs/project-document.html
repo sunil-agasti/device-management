@@ -533,6 +533,73 @@ RootLayout (layout.tsx)
   </div>
 </section>
 
+<!-- 9.5 NEW FEATURES -->
+<section id="new-features">
+  <h2><span class="icon" style="background:rgba(236,72,153,0.2)">9.5</span> New Features (Not in Old System)</h2>
+
+  <h3>Leadership Reports Dashboard</h3>
+  <p>A full analytics page at <code>/reports</code> designed for management visibility. Not available in the old system.</p>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">&#128202;</div>
+      <h4>Summary Metrics</h4>
+      <p>Total requests, registered users, active sessions, avg duration, success rate</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#22c55e,#14b8a6)">&#128200;</div>
+      <h4>Monthly Trend Chart</h4>
+      <p>12-month bar chart comparing admin vs GitHub requests over time</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316)">&#127942;</div>
+      <h4>Leaderboards</h4>
+      <p>Top requesters and most accessed users with ranked lists</p>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:linear-gradient(135deg,#ec4899,#f43f5e)">&#128241;</div>
+      <h4>Device Breakdown</h4>
+      <p>Mac vs iPhone vs iPad usage with percentage bars</p>
+    </div>
+  </div>
+
+  <h3>Permanent Backup Database</h3>
+  <p>Every log entry is automatically saved to a permanent backup that is <strong>never cleaned</strong>, even when the Cleanup Utility archives 90+ day old records from the active database.</p>
+  <table>
+    <thead><tr><th>File</th><th>Purpose</th><th>Cleaned?</th></tr></thead>
+    <tbody>
+      <tr><td><code>data/admin_logs.json</code></td><td>Active admin logs</td><td>Yes (90+ days)</td></tr>
+      <tr><td><code>data/github_logs.json</code></td><td>Active GitHub logs</td><td>Yes (90+ days)</td></tr>
+      <tr><td><code>data/backup/admin_logs_backup.json</code></td><td>All admin logs forever</td><td style="color:var(--green)"><strong>Never</strong></td></tr>
+      <tr><td><code>data/backup/github_logs_backup.json</code></td><td>All GitHub logs forever</td><td style="color:var(--green)"><strong>Never</strong></td></tr>
+    </tbody>
+  </table>
+  <p>Reports &ldquo;All Time&rdquo; and &ldquo;This Year&rdquo; views automatically pull from backup. CSV export supports <code>?source=backup</code> for complete history download.</p>
+
+  <h3>Human-Readable Error Messages</h3>
+  <p>All SSH and system errors are mapped to clear, actionable messages instead of raw stack traces. 11 error patterns detected and translated:</p>
+  <table>
+    <thead><tr><th>Error Type</th><th>User-Friendly Message</th></tr></thead>
+    <tbody>
+      <tr><td>Connection refused</td><td>&ldquo;The remote machine may be offline or SSH is not enabled.&rdquo;</td></tr>
+      <tr><td>Connection timeout</td><td>&ldquo;The device may be unreachable. Check that the VPN IP is correct.&rdquo;</td></tr>
+      <tr><td>Auth failed</td><td>&ldquo;The configured credentials may be incorrect. Contact your administrator.&rdquo;</td></tr>
+      <tr><td>No route to host</td><td>&ldquo;Ensure both devices are connected to Apple VPN.&rdquo;</td></tr>
+      <tr><td>sshpass missing</td><td>&ldquo;SSH utility not installed. Run: brew install hudochenkov/sshpass/sshpass&rdquo;</td></tr>
+      <tr><td>JAMF failed</td><td>&ldquo;The JAMF agent may not be installed or the device is not enrolled.&rdquo;</td></tr>
+      <tr><td>Permission denied</td><td>&ldquo;The portal may need elevated privileges. Try running with sudo.&rdquo;</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Make Standard / Force Revoke</h3>
+  <p>When an auto-revoke fails (IP changed, SSH timeout), a <strong>&ldquo;Make Standard&rdquo;</strong> button appears in the logs table. Admins can enter a new VPN IP and retry the revoke directly from the UI &mdash; no terminal needed.</p>
+
+  <h3>Session Timeout (15 min)</h3>
+  <p>Apple-standard session timeout with 2-minute warning banner, &ldquo;Why did this happen?&rdquo; explanation panel, and &ldquo;Return to Portal Home&rdquo; button. Session data is cleared for security.</p>
+
+  <h3>Device Tracking</h3>
+  <p>Every access log records the device type (Mac, iPhone, iPad) from the User-Agent header. Visible in logs table with icons and included in CSV export.</p>
+</section>
+
 <!-- 10 SECURITY -->
 <section id="security">
   <h2><span class="icon" style="background:rgba(239,68,68,0.2)">10</span> Security</h2>

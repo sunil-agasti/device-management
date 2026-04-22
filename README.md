@@ -109,6 +109,15 @@ All SSH and system errors are mapped to clear, actionable messages:
 - sshpass missing: "Run: brew install hudochenkov/sshpass/sshpass"
 - JAMF errors: "The JAMF agent may not be installed or the device is not enrolled"
 
+### Permanent Backup Database (New)
+Every log entry is automatically saved to a permanent backup that is never cleaned:
+- `data/backup/admin_logs_backup.json` - all admin logs forever
+- `data/backup/github_logs_backup.json` - all GitHub logs forever
+- Active logs in `data/` are cleaned after 90 days by Cleanup Utility
+- Backup is updated on every grant AND status change (revoke/fail/expire)
+- Reports page uses backup data for "All Time" and "This Year" views
+- CSV export with `?source=backup` downloads the complete history
+
 ### Smart Auto-Population
 - Detects user VPN IP on page load
 - SSHs to target IP to retrieve username and hostname
