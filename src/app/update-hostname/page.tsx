@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import ProgressTracker, { Step } from '@/components/ProgressTracker';
 import { motion } from 'framer-motion';
+import { secureFetch } from '@/lib/fetchClient';
 
 export default function UpdateHostnamePage() {
   const [systemInfo, setSystemInfo] = useState<{ serverUsername: string; serverHostname: string; clientIp: string } | undefined>();
@@ -12,6 +14,7 @@ export default function UpdateHostnamePage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [steps, setSteps] = useState<Step[]>([]);
 
   useEffect(() => {
     fetch('/api/system-info').then(r => r.json()).then(setSystemInfo).catch(() => {});
@@ -33,14 +36,43 @@ export default function UpdateHostnamePage() {
     setLoading(true);
     setMessage(null);
 
+    const progressSteps: Step[] = [
+      { id: 'connect', label: 'Getting current hostname', status: 'active' },
+      { id: 'update', label: 'Updating hostname', status: 'pending' },
+      { id: 'jamf', label: 'Running JAMF Commands', status: 'pending' },
+      { id: 'complete', label: 'Completing update', status: 'pending' },
+    ];
+    setSteps([...progressSteps]);
+
+    const advance = (idx: number, error = false) => {
+      return new Promise<void>(resolve => {
+        setTimeout(() => {
+          progressSteps[idx].status = error ? 'error' : 'completed';
+          if (idx + 1 < progressSteps.length && !error) progressSteps[idx + 1].status = 'active';
+          setSteps([...progressSteps]);
+          resolve();
+        }, 800 + Math.random() * 400);
+      });
+    };
+
     try {
-      const res = await fetch('/api/update-hostname', {
+      await advance(0);
+
+      const res = await secureFetch('/api/update-hostname', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ vpnIp, newHostname }),
       });
       const data = await res.json();
-      setMessage({ type: res.ok ? 'success' : 'error', text: data.message || data.error });
+
+      if (!res.ok) {
+        await advance(1, true);
+        setMessage({ type: 'error', text: data.error || 'Failed to update hostname' });
+      } else {
+        await advance(1);
+        await advance(2);
+        await advance(3);
+        setMessage({ type: 'success', text: data.message });
+      }
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed: ' + String(err) });
     } finally {
@@ -91,6 +123,15 @@ export default function UpdateHostnamePage() {
             </button>
           </div>
         </form>
+
+        {steps.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6"
+          >
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 text-center">Processing Request...</h3>
+            <ProgressTracker steps={steps} />
+          </motion.div>
+        )}
 
         {message && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
