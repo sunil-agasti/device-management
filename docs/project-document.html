@@ -531,6 +531,28 @@ RootLayout (layout.tsx)
     <div class="flow-step"><div class="flow-num">&#128203;</div><div class="flow-content"><strong>IP Tracker</strong><span>Detects VPN IP changes, sends macOS notification to update at.apple.com</span></div></div>
     <div class="flow-step"><div class="flow-num">&#128640;</div><div class="flow-content"><strong>Server Monitor</strong><span>Auto-restarts Next.js server if it crashes</span></div></div>
   </div>
+
+  <h3>LaunchAgent (com.tcs.admin-portal.keepalive.plist)</h3>
+  <p>A macOS LaunchAgent configuration that automatically starts the keepalive service when you log in. Installed to <code>~/Library/LaunchAgents/</code> via <code>install-service.sh</code>.</p>
+  <table>
+    <thead><tr><th>Property</th><th>Value</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>RunAtLoad</code></td><td>true</td><td>Starts automatically on login</td></tr>
+      <tr><td><code>KeepAlive</code></td><td>true</td><td>Auto-restarts if the process crashes</td></tr>
+      <tr><td><code>StandardOutPath</code></td><td>data/keepalive-stdout.log</td><td>Captures stdout for debugging</td></tr>
+      <tr><td><code>StandardErrorPath</code></td><td>data/keepalive-stderr.log</td><td>Captures stderr for debugging</td></tr>
+      <tr><td><code>PATH</code></td><td>/usr/local/bin:/usr/bin:...</td><td>Ensures sshpass and node are findable</td></tr>
+    </tbody>
+  </table>
+  <div class="code-block"><pre><span class="comment"># Install (one-time)</span>
+<span class="keyword">bash</span> scripts/install-service.sh
+
+<span class="comment"># Check status</span>
+<span class="keyword">bash</span> scripts/keepalive.sh status
+
+<span class="comment"># Stop service</span>
+<span class="keyword">launchctl</span> unload ~/Library/LaunchAgents/com.tcs.admin-portal.keepalive.plist</pre>
+  </div>
 </section>
 
 <!-- 9.5 NEW FEATURES -->

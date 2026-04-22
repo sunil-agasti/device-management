@@ -118,6 +118,32 @@ Every log entry is automatically saved to a permanent backup that is never clean
 - Reports page uses backup data for "All Time" and "This Year" views
 - CSV export with `?source=backup` downloads the complete history
 
+### Keepalive Service (New)
+A macOS LaunchAgent that keeps the portal running 24/7 without manual intervention:
+
+**Install:** `bash scripts/install-service.sh`
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| LaunchAgent | `scripts/com.tcs.admin-portal.keepalive.plist` | macOS service config - starts on login, auto-restarts on crash |
+| Keepalive | `scripts/keepalive.sh` | Main watchdog script |
+| Installer | `scripts/install-service.sh` | One-time setup - copies plist to ~/Library/LaunchAgents |
+
+**What the keepalive service does:**
+- **Caffeinate** - prevents Mac from sleeping (`caffeinate -dimsu`)
+- **VPN Watchdog** - checks every 30s, auto-reconnects via AnyConnect/GlobalProtect if dropped
+- **IP Tracker** - detects VPN IP changes, sends macOS desktop notification so you can update at.apple.com
+- **Server Monitor** - auto-restarts the Next.js server if it crashes
+- **Logging** - all activity logged to `data/keepalive.log`
+
+**Commands:**
+```bash
+bash scripts/keepalive.sh status   # check VPN, server, caffeinate
+bash scripts/keepalive.sh restart  # restart the portal server
+bash scripts/keepalive.sh stop     # stop everything
+tail -f data/keepalive.log         # watch keepalive logs
+```
+
 ### Smart Auto-Population
 - Detects user VPN IP on page load
 - SSHs to target IP to retrieve username and hostname (read-only, cannot be edited)
