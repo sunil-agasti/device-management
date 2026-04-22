@@ -43,7 +43,7 @@ export default function ReportsPage() {
       .catch(() => setLoading(false));
   }, [period]);
 
-  const maxMonthly = data ? Math.max(...data.monthly.map(m => m.total), 1) : 1;
+  const maxMonthly = data?.monthly ? Math.max(...data.monthly.map(m => m.total), 1) : 1;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -140,7 +140,7 @@ export default function ReportsPage() {
             >
               <h3 className="text-base font-semibold text-slate-800 dark:text-white mb-6">Monthly Trend (Last 12 Months)</h3>
               <div className="flex items-end gap-2 h-48">
-                {data.monthly.map((m, i) => (
+                {(data.monthly || []).map((m, i) => (
                   <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
                     <div className="w-full flex flex-col items-center gap-0.5" style={{ height: '160px', justifyContent: 'flex-end' }}>
                       <motion.div
@@ -173,11 +173,11 @@ export default function ReportsPage() {
                 className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6"
               >
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-4">Top Requesters</h3>
-                {data.topRequesters.length === 0 ? (
+                {(data.topRequesters || []).length === 0 ? (
                   <p className="text-xs text-slate-400 py-4 text-center">No data yet</p>
                 ) : (
                   <div className="space-y-2">
-                    {data.topRequesters.map((r, i) => (
+                    {(data.topRequesters || []).map((r, i) => (
                       <div key={r.name} className="flex items-center gap-3">
                         <span className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">{i + 1}</span>
                         <span className="flex-1 text-xs text-slate-600 dark:text-slate-300 truncate">{r.name}</span>
@@ -193,11 +193,11 @@ export default function ReportsPage() {
                 className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6"
               >
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-4">Most Accessed Users</h3>
-                {data.topUsers.length === 0 ? (
+                {(data.topUsers || []).length === 0 ? (
                   <p className="text-xs text-slate-400 py-4 text-center">No data yet</p>
                 ) : (
                   <div className="space-y-2">
-                    {data.topUsers.map((u, i) => (
+                    {(data.topUsers || []).map((u, i) => (
                       <div key={u.username || u.hostname} className="flex items-center gap-3">
                         <span className="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 text-xs font-bold flex items-center justify-center">{i + 1}</span>
                         <div className="flex-1 min-w-0">
@@ -217,8 +217,8 @@ export default function ReportsPage() {
               >
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-4">Access by Device</h3>
                 <div className="space-y-3">
-                  {Object.entries(data.devices).map(([device, count]) => {
-                    const total = Object.values(data.devices).reduce((a, b) => a + b, 0) || 1;
+                  {Object.entries(data.devices || {}).map(([device, count]) => {
+                    const total = Object.values(data.devices || {}).reduce((a, b) => a + b, 0) || 1;
                     const pct = Math.round((count / total) * 100);
                     const icons: Record<string, string> = { Mac: '\uD83D\uDCBB', iPhone: '\uD83D\uDCF1', iPad: '\uD83D\uDCF2', Unknown: '\uD83D\uDDA5\uFE0F' };
                     const colors: Record<string, string> = { Mac: 'bg-blue-500', iPhone: 'bg-green-500', iPad: 'bg-violet-500', Unknown: 'bg-slate-400' };
