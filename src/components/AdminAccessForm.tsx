@@ -31,6 +31,8 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
+  const [stepLogs, setStepLogs] = useState<Record<string, string>>({});
+  const [expandedStep, setExpandedStep] = useState<string | null>(null);
   const [logRefreshKey, setLogRefreshKey] = useState(0);
   const [sshLoading, setSshLoading] = useState(false);
   const [sshError, setSshError] = useState('');
@@ -155,6 +157,8 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
     setLoading(true);
     setMessage(null);
+    setStepLogs({});
+    setExpandedStep(null);
 
     const progressSteps: Step[] = [
       { id: 'grant', label: 'Granting admin access', status: 'active' },
@@ -163,17 +167,6 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
     ];
     setSteps([...progressSteps]);
 
-    const advance = (idx: number, error = false) => {
-      return new Promise<void>(resolve => {
-        setTimeout(() => {
-          progressSteps[idx].status = error ? 'error' : 'completed';
-          if (idx + 1 < progressSteps.length && !error) progressSteps[idx + 1].status = 'active';
-          setSteps([...progressSteps]);
-          resolve();
-        }, 800 + Math.random() * 400);
-      });
-    };
-
     try {
       const res = await secureFetch('/api/admin-access', {
         method: 'POST',
@@ -181,15 +174,33 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
       });
       const data = await res.json();
 
+      if (data.steps) {
+        const logs: Record<string, string> = {};
+        const updatedSteps = progressSteps.map(step => {
+          const apiStep = data.steps.find((s: { id: string }) => s.id === step.id);
+          if (apiStep) {
+            logs[step.id] = apiStep.log || '';
+            return { ...step, status: apiStep.success ? 'completed' as const : 'error' as const };
+          }
+          return { ...step, status: data.success ? 'completed' as const : 'pending' as const };
+        });
+        if (data.steps.find((s: { id: string }) => s.id === 'notify')) {
+          const notify = data.steps.find((s: { id: string }) => s.id === 'notify');
+          logs['notify'] = notify.log || '';
+        }
+        setStepLogs(logs);
+        setSteps(updatedSteps);
+      }
+
       if (!res.ok) {
-        await advance(0, true);
         setMessage({ type: 'error', text: data.error || 'Failed to grant access' });
       } else {
-        await advance(0);
-        await advance(1);
-        await advance(2);
         setMessage({ type: 'success', text: data.message });
         setLogRefreshKey(prev => prev + 1);
+        lastLookedUpIp.current = '';
+        setForm({ employeeId: '', email: '', hostname: '', vpnIp: '', username: '', duration: 60 });
+        setSshLogs([]);
+        setSshError('');
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Request failed: ' + String(err) });
@@ -284,8 +295,36 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6"
         >
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 text-center">Processing Request...</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 text-center">
+            {loading ? 'Processing Request...' : 'Request Complete'}
+          </h3>
           <ProgressTracker steps={steps} />
+          <div className="mt-4 space-y-1.5">
+            {steps.map(step => (
+              <div key={step.id} className="border border-slate-200 dark:border-slate-700/50 rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+                >
+                  {step.status === 'active' && <div className="w-3 h-3 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin flex-shrink-0" />}
+                  {step.status === 'completed' && <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  {step.status === 'error' && <svg className="w-3 h-3 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>}
+                  {step.status === 'pending' && <div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0" />}
+                  <span className={`font-medium ${step.status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'}`}>{step.label}</span>
+                  <svg className={`w-3 h-3 ml-auto text-slate-400 transition-transform ${expandedStep === step.id ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+                {expandedStep === step.id && (
+                  <div className="bg-slate-900 dark:bg-black px-3 py-2 font-mono text-[11px] text-green-400 whitespace-pre-wrap max-h-40 overflow-y-auto border-t border-slate-200 dark:border-slate-700">
+                    {step.status === 'active' && <span className="text-blue-400 animate-pulse">Executing...</span>}
+                    {step.status === 'pending' && <span className="text-slate-500">Waiting...</span>}
+                    {stepLogs[step.id] && <span className={step.status === 'error' ? 'text-red-400' : ''}>{stepLogs[step.id]}</span>}
+                    {step.status === 'completed' && !stepLogs[step.id] && <span className="text-green-400">Done</span>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </motion.div>
       )}
 
