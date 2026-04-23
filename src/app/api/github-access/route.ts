@@ -62,12 +62,23 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
   return { success: true, steps };
 }
 
-function grantGithubRemote(vpnIp: string, duration: number): { success: boolean; steps: StepResult[] } {
+function grantGithubRemote(vpnIp: string, duration: number): { success: boolean; steps: StepResult[]; alreadyAccessible?: boolean } {
   const steps: StepResult[] = [];
   const durationSec = duration * 60;
   const { passwords } = getSshCredentials();
   const pass = passwords[0] || '';
   const safePass = pass.replace(/'/g, "'\\''");
+
+  // Check if GitHub is already accessible
+  const checkCmd = `grep -q 'github.com' /etc/hosts 2>/dev/null && echo "BLOCKED" || echo "ACCESSIBLE"`;
+  const checkResult = sshRunCommand(vpnIp, checkCmd);
+  if (checkResult.success && checkResult.output.includes('ACCESSIBLE')) {
+    steps.push({
+      id: 'unblock', label: 'Unblocking GitHub', success: true,
+      log: `GitHub is already accessible on this device (not blocked in /etc/hosts).`,
+    });
+    return { success: true, steps, alreadyAccessible: true };
+  }
 
   const unblockCmd = `echo '${safePass}' | sudo -S sed -i '' '/github.com/d' /etc/hosts; echo '${safePass}' | sudo -S sed -i '' '/www.github.com/d' /etc/hosts; echo '${safePass}' | sudo -S dscacheutil -flushcache; echo '${safePass}' | sudo -S killall -HUP mDNSResponder && echo "UNBLOCK_OK" || echo "UNBLOCK_FAIL"`;
   const unblockResult = sshRunCommand(vpnIp, unblockCmd);
@@ -127,12 +138,20 @@ export async function POST(req: NextRequest) {
 
     const logId = crypto.randomUUID();
     const local = isLocalIp(vpnIp);
-    let result: { success: boolean; steps: StepResult[] };
+    let result: { success: boolean; steps: StepResult[]; alreadyAccessible?: boolean };
 
     if (local) {
       result = await grantGithubLocal(duration);
     } else {
       result = grantGithubRemote(vpnIp, duration);
+    }
+
+    // Already accessible — skip everything
+    if (result.alreadyAccessible) {
+      return NextResponse.json({
+        success: true, steps: result.steps, alreadyAccessible: true,
+        message: `GitHub is already accessible on ${hostname || vpnIp}. No changes made.`,
+      });
     }
 
     if (!result.success) {

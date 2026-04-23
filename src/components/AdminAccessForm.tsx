@@ -38,6 +38,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const [sshError, setSshError] = useState('');
   const [sshLogs, setSshLogs] = useState<string[]>([]);
   const [showLogs, setShowLogs] = useState(false);
+  const [alreadyGranted, setAlreadyGranted] = useState(false);
   const lastLookedUpIp = useRef('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -194,6 +195,9 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
       if (!res.ok) {
         setMessage({ type: 'error', text: data.error || 'Failed to grant access' });
+      } else if (data.alreadyAdmin) {
+        setMessage({ type: 'success', text: data.message });
+        setAlreadyGranted(true);
       } else {
         setMessage({ type: 'success', text: data.message });
         setLogRefreshKey(prev => prev + 1);

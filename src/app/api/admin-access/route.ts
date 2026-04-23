@@ -55,11 +55,22 @@ async function grantAdminLocal(username: string, duration: number): Promise<{ su
   return { success: true, steps };
 }
 
-function grantAdminRemote(ip: string, username: string, duration: number): { success: boolean; steps: StepResult[] } {
+function grantAdminRemote(ip: string, username: string, duration: number): { success: boolean; steps: StepResult[]; alreadyAdmin?: boolean } {
   const steps: StepResult[] = [];
   const { passwords } = getSshCredentials();
   const pass = passwords[0] || '';
   const safePass = pass.replace(/'/g, "'\\''");
+
+  // Check if user is already admin
+  const checkCmd = `dseditgroup -o checkmember -m $(stat -f%Su /dev/console) admin 2>/dev/null`;
+  const checkResult = sshRunCommand(ip, checkCmd);
+  if (checkResult.success && checkResult.output.includes('is a member')) {
+    steps.push({
+      id: 'grant', label: 'Granting admin access', success: true,
+      log: `User ${username} is already an admin on this device.\n${checkResult.output.trim()}`,
+    });
+    return { success: true, steps, alreadyAdmin: true };
+  }
 
   const grantCmd = `CONSOLE_USER=$(stat -f%Su /dev/console); echo "User: $CONSOLE_USER"; echo '${safePass}' | sudo -S dseditgroup -o edit -a $CONSOLE_USER -t user admin 2>/dev/null && echo "GRANT_OK" || echo "GRANT_FAIL"`;
   const grantResult = sshRunCommand(ip, grantCmd);
@@ -205,12 +216,20 @@ export async function POST(req: NextRequest) {
 
     const logId = crypto.randomUUID();
     const local = isLocalIp(vpnIp);
-    let result: { success: boolean; steps: StepResult[] };
+    let result: { success: boolean; steps: StepResult[]; alreadyAdmin?: boolean };
 
     if (local) {
       result = await grantAdminLocal(username, duration);
     } else {
       result = grantAdminRemote(vpnIp, username, duration);
+    }
+
+    // Already admin — skip everything, just return info
+    if (result.alreadyAdmin) {
+      return NextResponse.json({
+        success: true, steps: result.steps, alreadyAdmin: true,
+        message: `${username} is already an admin on ${hostname}. No changes made.`,
+      });
     }
 
     if (!result.success) {
