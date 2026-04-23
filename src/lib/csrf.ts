@@ -12,7 +12,7 @@ export function generateCsrfToken(): string {
 export function setCsrfCookie(response: NextResponse, token: string): NextResponse {
   response.cookies.set(CSRF_COOKIE, token, {
     httpOnly: false,
-    secure: true,
+    secure: false,
     sameSite: 'strict',
     path: '/',
     maxAge: 60 * 60 * 8,

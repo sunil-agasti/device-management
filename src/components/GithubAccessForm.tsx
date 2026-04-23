@@ -111,8 +111,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
     setMessage(null);
 
     const progressSteps: Step[] = [
-      { id: 'verify', label: 'Verifying hostname', status: 'active' },
-      { id: 'unblock', label: 'Unblocking GitHub', status: 'pending' },
+      { id: 'unblock', label: 'Unblocking GitHub', status: 'active' },
       { id: 'jamf', label: 'Running JAMF Commands', status: 'pending' },
       { id: 'schedule', label: 'Scheduling auto-revoke', status: 'pending' },
     ];
@@ -130,8 +129,6 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
     };
 
     try {
-      await advance(0);
-
       const res = await secureFetch('/api/github-access', {
         method: 'POST',
         body: JSON.stringify({ ...form, requestedBy }),
@@ -139,12 +136,12 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
       const data = await res.json();
 
       if (!res.ok) {
-        await advance(1, true);
+        await advance(0, true);
         setMessage({ type: 'error', text: data.error || 'Failed to grant access' });
       } else {
+        await advance(0);
         await advance(1);
         await advance(2);
-        await advance(3);
         setMessage({ type: 'success', text: data.message });
         setLogRefreshKey(prev => prev + 1);
       }
