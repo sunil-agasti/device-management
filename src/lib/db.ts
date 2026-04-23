@@ -20,8 +20,13 @@ function ensureFile(filePath: string) {
 function readJson<T>(filename: string, dir = DATA_DIR): T[] {
   const filePath = path.join(dir, filename);
   ensureFile(filePath);
-  const raw = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(raw);
+  const raw = fs.readFileSync(filePath, 'utf-8').trim();
+  if (!raw || raw === '') return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
 }
 
 function writeJson<T>(filename: string, data: T[], dir = DATA_DIR) {

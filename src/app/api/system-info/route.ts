@@ -22,14 +22,19 @@ export async function GET(req: NextRequest) {
 
     let remoteUsername: string | undefined;
     let remoteHostname: string | undefined;
+    let sshError: string | undefined;
+    let sshMethod: string | undefined;
 
     const probeIp = targetIp ? sanitizeIp(targetIp) : null;
 
     if (probeIp && probeIp.startsWith('17.')) {
       const result = sshFetchUserInfo(probeIp);
+      sshMethod = result.method;
       if (result.success) {
         remoteUsername = result.username;
         remoteHostname = result.hostname;
+      } else {
+        sshError = result.error;
       }
     }
 
@@ -40,18 +45,10 @@ export async function GET(req: NextRequest) {
     const isLocal = clientIp === '127.0.0.1' || clientIp === '::1';
 
     if (!isLocal && clientIp.startsWith('17.')) {
-      // Try DB first (fast)
       const dbUser = findUserByIp(clientIp);
       if (dbUser && dbUser.username) {
         clientUsername = dbUser.username;
         clientHostname = dbUser.hostname || clientHostname;
-      } else if (!probeIp) {
-        // SSH to client IP to get their identity (only if no target probe running)
-        const clientInfo = sshFetchUserInfo(clientIp);
-        if (clientInfo.success) {
-          clientUsername = clientInfo.username;
-          clientHostname = clientInfo.hostname;
-        }
       }
     }
 
@@ -63,6 +60,8 @@ export async function GET(req: NextRequest) {
       clientHostname,
       remoteUsername,
       remoteHostname,
+      sshError,
+      sshMethod,
     });
   } catch {
     return NextResponse.json({ clientIp: '127.0.0.1', serverHostname: 'unknown', serverUsername: 'unknown', clientUsername: 'unknown', clientHostname: 'unknown' });

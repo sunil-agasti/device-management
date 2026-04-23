@@ -4,18 +4,24 @@ import { createContext, useContext, useEffect, useRef, ReactNode, useSyncExterna
 
 type Theme = 'dark' | 'light';
 
+function getSystemTheme(): Theme {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 const ThemeContext = createContext<{
   theme: Theme;
   toggleTheme: () => void;
-}>({ theme: 'dark', toggleTheme: () => {} });
+}>({ theme: 'light', toggleTheme: () => {} });
 
 function getStoredTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  return (localStorage.getItem('portal-theme') as Theme) || 'dark';
+  if (typeof window === 'undefined') return 'light';
+  const stored = localStorage.getItem('portal-theme') as Theme | null;
+  return stored || getSystemTheme();
 }
 
 const subscribers = new Set<() => void>();
-let currentTheme: Theme = 'dark';
+let currentTheme: Theme = 'light';
 
 function subscribe(cb: () => void) {
   subscribers.add(cb);
@@ -36,7 +42,7 @@ function setThemeExternal(t: Theme) {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const initializedRef = useRef(false);
-  const theme = useSyncExternalStore(subscribe, getSnapshot, () => 'dark' as Theme);
+  const theme = useSyncExternalStore(subscribe, getSnapshot, () => 'light' as Theme);
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -44,6 +50,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const saved = getStoredTheme();
       setThemeExternal(saved);
     }
+
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onSystemChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem('portal-theme')) {
+        setThemeExternal(e.matches ? 'dark' : 'light');
+      }
+    };
+    mq.addEventListener('change', onSystemChange);
+    return () => mq.removeEventListener('change', onSystemChange);
   }, []);
 
   const toggleTheme = () => {

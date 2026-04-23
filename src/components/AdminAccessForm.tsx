@@ -36,6 +36,8 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   const [sshError, setSshError] = useState('');
   const [sshLogs, setSshLogs] = useState<string[]>([]);
   const [showLogs, setShowLogs] = useState(false);
+  const lastLookedUpIp = useRef('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const formRef = useRef(form);
   useEffect(() => {
@@ -48,37 +50,41 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
   const lookupByIp = useCallback(async (ip: string) => {
     if (!ip.startsWith('17.')) return;
+    if (ip === lastLookedUpIp.current) return;
+    lastLookedUpIp.current = ip;
     setSshLoading(true);
     setSshError('');
+    setForm(prev => ({ ...prev, username: '', hostname: '', employeeId: '', email: '' }));
     const logs: string[] = [];
     const log = (msg: string) => { logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`); setSshLogs([...logs]); };
 
-    log(`Initiating SSH connection to ${ip}...`);
-    log(`Using sshpass at auto-detected path with env credentials`);
-    log(`Running: ssh tcsadmin@${ip} "stat -f%Su /dev/console && scutil --get ComputerName"`);
+    log(`Connecting to ${ip}...`);
+    log(`Fetching device info from remote machine`);
     try {
       const res = await fetch(`/api/system-info?ip=${ip}`);
       const info = await res.json();
       if (info.remoteUsername) {
-        log(`SSH connected. Username: ${info.remoteUsername}, Hostname: ${info.remoteHostname}`);
+        log(`Connected. Console user: ${info.remoteUsername}, Device: ${info.remoteHostname}`);
         setForm(prev => ({ ...prev, username: info.remoteUsername, hostname: info.remoteHostname || prev.hostname }));
 
-        log(`Looking up ${info.remoteUsername} in database...`);
+        log(`Looking up user in database...`);
         const userRes = await fetch(`/api/user?username=${info.remoteUsername}`);
         const userData = await userRes.json();
         if (userData.found && userData.user) {
-          log(`User found. Employee ID: ${userData.user.employeeId}, Email: ${userData.user.email}`);
+          log(`Found: ${userData.user.email}`);
           setForm(prev => ({
             ...prev,
             employeeId: userData.user.employeeId || prev.employeeId,
             email: userData.user.email || prev.email,
           }));
         } else {
-          log('User not in database. Please enter Employee ID and Email manually.');
+          log('User not in database. Enter Employee ID and Email manually.');
         }
-        log('Auto-populate complete.');
+        log('Done.');
       } else {
-        log(`SSH connection failed. Trying database lookup by IP...`);
+        const errDetail = info.sshError || 'Unknown error';
+        log(`Connection failed: ${errDetail}`);
+        log(`Trying database lookup by IP...`);
         const userRes = await fetch(`/api/user?ip=${ip}`);
         const userData = await userRes.json();
         if (userData.found && userData.user) {
@@ -103,8 +109,30 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
     }
   }, []);
 
+  const handleIpChange = (value: string) => {
+    setForm(prev => ({ ...prev, vpnIp: value }));
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!value || !value.startsWith('17.')) {
+      if (lastLookedUpIp.current) {
+        lastLookedUpIp.current = '';
+        setForm(prev => ({ ...prev, vpnIp: value, username: '', hostname: '', employeeId: '', email: '' }));
+        setSshError('');
+        setSshLogs([]);
+      }
+      return;
+    }
+
+    if (value !== lastLookedUpIp.current && value.match(/^17\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
+      debounceRef.current = setTimeout(() => lookupByIp(value), 500);
+    }
+  };
+
   const handleIpBlur = () => {
-    if (form.vpnIp.startsWith('17.')) lookupByIp(form.vpnIp);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (form.vpnIp.startsWith('17.') && form.vpnIp !== lastLookedUpIp.current) {
+      lookupByIp(form.vpnIp);
+    }
   };
 
   const validate = () => {
@@ -205,7 +233,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">VPN IP *</label>
-            <input type="text" value={form.vpnIp} onChange={e => setForm({...form, vpnIp: e.target.value})} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
+            <input type="text" value={form.vpnIp} onChange={e => handleIpChange(e.target.value)} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
             {errors.vpnIp && <p className="mt-1 text-xs text-red-500">{errors.vpnIp}</p>}
             {sshError && <p className="mt-1 text-xs text-red-500 bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
             {(sshLoading || sshLogs.length > 0) && (
