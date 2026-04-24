@@ -46,7 +46,7 @@ A modern, AI-powered web portal for managing temporary admin access, GitHub acce
   │  (child_process)     │  (fs read/write)              │
   └──────────┬───────────┴──────────┬────────────────────┘
              │                      │
-     SSH (sshpass)           data/*.json
+     SSH (SSH_ASKPASS)         data/*.json
      to target Mac           (NoSQL DB)
              │
   TARGET MACBOOK
@@ -56,6 +56,123 @@ A modern, AI-powered web portal for managing temporary admin access, GitHub acce
   ├── jamf (MDM manage + recon)
   ├── osascript (user notifications)
   └── LaunchDaemon (auto-revoke)
+```
+
+## How It Works — Grant & Revoke Flow
+
+### Admin Access Grant Flow
+
+```
+1. User enters VPN IP → SSH auto-detects username + hostname
+2. User clicks "Request Admin Access"
+3. Server streams real-time progress (NDJSON):
+
+   [Step 1: Grant]
+   ├── SSH to target Mac as tcsadmin
+   ├── Run: sudo dseditgroup -o edit -a <user> -t user admin
+   ├── Verify: dseditgroup -o checkmember -m <user> admin
+   └── Result: "yes, <user> is a member of admin" ✓
+
+   [Step 2: JAMF]
+   ├── SSH run: jamf manage + jamf policy + jamf recon
+   └── Updates MDM inventory and enforces policies
+
+   [Step 3: Schedule Auto-Revoke]
+   ├── Installs /usr/local/bin/admin_revoke.sh (root:wheel 700)
+   ├── Installs LaunchDaemon: com.tcs.admin.revoke (RunAtLoad + KeepAlive)
+   ├── Script uses epoch timestamp (not sleep) — survives reboot
+   └── LaunchDaemon auto-restarts if killed or machine reboots
+
+   [Step 4: Notify User]
+   └── Dialog box on target Mac: "Hello <user>, you have been granted
+       temporary admin access for <N> minutes."
+```
+
+### Admin Access Revoke Flow (Bulletproof)
+
+```
+When timer expires (epoch-based, checked every 30 seconds):
+
+1. Remove from admin group:
+   └── sudo dseditgroup -o edit -d <user> -t user admin
+
+2. Verify removal:
+   └── dseditgroup -o checkmember -m <user> admin
+
+3. Force retry (if still admin):
+   └── Retry 5 times with 2-second intervals
+
+4. Notify user (dialog box):
+   └── "User Privileges Updated — Hello <user>, your admin privileges
+       have been revoked and updated to Standard User."
+
+5. Self-cleanup:
+   ├── rm /usr/local/bin/admin_revoke.sh
+   ├── launchctl bootout system/com.tcs.admin.revoke
+   └── rm /Library/LaunchDaemons/com.tcs.admin.revoke.plist
+
+Survives: reboot, shutdown, VPN disconnect, network loss, server crash
+Password: uses tcsadmin password from .env via sudo -S
+Security: revoke script is root:wheel 700 (only root can read)
+```
+
+### GitHub Access Grant Flow
+
+```
+1. User enters VPN IP → SSH auto-detects username + hostname
+2. User clicks "Request GitHub Access"
+3. Server executes:
+
+   [Step 1: Unblock GitHub]
+   ├── SSH to target Mac
+   ├── Remove github.com entries from /etc/hosts
+   ├── Flush DNS: dscacheutil -flushcache + killall -HUP mDNSResponder
+   └── Verify: github.com resolves to public IP
+
+   [Step 2: JAMF]
+   └── Background: jamf manage + policy + recon
+
+   [Step 3: Schedule Auto-Revoke]
+   ├── Installs /usr/local/bin/github_revoke.sh (root:wheel 700)
+   ├── Installs LaunchDaemon: com.tcs.github.revoke (RunAtLoad + KeepAlive)
+   └── Epoch-based timer — survives reboot
+
+   [Step 4: Notify User]
+   └── Dialog box: "Hello <user>, you have been granted public GitHub
+       access for <N> minutes."
+```
+
+### GitHub Access Revoke Flow
+
+```
+When timer expires:
+
+1. Re-block GitHub:
+   ├── Add "127.0.0.1 github.com" to /etc/hosts
+   ├── Add "127.0.0.1 www.github.com" to /etc/hosts
+   └── Flush DNS cache
+
+2. Notify user (dialog box):
+   └── "GitHub Access Revoked — Your public GitHub access has been revoked."
+
+3. Self-cleanup:
+   └── Removes revoke script + LaunchDaemon plist
+
+Survives: reboot, shutdown, VPN disconnect, network loss
+```
+
+### Notification Timeline
+
+```
+  Grant                    1 min before expiry        Expiry
+    │                             │                      │
+    ▼                             ▼                      ▼
+  ┌──────────┐            ┌──────────────┐        ┌──────────────┐
+  │ Dialog:  │            │ Dialog:      │        │ Dialog:      │
+  │ "Access  │            │ "Expiring in │        │ "Privileges  │
+  │ Granted  │            │  1 minute"   │        │  Revoked"    │
+  │ for Nm"  │            │              │        │              │
+  └──────────┘            └──────────────┘        └──────────────┘
 ```
 
 ## Features
@@ -69,11 +186,13 @@ Natural language interface for quick actions:
 - `run cleanup utility`
 
 ### Temporary Admin Access
-- Grant/revoke admin privileges via SSH on remote MacBooks
-- Automated JAMF manage & recon after granting
-- Auto-revoke with configurable duration (5-180 minutes)
-- macOS system notifications on grant and revoke
-- 5-minute expiry warning notifications in the portal
+- Grant/revoke admin privileges via SSH (SSH_ASKPASS) on remote MacBooks
+- Real-time streaming progress with expandable script logs per step
+- Automated JAMF manage, policy & recon after granting
+- Epoch-based auto-revoke via LaunchDaemon (survives reboot/shutdown/VPN loss)
+- Force retry 5x if revoke fails, self-cleanup after
+- Dialog notifications: grant, 1-min warning, revoke with personalized messages
+- Detects if user is already admin and skips redundant grant
 
 ### Temporary GitHub Access
 - Unblock GitHub by modifying `/etc/hosts` on remote machines
