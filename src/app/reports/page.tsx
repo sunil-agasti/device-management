@@ -45,6 +45,59 @@ export default function ReportsPage() {
 
   const maxMonthly = data?.monthly ? Math.max(...data.monthly.map(m => m.total), 1) : 1;
 
+  const buildReportRows = () => {
+    if (!data) return [];
+    const rows: string[][] = [];
+    rows.push(['TCS Admin Portal - Report', '', '', '']);
+    rows.push(['Period', periods.find(p => p.value === period)?.label || period, '', '']);
+    rows.push(['Generated', new Date().toLocaleString(), '', '']);
+    rows.push([]);
+    rows.push(['Summary', '', '', '']);
+    rows.push(['Total Requests', String(data.summary?.totalRequests ?? 0), '', '']);
+    rows.push(['Registered Users', String(data.summary?.totalUsers ?? 0), '', '']);
+    rows.push(['Active Now', String(data.summary?.activeNow ?? 0), '', '']);
+    rows.push(['Avg Duration (min)', String(data.summary?.avgDuration ?? 0), '', '']);
+    rows.push(['Success Rate', `${data.summary?.successRate ?? 100}%`, '', '']);
+    rows.push([]);
+    rows.push(['Breakdown', 'Total', 'Granted', 'Revoked', 'Expired', 'Failed']);
+    rows.push(['Admin Access', String(data.admin?.total ?? 0), String(data.admin?.granted ?? 0), String(data.admin?.revoked ?? 0), String(data.admin?.expired ?? 0), String(data.admin?.failed ?? 0)]);
+    rows.push(['GitHub Access', String(data.github?.total ?? 0), String(data.github?.granted ?? 0), String(data.github?.revoked ?? 0), String(data.github?.expired ?? 0), String(data.github?.failed ?? 0)]);
+    rows.push([]);
+    rows.push(['Monthly Trend', 'Admin', 'GitHub', 'Total']);
+    (data.monthly || []).forEach(m => rows.push([m.month, String(m.admin), String(m.github), String(m.total)]));
+    rows.push([]);
+    rows.push(['Top Requesters', 'Count']);
+    (data.topRequesters || []).forEach(r => rows.push([r.name, String(r.count)]));
+    rows.push([]);
+    rows.push(['Most Accessed Users', 'Hostname', 'Count']);
+    (data.topUsers || []).forEach(u => rows.push([u.username, u.hostname, String(u.count)]));
+    rows.push([]);
+    rows.push(['Device Breakdown', 'Count']);
+    Object.entries(data.devices || {}).forEach(([d, c]) => rows.push([d, String(c)]));
+    return rows;
+  };
+
+  const downloadCSV = () => {
+    const rows = buildReportRows();
+    const csv = rows.map(r => r.map(c => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `tcs_report_${period}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
+
+  const downloadExcel = () => {
+    const rows = buildReportRows();
+    const tableRows = rows.map(r => `<tr>${r.map(c => `<td>${c || ''}</td>`).join('')}</tr>`).join('');
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Report</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table border="1">${tableRows}</table></body></html>`;
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `tcs_report_${period}_${new Date().toISOString().split('T')[0]}.xls`;
+    a.click();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Navbar systemInfo={systemInfo} />
@@ -57,16 +110,30 @@ export default function ReportsPage() {
             </Link>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Leadership Reports</h1>
           </div>
-          <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
-            {periods.map(p => (
-              <button key={p.value} onClick={() => setPeriod(p.value)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  period === p.value
-                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                }`}
-              >{p.label}</button>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+              {periods.map(p => (
+                <button key={p.value} onClick={() => setPeriod(p.value)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                    period === p.value
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                >{p.label}</button>
+              ))}
+            </div>
+            {data && !loading && (
+              <div className="flex gap-1.5">
+                <button onClick={downloadCSV} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors flex items-center gap-1.5 border border-green-200 dark:border-green-500/30">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  CSV
+                </button>
+                <button onClick={downloadExcel} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors flex items-center gap-1.5 border border-blue-200 dark:border-blue-500/30">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Excel
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
