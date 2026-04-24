@@ -418,23 +418,74 @@ RootLayout (layout.tsx)
 <section id="data-flow">
   <h2><span class="icon" style="background:rgba(245,158,11,0.2)">06</span> Data Flows</h2>
 
-  <h3>Grant Admin Access</h3>
+  <h3>Admin Access — Grant Flow</h3>
   <div class="flow">
-    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>AI Prompt or Form Submit</strong><span>User types "grant admin to 17.233.8.2" or fills form manually</span></div></div>
-    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Parse &amp; Route</strong><span>AI parser extracts IP, action, duration &#8594; redirects to /admin-access with pre-filled params</span></div></div>
-    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Auto-Populate</strong><span>SSH to IP &#8594; get username + hostname (read-only) &#8594; DB lookup &#8594; fill employee ID + email (editable, user can override if outdated)</span></div></div>
-    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Validate</strong><span>Check IP (17.x), hostname prefix, employee ID, @apple.com email, duration (5-180m)</span></div></div>
-    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Execute</strong><span>Run user-admin.sh &#8594; SSH &#8594; dseditgroup grant &#8594; JAMF manage/recon &#8594; notify user</span></div></div>
-    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Log &amp; Schedule</strong><span>Write to admin_logs.json (GRANTED) &#8594; schedule 5-min warning &#8594; schedule revoke</span></div></div>
-    <div class="flow-step"><div class="flow-num">7</div><div class="flow-content"><strong>Revoke</strong><span>Re-resolve latest IP from DB &#8594; SSH &#8594; dseditgroup remove &#8594; verify &#8594; notify &#8594; update log</span></div></div>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>VPN IP Lookup (on blur)</strong><span>SSH to target Mac via SSH_ASKPASS &rarr; fetches console username + hostname &rarr; DB lookup for employee ID + email &rarr; auto-populates form</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Pre-check: Already Admin?</strong><span>Runs <code>dseditgroup -o checkmember</code> on target. If user is already admin, returns immediately &mdash; no grant, no log, no revoke scheduled</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Grant Admin (streamed live)</strong><span>SSH &rarr; <code>echo $PASS | sudo -S dseditgroup -o edit -a $USER -t user admin</code> &rarr; verify with <code>checkmember</code> &rarr; real-time log streamed to UI via NDJSON</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>JAMF Commands (streamed live)</strong><span>SSH &rarr; <code>jamf manage + jamf policy + jamf recon</code> &rarr; updates MDM inventory, enforces policies. Also runs via background script for reliability</span></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Install Revoke LaunchDaemon</strong><span>Installs <code>/usr/local/bin/admin_revoke.sh</code> (root:wheel 700) + <code>com.tcs.admin.revoke.plist</code> (RunAtLoad + KeepAlive). Uses epoch timestamp, not sleep &mdash; survives reboot/shutdown/VPN disconnect</span></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Notify User (dialog box)</strong><span>macOS dialog: &ldquo;Hello {user}, you have been granted temporary admin access for {N} minutes.&rdquo; with OK button. Gives up after 5 minutes if unacknowledged</span></div></div>
+    <div class="flow-step"><div class="flow-num">7</div><div class="flow-content"><strong>Log &amp; Schedule Warning</strong><span>Writes GRANTED to admin_logs.json. Schedules 1-minute warning notification. Server-side backup revoke at duration+1 min (failsafe)</span></div></div>
   </div>
+
+  <h3>Admin Access — Revoke Flow (Bulletproof)</h3>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Epoch Timer Check</strong><span>LaunchDaemon runs revoke script on boot. Script loops every 30 seconds comparing <code>date +%s</code> vs stored expiry epoch. Fires when time is reached &mdash; correct even after reboot</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Remove Admin</strong><span><code>echo $PASS | sudo -S dseditgroup -o edit -d $USER -t user admin</code></span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Verify Removal</strong><span><code>dseditgroup -o checkmember -m $USER admin</code> &mdash; confirms user is no longer admin</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Force Retry (if still admin)</strong><span>Retries <code>dseditgroup -o edit -d</code> up to 5 times with 2-second intervals</span></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Notify User (dialog box)</strong><span>&ldquo;** User Privileges Updated ** &mdash; Hello {user}, your admin privileges have been revoked and updated to Standard User.&rdquo;</span></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Self-Cleanup</strong><span>Removes <code>/usr/local/bin/admin_revoke.sh</code>, unloads and removes <code>com.tcs.admin.revoke.plist</code></span></div></div>
+  </div>
+
+  <p><strong>Survives:</strong> Machine reboot, shutdown, VPN disconnect, network loss, portal server crash. Password stored securely in root-owned script (700 permissions). KeepAlive ensures launchd restarts the script if it's killed.</p>
+
+  <h3>GitHub Access — Grant Flow</h3>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Pre-check: Already Accessible?</strong><span>Checks if <code>github.com</code> exists in <code>/etc/hosts</code>. If not blocked, returns immediately &mdash; no changes made</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Unblock GitHub</strong><span>SSH &rarr; remove github.com entries from <code>/etc/hosts</code> &rarr; flush DNS (<code>dscacheutil -flushcache</code> + <code>killall -HUP mDNSResponder</code>)</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>JAMF Commands</strong><span>Background: <code>jamf manage + policy + recon</code></span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Install Revoke LaunchDaemon</strong><span><code>com.tcs.github.revoke.plist</code> (RunAtLoad + KeepAlive) with epoch-based timer. Survives reboot</span></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Notify User</strong><span>&ldquo;Hello {user}, you have been granted public GitHub access for {N} minutes.&rdquo;</span></div></div>
+  </div>
+
+  <h3>GitHub Access — Revoke Flow</h3>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Re-block GitHub</strong><span>Adds <code>127.0.0.1 github.com</code> and <code>127.0.0.1 www.github.com</code> back to <code>/etc/hosts</code></span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Flush DNS</strong><span><code>dscacheutil -flushcache</code> + <code>killall -HUP mDNSResponder</code></span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Notify User</strong><span>&ldquo;** GitHub Access Revoked ** &mdash; Your public GitHub access has been revoked.&rdquo;</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Self-Cleanup</strong><span>Removes revoke script + LaunchDaemon plist</span></div></div>
+  </div>
+
+  <h3>Notification Timeline</h3>
+  <div class="diagram">
+    <div class="diagram-label">User Notifications (macOS Dialog Boxes)</div>
+    <pre>
+  Grant                        1 min before expiry             Expiry
+    &#9474;                                  &#9474;                          &#9474;
+    &#9660;                                  &#9660;                          &#9660;
+  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;          &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;     &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+  &#9474; Dialog:        &#9474;          &#9474; Dialog:           &#9474;     &#9474; Dialog:           &#9474;
+  &#9474; "Access        &#9474;          &#9474; "Expiring in      &#9474;     &#9474; "Privileges       &#9474;
+  &#9474;  Granted       &#9474;          &#9474;  1 minute.        &#9474;     &#9474;  Revoked.          &#9474;
+  &#9474;  for N min"    &#9474;          &#9474;  Save your work." &#9474;     &#9474;  Standard User."   &#9474;
+  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;          &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;     &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+    </pre>
+  </div>
+
+  <h3>SSH Connection Method</h3>
+  <p>All SSH connections use <strong>SSH_ASKPASS</strong> for password-based authentication. A temporary askpass script (<code>/tmp/.askpass_*</code>) echoes the password from <code>.env</code>. SSH is invoked with <code>SSH_ASKPASS_REQUIRE=force</code> which works with both <strong>password</strong> and <strong>keyboard-interactive</strong> authentication methods. The askpass file is deleted immediately after use.</p>
+
+  <h3>Real-Time Progress Streaming</h3>
+  <p>The admin access API uses <strong>NDJSON streaming</strong> (newline-delimited JSON). Each step&rsquo;s status and log are streamed to the browser the moment they complete. The frontend reads the stream with <code>ReadableStream.getReader()</code> and updates each progress step in real-time. Users can expand any step to see the actual SSH commands and output.</p>
 
   <h3>Dynamic IP Handling</h3>
   <div class="flow">
-    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Every Page Visit</strong><span>Detect current VPN IP from request headers</span></div></div>
-    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>SSH Probe</strong><span>SSH to current IP &#8594; get username (primary key) + hostname</span></div></div>
-    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>DB Update</strong><span>upsertUser() updates the user's stored IP to the new one</span></div></div>
-    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Revoke Uses Latest</strong><span>At revoke time, re-reads DB for user's current IP, falls back to original grant IP</span></div></div>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>On VPN IP Entry</strong><span>Debounced lookup (500ms) &mdash; SSH to IP, get username (primary key) + hostname</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>DB Update</strong><span>upsertUser() updates the user's stored IP to the new one</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Revoke Uses Latest</strong><span>Server-side backup revoke re-reads DB for current IP, falls back to original grant IP</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>LaunchDaemon is Local</strong><span>Primary revoke runs on the target machine itself &mdash; no SSH needed, unaffected by IP changes</span></div></div>
   </div>
 </section>
 
