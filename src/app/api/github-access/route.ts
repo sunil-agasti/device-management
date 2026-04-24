@@ -23,8 +23,8 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
 
   try {
     const cmds = [
-      "sudo sed -i '' '/github.com/d' /etc/hosts",
-      "sudo sed -i '' '/www.github.com/d' /etc/hosts",
+      "sudo cp /etc/hosts /etc/hosts.bak",
+      "sudo sed -i '' '/^127\\.0\\.0\\.1.*github\\.com/d' /etc/hosts",
       "sudo dscacheutil -flushcache",
       "sudo killall -HUP mDNSResponder",
     ];
@@ -52,7 +52,7 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
 
   const revokeScript = `/tmp/github_revoke_${Date.now()}.sh`;
   try {
-    const content = `#!/bin/bash\nsleep ${duration * 60}\necho "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null\necho "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null\nsudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder\nosascript -e 'display dialog "** GitHub Access Revoked **\n\nYour public GitHub access has been revoked.\n\nIf you need GitHub access again, please request through the TCS Admin Portal." with title "** GitHub Access Revoked **" buttons {"OK"} default button "OK" giving up after 300'\nrm -f "${revokeScript}"`;
+    const content = `#!/bin/bash\nsleep ${duration * 60}\nsudo cp /etc/hosts /etc/hosts.bak\nsudo sed -i '' '/^127\\\\.0\\\\.0\\\\.1.*github\\\\.com/d' /etc/hosts\necho "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null\necho "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null\nsudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder\nosascript -e 'display dialog "** GitHub Access Revoked **\n\nYour public GitHub access has been revoked.\n\nIf you need GitHub access again, please request through the TCS Admin Portal." with title "** GitHub Access Revoked **" buttons {"OK"} default button "OK" giving up after 300'\nrm -f "${revokeScript}"`;
     await execAsync(`echo '${content.replace(/'/g, "'\\''")}' > "${revokeScript}" && chmod +x "${revokeScript}" && nohup bash "${revokeScript}" &>/dev/null &`);
     steps.push({ id: 'schedule', label: 'Scheduling auto-revoke', success: true, log: `Revoke scheduled in ${duration} minutes\n> echo "127.0.0.1 github.com" >> /etc/hosts\n> dscacheutil -flushcache` });
   } catch (e) {
@@ -70,7 +70,7 @@ function grantGithubRemote(vpnIp: string, duration: number): { success: boolean;
   const safePass = pass.replace(/'/g, "'\\''");
 
   // Check if GitHub is already accessible
-  const checkCmd = `grep -q 'github.com' /etc/hosts 2>/dev/null && echo "BLOCKED" || echo "ACCESSIBLE"`;
+  const checkCmd = `grep -q '^127\\.0\\.0\\.1.*github\\.com' /etc/hosts 2>/dev/null && echo "BLOCKED" || echo "ACCESSIBLE"`;
   const checkResult = sshRunCommand(vpnIp, checkCmd);
   if (checkResult.success && checkResult.output.includes('ACCESSIBLE')) {
     steps.push({
@@ -80,7 +80,7 @@ function grantGithubRemote(vpnIp: string, duration: number): { success: boolean;
     return { success: true, steps, alreadyAccessible: true };
   }
 
-  const unblockCmd = `echo '${safePass}' | sudo -S sed -i '' '/github.com/d' /etc/hosts; echo '${safePass}' | sudo -S sed -i '' '/www.github.com/d' /etc/hosts; echo '${safePass}' | sudo -S dscacheutil -flushcache; echo '${safePass}' | sudo -S killall -HUP mDNSResponder && echo "UNBLOCK_OK" || echo "UNBLOCK_FAIL"`;
+  const unblockCmd = `echo '${safePass}' | sudo -S cp /etc/hosts /etc/hosts.bak; echo '${safePass}' | sudo -S sed -i '' '/^127\\.0\\.0\\.1.*github\\.com/d' /etc/hosts; echo '${safePass}' | sudo -S dscacheutil -flushcache; echo '${safePass}' | sudo -S killall -HUP mDNSResponder && echo "UNBLOCK_OK" || echo "UNBLOCK_FAIL"`;
   const unblockResult = sshRunCommand(vpnIp, unblockCmd);
   const unblockOk = unblockResult.success && unblockResult.output.includes('UNBLOCK_OK');
   steps.push({
@@ -104,7 +104,8 @@ function grantGithubRemote(vpnIp: string, duration: number): { success: boolean;
 EXPIRY=${expiryEpoch}
 PASSWORD='${safePass}'
 while [ \\$(date +%s) -lt \\$EXPIRY ]; do sleep 30; done
-echo "\\$PASSWORD" | sudo -S sed -i '' '/github.com/d' /etc/hosts
+echo "\\$PASSWORD" | sudo -S cp /etc/hosts /etc/hosts.bak
+echo "\\$PASSWORD" | sudo -S sed -i '' '/^127\\.0\\.0\\.1.*github\\.com/d' /etc/hosts
 echo "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null
 echo "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null
 echo "\\$PASSWORD" | sudo -S dscacheutil -flushcache
