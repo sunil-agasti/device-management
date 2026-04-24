@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import ProgressTracker, { Step } from './ProgressTracker';
 import AccessLogs from './AccessLogs';
 import { motion } from 'framer-motion';
-import { secureFetch } from '@/lib/fetchClient';
 
 interface Props {
   initialData?: {
@@ -169,42 +168,77 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
     setSteps([...progressSteps]);
 
     try {
-      const res = await secureFetch('/api/admin-access', {
-        method: 'POST',
-        body: JSON.stringify({ ...form, requestedBy }),
-      });
-      const data = await res.json();
+      const csrfMatch = document.cookie.match(/csrf_token=([^;]+)/);
+      const csrfToken = csrfMatch ? csrfMatch[1] : '';
 
-      if (data.steps) {
-        const logs: Record<string, string> = {};
-        const updatedSteps = progressSteps.map(step => {
-          const apiStep = data.steps.find((s: { id: string }) => s.id === step.id);
-          if (apiStep) {
-            logs[step.id] = apiStep.log || '';
-            return { ...step, status: apiStep.success ? 'completed' as const : 'error' as const };
-          }
-          return { ...step, status: data.success ? 'completed' as const : 'pending' as const };
-        });
-        if (data.steps.find((s: { id: string }) => s.id === 'notify')) {
-          const notify = data.steps.find((s: { id: string }) => s.id === 'notify');
-          logs['notify'] = notify.log || '';
-        }
-        setStepLogs(logs);
-        setSteps(updatedSteps);
+      const res = await fetch('/api/admin-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
+        body: JSON.stringify({ ...form, requestedBy }),
+        credentials: 'same-origin',
+      });
+
+      if (!res.body) {
+        setMessage({ type: 'error', text: 'Streaming not supported' });
+        return;
       }
 
-      if (!res.ok) {
-        setMessage({ type: 'error', text: data.error || 'Failed to grant access' });
-      } else if (data.alreadyAdmin) {
-        setMessage({ type: 'success', text: data.message });
-        setAlreadyGranted(true);
-      } else {
-        setMessage({ type: 'success', text: data.message });
-        setLogRefreshKey(prev => prev + 1);
-        lastLookedUpIp.current = '';
-        setForm({ employeeId: '', email: '', hostname: '', vpnIp: '', username: '', duration: 60 });
-        setSshLogs([]);
-        setSshError('');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      const logs: Record<string, string> = {};
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line);
+
+            if (event.done) {
+              if (!event.success) {
+                setMessage({ type: 'error', text: event.error || 'Failed to grant access' });
+              } else if (event.alreadyAdmin) {
+                setMessage({ type: 'success', text: event.message });
+                setAlreadyGranted(true);
+                setTimeout(() => setMessage(null), 5000);
+              } else {
+                setMessage({ type: 'success', text: event.message });
+                setLogRefreshKey(prev => prev + 1);
+                lastLookedUpIp.current = '';
+                setForm({ employeeId: '', email: '', hostname: '', vpnIp: '', username: '', duration: 60 });
+                setSshLogs([]);
+                setSshError('');
+                setTimeout(() => setMessage(null), 5000);
+              }
+              continue;
+            }
+
+            if (event.step) {
+              if (event.log) logs[event.step] = event.log;
+              setStepLogs({ ...logs });
+
+              setSteps(prev => {
+                const stepIds = ['grant', 'jamf', 'schedule', 'notify'];
+                if (!prev.find(s => s.id === event.step)) {
+                  return [...prev, { id: event.step, label: event.label, status: event.status }];
+                }
+                return prev.map(s => {
+                  if (s.id === event.step) return { ...s, label: event.label, status: event.status };
+                  if (event.status === 'active' && stepIds.indexOf(s.id) > stepIds.indexOf(event.step) && s.status !== 'completed' && s.status !== 'error') {
+                    return { ...s, status: 'pending' as const };
+                  }
+                  return s;
+                });
+              });
+            }
+          } catch { /* skip malformed lines */ }
+        }
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Request failed: ' + String(err) });

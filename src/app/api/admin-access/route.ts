@@ -11,163 +11,10 @@ import { formatSSHError } from '@/lib/errors';
 
 const execAsync = promisify(exec);
 
-interface StepResult {
-  id: string;
-  label: string;
-  success: boolean;
-  log: string;
-}
+type StreamWriter = (event: Record<string, unknown>) => void;
 
-async function grantAdminLocal(username: string, duration: number): Promise<{ success: boolean; steps: StepResult[] }> {
-  const steps: StepResult[] = [];
-
-  try {
-    const r = await execAsync(`dseditgroup -o edit -a ${username} -t user admin`, { timeout: 10000 });
-    steps.push({ id: 'grant', label: 'Granting admin access', success: true, log: `dseditgroup -o edit -a ${username} -t user admin\n${r.stdout || 'OK'}` });
-  } catch {
-    try {
-      const r = await execAsync(`sudo dseditgroup -o edit -a ${username} -t user admin`, { timeout: 10000 });
-      steps.push({ id: 'grant', label: 'Granting admin access', success: true, log: `sudo dseditgroup -o edit -a ${username} -t user admin\n${r.stdout || 'OK'}` });
-    } catch (e2) {
-      steps.push({ id: 'grant', label: 'Granting admin access', success: false, log: `Failed: ${e2}` });
-      return { success: false, steps };
-    }
-  }
-
-  try {
-    await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
-    await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
-    await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
-    steps.push({ id: 'jamf', label: 'Running JAMF Commands', success: true, log: 'jamf manage ✓\njamf policy ✓\njamf recon ✓' });
-  } catch {
-    steps.push({ id: 'jamf', label: 'Running JAMF Commands', success: true, log: 'JAMF not available on this machine (skipped)' });
-  }
-
-  const revokeScript = `/tmp/admin_revoke_${Date.now()}.sh`;
-  const revokeContent = `#!/bin/bash\nsleep ${duration * 60}\n/usr/sbin/dseditgroup -o edit -d ${username} -t user admin 2>/dev/null || sudo /usr/sbin/dseditgroup -o edit -d ${username} -t user admin\nosascript -e 'display notification "Your admin access has been revoked." with title "Admin Access Removed" sound name "Glass"'\nrm -f "${revokeScript}"`;
-  try {
-    await execAsync(`cat > "${revokeScript}" << 'SCRIPT'\n${revokeContent}\nSCRIPT\nchmod +x "${revokeScript}" && nohup bash "${revokeScript}" &>/dev/null &`);
-    steps.push({ id: 'schedule', label: 'Scheduling auto-revoke', success: true, log: `Revoke scheduled in ${duration} minutes\nScript: ${revokeScript}` });
-  } catch (e) {
-    steps.push({ id: 'schedule', label: 'Scheduling auto-revoke', success: false, log: String(e) });
-  }
-
-  return { success: true, steps };
-}
-
-function grantAdminRemote(ip: string, username: string, duration: number): { success: boolean; steps: StepResult[]; alreadyAdmin?: boolean } {
-  const steps: StepResult[] = [];
-  const { passwords } = getSshCredentials();
-  const pass = passwords[0] || '';
-  const safePass = pass.replace(/'/g, "'\\''");
-
-  // Check if user is already admin
-  const checkCmd = `dseditgroup -o checkmember -m $(stat -f%Su /dev/console) admin 2>/dev/null`;
-  const checkResult = sshRunCommand(ip, checkCmd);
-  if (checkResult.success && checkResult.output.includes('is a member')) {
-    steps.push({
-      id: 'grant', label: 'Granting admin access', success: true,
-      log: `User ${username} is already an admin on this device.\n${checkResult.output.trim()}`,
-    });
-    return { success: true, steps, alreadyAdmin: true };
-  }
-
-  const grantCmd = `CONSOLE_USER=$(stat -f%Su /dev/console); echo "User: $CONSOLE_USER"; echo '${safePass}' | sudo -S dseditgroup -o edit -a $CONSOLE_USER -t user admin 2>/dev/null && echo "GRANT_OK" || echo "GRANT_FAIL"`;
-  const grantResult = sshRunCommand(ip, grantCmd);
-  const grantOk = grantResult.success && grantResult.output.includes('GRANT_OK');
-  steps.push({
-    id: 'grant', label: 'Granting admin access', success: grantOk,
-    log: `ssh tcsadmin@${ip}\n> sudo dseditgroup -o edit -a ${username} -t user admin\n${grantResult.output}`,
-  });
-  if (!grantOk) return { success: false, steps };
-
-  const verifyResult = sshRunCommand(ip, `dseditgroup -o checkmember -m $(stat -f%Su /dev/console) admin 2>/dev/null`);
-  const isMember = verifyResult.success && verifyResult.output.includes('is a member');
-  steps[0].log += `\n> Verify: ${verifyResult.output.trim()}`;
-  if (!isMember) {
-    steps[0].success = false;
-    steps[0].log += '\nUser NOT added to admin group';
-    return { success: false, steps };
-  }
-
-  const jamfCmd = `echo '${safePass}' | sudo -S /usr/local/bin/jamf manage 2>&1 && echo "MANAGE_OK"; echo '${safePass}' | sudo -S /usr/local/bin/jamf policy 2>&1 && echo "POLICY_OK"; echo '${safePass}' | sudo -S /usr/local/bin/jamf recon 2>&1 && echo "RECON_OK"`;
-  const jamfResult = sshRunCommand(ip, jamfCmd);
-
-  // Also run JAMF policies in background via script for reliability
-  const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
-  execAsync(`bash "${scriptPath}" "${ip}"`, { timeout: 120000 }).catch(() => {});
-
-  steps.push({
-    id: 'jamf', label: 'Running JAMF Commands', success: jamfResult.success,
-    log: `ssh tcsadmin@${ip}\n> jamf manage + policy + recon\n${jamfResult.output}`,
-  });
-
-  // Install revoke LaunchDaemon on remote machine (survives reboots)
-  const revokeSec = duration * 60;
-  const revokeCmd = `
-CONSOLE_USER=$(stat -f%Su /dev/console)
-USER_ID=$(id -u $CONSOLE_USER)
-
-# Create revoke script
-sudo tee /usr/local/bin/admin_revoke.sh > /dev/null <<'REVOKESCRIPT'
-#!/bin/bash
-sleep ${revokeSec}
-CONSOLE_USER=$(stat -f%Su /dev/console)
-USER_ID=$(id -u $CONSOLE_USER)
-
-# Revoke admin
-sudo /usr/sbin/dseditgroup -o edit -d $CONSOLE_USER -t user admin 2>/dev/null
-
-# Verify
-VERIFY=$(dseditgroup -o checkmember -m $CONSOLE_USER admin 2>/dev/null)
-if echo "$VERIFY" | grep -q "is a member"; then
-  # Force revoke - retry 5 times
-  for i in 1 2 3 4 5; do
-    sudo /usr/sbin/dseditgroup -o edit -d $CONSOLE_USER -t user admin 2>/dev/null
-    sleep 2
-  done
-fi
-
-# Notify user
-sudo launchctl asuser $USER_ID sudo -u $CONSOLE_USER osascript -e 'display notification "Your admin access has been revoked." with title "Admin Access Removed" sound name "Glass"'
-
-# Cleanup
-sudo rm -f /usr/local/bin/admin_revoke.sh
-sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist
-REVOKESCRIPT
-sudo chmod +x /usr/local/bin/admin_revoke.sh
-
-# Create LaunchDaemon plist
-sudo tee /Library/LaunchDaemons/com.tcs.admin.revoke.plist > /dev/null <<'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.tcs.admin.revoke</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/bin/bash</string>
-        <string>/usr/local/bin/admin_revoke.sh</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-</dict>
-</plist>
-PLIST
-sudo chown root:wheel /Library/LaunchDaemons/com.tcs.admin.revoke.plist
-sudo chmod 644 /Library/LaunchDaemons/com.tcs.admin.revoke.plist
-
-# Load the daemon
-sudo launchctl bootstrap system /Library/LaunchDaemons/com.tcs.admin.revoke.plist 2>/dev/null || sudo launchctl load -w /Library/LaunchDaemons/com.tcs.admin.revoke.plist
-echo "SCHEDULE_OK"
-`;
-  const schedResult = sshRunCommand(ip, revokeCmd);
-  steps.push({
-    id: 'schedule', label: 'Scheduling auto-revoke', success: schedResult.success && schedResult.output.includes('SCHEDULE_OK'),
-    log: `LaunchDaemon installed on remote machine\n> /Library/LaunchDaemons/com.tcs.admin.revoke.plist\n> /usr/local/bin/admin_revoke.sh\n> Revoke in ${duration} minutes (survives reboot)\n> Force revoke if first attempt fails\n> Notification on revoke\n${schedResult.output}`,
-  });
-
-  return { success: true, steps };
+function streamStep(write: StreamWriter, id: string, label: string, status: string, extra?: Record<string, unknown>) {
+  write({ step: id, label, status, ...extra });
 }
 
 async function revokeAdminAccess(username: string, logId: string, originalIp: string) {
@@ -180,11 +27,12 @@ async function revokeAdminAccess(username: string, logId: string, originalIp: st
       updateLogStatus(logId, 'admin', 'REVOKED');
       await sendNotification(currentIp, 'Admin Access Removed', 'Your admin access has been revoked.');
       return;
-    } catch { /* fall through to SSH */ }
+    } catch { /* fall through */ }
   }
 
-  const revokeCmd = `CONSOLE_USER=$(stat -f%Su /dev/console); sudo /usr/sbin/dseditgroup -o edit -d $CONSOLE_USER -t user admin; dseditgroup -o checkmember -m $CONSOLE_USER admin 2>/dev/null`;
-
+  const { passwords } = getSshCredentials();
+  const safePass = (passwords[0] || '').replace(/'/g, "'\\''");
+  const revokeCmd = `CONSOLE_USER=$(stat -f%Su /dev/console); echo '${safePass}' | sudo -S /usr/sbin/dseditgroup -o edit -d $CONSOLE_USER -t user admin 2>/dev/null; dseditgroup -o checkmember -m $CONSOLE_USER admin 2>/dev/null`;
   for (const ip of [currentIp, originalIp]) {
     const result = sshRunCommand(ip, revokeCmd);
     if (result.success && result.output.includes('not a member')) {
@@ -197,84 +45,236 @@ async function revokeAdminAccess(username: string, logId: string, originalIp: st
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { employeeId, email, hostname, vpnIp, username, duration = 60, requestedBy } = body;
+  const body = await req.json();
+  const { employeeId, email, hostname, vpnIp, username, duration = 60, requestedBy } = body;
 
-    const userAgent = req.headers.get('user-agent') || '';
-    const device = detectDevice(userAgent);
+  const userAgent = req.headers.get('user-agent') || '';
+  const device = detectDevice(userAgent);
 
-    const checks = [
-      validateVpnIp(vpnIp), validateHostname(hostname),
-      validateEmployeeId(employeeId), validateEmail(email), validateDuration(duration),
-    ];
-    for (const c of checks) {
-      if (!c.valid) return NextResponse.json({ error: c.message }, { status: 400 });
-    }
-
-    upsertUser({ username, employeeId, email, hostname, vpnIp });
-
-    const logId = crypto.randomUUID();
-    const local = isLocalIp(vpnIp);
-    let result: { success: boolean; steps: StepResult[]; alreadyAdmin?: boolean };
-
-    if (local) {
-      result = await grantAdminLocal(username, duration);
-    } else {
-      result = grantAdminRemote(vpnIp, username, duration);
-    }
-
-    // Already admin — skip everything, just return info
-    if (result.alreadyAdmin) {
-      return NextResponse.json({
-        success: true, steps: result.steps, alreadyAdmin: true,
-        message: `${username} is already an admin on ${hostname}. No changes made.`,
-      });
-    }
-
-    if (!result.success) {
-      addLog({
-        id: logId, hostname, username, employeeId, email, vpnIp,
-        grantedAt: new Date().toISOString(), duration, revokedAt: null,
-        status: 'FAILED', requestedBy: requestedBy || 'system', type: 'admin', device,
-      });
-      return NextResponse.json({
-        success: false, logId, steps: result.steps,
-        error: result.steps.find(s => !s.success)?.log || 'Failed to grant access',
-      }, { status: 500 });
-    }
-
-    addLog({
-      id: logId, hostname, username, employeeId, email, vpnIp,
-      grantedAt: new Date().toISOString(), duration, revokedAt: null,
-      status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'admin', device,
-    });
-
-    // Send notification
-    const notified = await sendNotification(vpnIp, 'Admin Access Granted',
-      `You have been granted temporary admin access for ${duration} minutes.`);
-    result.steps.push({
-      id: 'notify', label: 'Sending notification', success: notified,
-      log: notified ? `Notification sent to ${vpnIp}` : 'Notification failed (device may be unreachable)',
-    });
-
-    // 5 min before expiry warning
-    if (duration > 5) {
-      setTimeout(async () => {
-        const u = findUserByUsername(username);
-        await sendNotification(u?.vpnIp || vpnIp, 'Access Expiring Soon',
-          'Your admin access will expire in 5 minutes.');
-      }, (duration - 5) * 60 * 1000);
-    }
-
-    // Server-side backup revoke (in case LaunchDaemon fails)
-    setTimeout(() => revokeAdminAccess(username, logId, vpnIp), (duration + 1) * 60 * 1000);
-
-    return NextResponse.json({
-      success: true, logId, steps: result.steps,
-      message: `Admin access granted to ${username} on ${hostname}. Will auto-revoke in ${duration} minutes.`,
-    });
-  } catch (err) {
-    return NextResponse.json({ error: formatSSHError('target', String(err)) }, { status: 500 });
+  const checks = [
+    validateVpnIp(vpnIp), validateHostname(hostname),
+    validateEmployeeId(employeeId), validateEmail(email), validateDuration(duration),
+  ];
+  for (const c of checks) {
+    if (!c.valid) return NextResponse.json({ error: c.message }, { status: 400 });
   }
+
+  upsertUser({ username, employeeId, email, hostname, vpnIp });
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const write: StreamWriter = (event) => {
+        controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
+      };
+
+      try {
+        const local = isLocalIp(vpnIp);
+        const { passwords } = getSshCredentials();
+        const pass = passwords[0] || '';
+        const safePass = pass.replace(/'/g, "'\\''");
+        const logId = crypto.randomUUID();
+        let overallSuccess = true;
+
+        // === STEP 1: GRANT ===
+        streamStep(write, 'grant', 'Granting admin access', 'active');
+
+        if (local) {
+          try {
+            await execAsync(`sudo dseditgroup -o edit -a ${username} -t user admin`, { timeout: 10000 });
+            streamStep(write, 'grant', 'Granting admin access', 'completed', {
+              success: true, log: `dseditgroup -o edit -a ${username} -t user admin\nOK`,
+            });
+          } catch (e) {
+            streamStep(write, 'grant', 'Granting admin access', 'error', {
+              success: false, log: `Failed: ${e}`,
+            });
+            overallSuccess = false;
+          }
+        } else {
+          // Check if already admin
+          const checkResult = sshRunCommand(vpnIp, `dseditgroup -o checkmember -m $(stat -f%Su /dev/console) admin 2>/dev/null`);
+          if (checkResult.success && checkResult.output.includes('is a member')) {
+            streamStep(write, 'grant', 'Granting admin access', 'completed', {
+              success: true, log: `User ${username} is already an admin on this device.\n${checkResult.output.trim()}`,
+            });
+            write({ done: true, success: true, alreadyAdmin: true, message: `${username} is already an admin on ${hostname}. No changes made.` });
+            controller.close();
+            return;
+          }
+
+          // Grant admin
+          const grantCmd = `CONSOLE_USER=$(stat -f%Su /dev/console); echo "User: $CONSOLE_USER"; echo '${safePass}' | sudo -S dseditgroup -o edit -a $CONSOLE_USER -t user admin 2>/dev/null && echo "GRANT_OK" || echo "GRANT_FAIL"`;
+          const grantResult = sshRunCommand(vpnIp, grantCmd);
+          const grantOk = grantResult.success && grantResult.output.includes('GRANT_OK');
+
+          if (grantOk) {
+            const verifyResult = sshRunCommand(vpnIp, `dseditgroup -o checkmember -m $(stat -f%Su /dev/console) admin 2>/dev/null`);
+            const isMember = verifyResult.success && verifyResult.output.includes('is a member');
+            streamStep(write, 'grant', 'Granting admin access', isMember ? 'completed' : 'error', {
+              success: isMember,
+              log: `ssh tcsadmin@${vpnIp}\n> sudo dseditgroup -o edit -a ${username} -t user admin\n${grantResult.output}\n> Verify: ${verifyResult.output.trim()}`,
+            });
+            if (!isMember) overallSuccess = false;
+          } else {
+            streamStep(write, 'grant', 'Granting admin access', 'error', {
+              success: false,
+              log: `ssh tcsadmin@${vpnIp}\n> sudo dseditgroup -o edit -a ${username} -t user admin\n${grantResult.output}`,
+            });
+            overallSuccess = false;
+          }
+        }
+
+        if (!overallSuccess) {
+          addLog({ id: logId, hostname, username, employeeId, email, vpnIp, grantedAt: new Date().toISOString(), duration, revokedAt: null, status: 'FAILED', requestedBy: requestedBy || 'system', type: 'admin', device });
+          write({ done: true, success: false, logId, error: 'Failed to grant admin access' });
+          controller.close();
+          return;
+        }
+
+        // === STEP 2: JAMF ===
+        streamStep(write, 'jamf', 'Running JAMF Commands', 'active');
+
+        if (local) {
+          try {
+            await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
+            await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
+            await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
+            streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'jamf manage ✓\njamf policy ✓\njamf recon ✓' });
+          } catch {
+            streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'JAMF not available (skipped)' });
+          }
+        } else {
+          const jamfCmd = `echo '${safePass}' | sudo -S /usr/local/bin/jamf manage 2>&1 && echo "MANAGE_OK"; echo '${safePass}' | sudo -S /usr/local/bin/jamf policy 2>&1 && echo "POLICY_OK"; echo '${safePass}' | sudo -S /usr/local/bin/jamf recon 2>&1 && echo "RECON_OK"`;
+          const jamfResult = sshRunCommand(vpnIp, jamfCmd);
+          const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
+          execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
+          streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', {
+            success: jamfResult.success,
+            log: `ssh tcsadmin@${vpnIp}\n> jamf manage + policy + recon\n${jamfResult.output}`,
+          });
+        }
+
+        // === STEP 3: SCHEDULE REVOKE ===
+        streamStep(write, 'schedule', 'Scheduling auto-revoke', 'active');
+
+        const expiryEpoch = Math.floor(Date.now() / 1000) + duration * 60;
+
+        if (local) {
+          const revokeScript = `/usr/local/bin/admin_revoke_${username}.sh`;
+          const revokeContent = `#!/bin/bash
+EXPIRY=${expiryEpoch}
+while [ $(date +%s) -lt $EXPIRY ]; do sleep 30; done
+/usr/sbin/dseditgroup -o edit -d ${username} -t user admin 2>/dev/null || sudo /usr/sbin/dseditgroup -o edit -d ${username} -t user admin
+VERIFY=$(dseditgroup -o checkmember -m ${username} admin 2>/dev/null)
+if echo "$VERIFY" | grep -q "is a member"; then
+  for i in 1 2 3 4 5; do sudo /usr/sbin/dseditgroup -o edit -d ${username} -t user admin 2>/dev/null; sleep 2; done
+fi
+osascript -e 'display dialog "** User Privileges Updated **
+
+Hello ${username}, your admin privileges have been revoked and updated to Standard User.
+
+If you require elevated access (Admin Rights) on your MacBook, please request through the TCS Admin Portal." with title "** User Privileges Updated **" buttons {"OK"} default button "OK" giving up after 300'
+rm -f "${revokeScript}"
+sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
+sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist`;
+          try {
+            await execAsync(`sudo tee "${revokeScript}" > /dev/null << 'SCRIPT'\n${revokeContent}\nSCRIPT`);
+            await execAsync(`sudo chmod +x "${revokeScript}"`);
+            const plist = `<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+<key>Label</key><string>com.tcs.admin.revoke</string>
+<key>ProgramArguments</key><array><string>/bin/bash</string><string>${revokeScript}</string></array>
+<key>RunAtLoad</key><true/>
+<key>KeepAlive</key><true/>
+</dict></plist>`;
+            await execAsync(`sudo tee /Library/LaunchDaemons/com.tcs.admin.revoke.plist > /dev/null << 'PLIST'\n${plist}\nPLIST`);
+            await execAsync(`sudo chown root:wheel /Library/LaunchDaemons/com.tcs.admin.revoke.plist && sudo chmod 644 /Library/LaunchDaemons/com.tcs.admin.revoke.plist`);
+            await execAsync(`sudo launchctl bootstrap system /Library/LaunchDaemons/com.tcs.admin.revoke.plist 2>/dev/null || sudo launchctl load -w /Library/LaunchDaemons/com.tcs.admin.revoke.plist`);
+            streamStep(write, 'schedule', 'Scheduling auto-revoke', 'completed', {
+              success: true,
+              log: `Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\nLaunchDaemon: com.tcs.admin.revoke (KeepAlive + RunAtLoad)\nSurvives: reboot, shutdown, network loss\nForce retry: 5 attempts if first fails\nNotification on revoke`,
+            });
+          } catch (e) {
+            streamStep(write, 'schedule', 'Scheduling auto-revoke', 'error', { success: false, log: String(e) });
+          }
+        } else {
+          const revokeCmd = `echo '${safePass}' | sudo -S tee /usr/local/bin/admin_revoke.sh > /dev/null <<'REVOKESCRIPT'
+#!/bin/bash
+EXPIRY=${expiryEpoch}
+PASSWORD='${safePass}'
+while [ \\$(date +%s) -lt \\$EXPIRY ]; do sleep 30; done
+CONSOLE_USER=\\$(stat -f%Su /dev/console)
+USER_ID=\\$(id -u \\$CONSOLE_USER)
+echo "\\$PASSWORD" | sudo -S /usr/sbin/dseditgroup -o edit -d \\$CONSOLE_USER -t user admin 2>/dev/null
+VERIFY=\\$(dseditgroup -o checkmember -m \\$CONSOLE_USER admin 2>/dev/null)
+if echo "\\$VERIFY" | grep -q "is a member"; then
+  for i in 1 2 3 4 5; do
+    echo "\\$PASSWORD" | sudo -S /usr/sbin/dseditgroup -o edit -d \\$CONSOLE_USER -t user admin 2>/dev/null
+    sleep 2
+  done
+fi
+sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display dialog "** User Privileges Updated **
+
+Hello '\\$CONSOLE_USER', your admin privileges have been revoked and updated to Standard User.
+
+If you require elevated access (Admin Rights) on your MacBook, please request through the TCS Admin Portal." with title "** User Privileges Updated **" buttons {"OK"} default button "OK" giving up after 300'
+sudo rm -f /usr/local/bin/admin_revoke.sh
+sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
+sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist
+REVOKESCRIPT
+echo '${safePass}' | sudo -S chmod 700 /usr/local/bin/admin_revoke.sh
+echo '${safePass}' | sudo -S chown root:wheel /usr/local/bin/admin_revoke.sh
+echo '${safePass}' | sudo -S tee /Library/LaunchDaemons/com.tcs.admin.revoke.plist > /dev/null <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+<key>Label</key><string>com.tcs.admin.revoke</string>
+<key>ProgramArguments</key><array><string>/bin/bash</string><string>/usr/local/bin/admin_revoke.sh</string></array>
+<key>RunAtLoad</key><true/>
+<key>KeepAlive</key><true/>
+</dict></plist>
+PLIST
+echo '${safePass}' | sudo -S chown root:wheel /Library/LaunchDaemons/com.tcs.admin.revoke.plist
+echo '${safePass}' | sudo -S chmod 644 /Library/LaunchDaemons/com.tcs.admin.revoke.plist
+echo '${safePass}' | sudo -S launchctl bootstrap system /Library/LaunchDaemons/com.tcs.admin.revoke.plist 2>/dev/null || echo '${safePass}' | sudo -S launchctl load -w /Library/LaunchDaemons/com.tcs.admin.revoke.plist
+echo "SCHEDULE_OK"`;
+          const schedResult = sshRunCommand(vpnIp, revokeCmd);
+          const schedOk = schedResult.success && schedResult.output.includes('SCHEDULE_OK');
+          streamStep(write, 'schedule', 'Scheduling auto-revoke', schedOk ? 'completed' : 'error', {
+            success: schedOk,
+            log: `LaunchDaemon on remote machine (KeepAlive + RunAtLoad)\n> Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\n> Survives: reboot, shutdown, VPN disconnect, network loss\n> Script: /usr/local/bin/admin_revoke.sh (root:wheel 700)\n> Password secured, force retry 5x, notification on revoke\n> Cleanup: removes script + plist after revoke\n${schedResult.output}`,
+          });
+        }
+
+        // === STEP 4: NOTIFY ===
+        streamStep(write, 'notify', 'Sending notification', 'active');
+        const notified = await sendNotification(vpnIp, 'Admin Access Granted',
+          `Hello ${username}, you have been granted temporary admin access for ${duration} minutes. Your privileges will be automatically revoked after the timer expires.`);
+        streamStep(write, 'notify', 'Sending notification', 'completed', {
+          success: notified, log: notified ? `Notification sent to ${vpnIp}` : 'Notification failed (device may be unreachable)',
+        });
+
+        // Log and schedule server-side backup
+        addLog({ id: logId, hostname, username, employeeId, email, vpnIp, grantedAt: new Date().toISOString(), duration, revokedAt: null, status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'admin', device });
+
+        if (duration > 1) {
+          setTimeout(async () => {
+            const u = findUserByUsername(username);
+            await sendNotification(u?.vpnIp || vpnIp, 'Access Expiring Soon', `Hello ${username}, your admin access will expire in 1 minute. Save your work.`);
+          }, (duration - 1) * 60 * 1000);
+        }
+        setTimeout(() => revokeAdminAccess(username, logId, vpnIp), (duration + 1) * 60 * 1000);
+
+        write({ done: true, success: true, logId, message: `Admin access granted to ${username} on ${hostname}. Will auto-revoke in ${duration} minutes.` });
+      } catch (err) {
+        write({ done: true, success: false, error: formatSSHError('target', String(err)) });
+      }
+
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-cache', 'Transfer-Encoding': 'chunked' },
+  });
 }

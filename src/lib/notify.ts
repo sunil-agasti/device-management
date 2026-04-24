@@ -30,12 +30,11 @@ export async function sendNotification(
   const safeMessage = sanitizeForShell(message);
   const local = isLocalIp(ip);
 
+  const script = `display dialog "${safeMessage}" with title "** ${safeTitle} **" buttons {"OK"} default button "OK" giving up after 300`;
+
   if (local) {
     try {
-      await execAsync(
-        `osascript -e 'display notification "${safeMessage}" with title "${safeTitle}" sound name "Glass"'`,
-        { timeout: 5000 }
-      );
+      await execAsync(`osascript -e '${script}'`, { timeout: 10000 });
       return true;
     } catch {
       return false;
@@ -43,7 +42,7 @@ export async function sendNotification(
   }
 
   const result = sshRunCommand(ip,
-    `CONSOLE_USER=$(stat -f%Su /dev/console); USER_ID=$(id -u $CONSOLE_USER); sudo launchctl asuser $USER_ID sudo -u $CONSOLE_USER osascript -e 'display notification "${safeMessage}" with title "${safeTitle}" sound name "Glass"'`
+    `CONSOLE_USER=$(stat -f%Su /dev/console); USER_ID=$(id -u $CONSOLE_USER); sudo launchctl asuser $USER_ID sudo -u $CONSOLE_USER osascript -e '${script}'`
   );
   return result.success;
 }

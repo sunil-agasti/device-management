@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { secureFetch } from '@/lib/fetchClient';
 
 type SortKey = 'hostname' | 'username' | 'vpnIp' | 'grantedAt' | 'status' | 'requestedBy' | 'duration';
 type SortDir = 'asc' | 'desc';
@@ -33,158 +32,6 @@ interface Log {
 }
 
 const PAGE_SIZE = 15;
-
-function ForceRevokePopover({ log, onSuccess }: { log: Log; onSuccess: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [ip, setIp] = useState(log.vpnIp);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [now] = useState(() => Date.now());
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    if (open) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  const handleRevoke = async () => {
-    if (!ip.startsWith('17.') && ip !== '127.0.0.1') {
-      setResult({ success: false, message: 'IP must start with 17.' });
-      return;
-    }
-    setLoading(true);
-    setResult(null);
-    try {
-      const res = await secureFetch('/api/force-revoke', {
-        method: 'POST',
-        body: JSON.stringify({ logId: log.id, type: log.type, username: log.username, vpnIp: ip }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setResult({ success: true, message: data.message || 'Revoked successfully' });
-        setTimeout(() => { setOpen(false); onSuccess(); }, 1500);
-      } else {
-        setResult({ success: false, message: data.error || 'Revoke failed' });
-      }
-    } catch (err) {
-      setResult({ success: false, message: 'Request failed: ' + String(err) });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const isExpiredGranted = log.status === 'GRANTED' &&
-    (new Date(log.grantedAt).getTime() + log.duration * 60 * 1000) < now;
-  const isFailed = log.status === 'FAILED';
-
-  if (!isFailed && !isExpiredGranted) return null;
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => { setOpen(!open); setResult(null); setIp(log.vpnIp); }}
-        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 ${
-          isFailed
-            ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/30'
-            : 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30'
-        }`}
-      >
-        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-        </svg>
-        {isFailed ? 'Make Standard' : 'Force Revoke'}
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -5, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -5, scale: 0.95 }}
-            className="absolute right-0 top-full mt-2 z-50 w-72 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xl p-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isFailed ? 'bg-red-100 dark:bg-red-500/20' : 'bg-amber-100 dark:bg-amber-500/20'}`}>
-                <svg className={`w-4 h-4 ${isFailed ? 'text-red-500' : 'text-amber-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                  {isFailed ? 'Retry: Make Standard User' : 'Force Revoke Access'}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {log.type === 'admin' ? 'Remove admin privileges' : 'Re-block GitHub access'}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">User: <strong className="text-slate-700 dark:text-slate-300">{log.username || '-'}</strong> on <strong className="text-slate-700 dark:text-slate-300">{log.hostname || '-'}</strong></p>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1 block">
-                  VPN IP (update if changed)
-                </label>
-                <input
-                  type="text"
-                  value={ip}
-                  onChange={e => setIp(e.target.value)}
-                  placeholder="17.x.x.x"
-                  className="w-full px-3 py-2 text-sm rounded-lg bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                />
-                {ip !== log.vpnIp && (
-                  <p className="text-xs text-blue-500 mt-1">Changed from {log.vpnIp}</p>
-                )}
-              </div>
-
-              <button
-                onClick={handleRevoke}
-                disabled={loading || !ip}
-                className={`w-full py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
-                  isFailed
-                    ? 'bg-red-500 hover:bg-red-600 text-white disabled:opacity-50'
-                    : 'bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50'
-                }`}
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Revoking...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                    {isFailed ? 'Make Standard Now' : 'Force Revoke Now'}
-                  </>
-                )}
-              </button>
-
-              {result && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  className={`p-2 rounded-lg text-xs ${
-                    result.success
-                      ? 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
-                      : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400'
-                  }`}
-                >
-                  {result.message}
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
   const [allLogs, setAllLogs] = useState<Log[]>([]);
@@ -290,8 +137,9 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
       EXPIRED: 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400 border-slate-200 dark:border-slate-500/30',
       FAILED: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border-red-200 dark:border-red-500/30',
     };
+    const tooltip = status === 'FAILED' ? 'Revoke failed — sudo password may be incorrect or device unreachable' : undefined;
     return (
-      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${styles[status] || styles.GRANTED}`}>
+      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${styles[status] || styles.GRANTED} ${status === 'FAILED' ? 'cursor-help' : ''}`} title={tooltip}>
         {status}
       </span>
     );
@@ -393,7 +241,6 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                 >
                   <span className="flex items-center gap-1">Status <SortIndicator active={sortKey === 'status'} direction={sortDir} /></span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -423,9 +270,6 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                       {(!log.device || log.device === 'Unknown') && <span title="Unknown">&#128421; Unknown</span>}
                     </td>
                     <td className="px-4 py-3">{getStatusBadge(log.status)}</td>
-                    <td className="px-4 py-3">
-                      <ForceRevokePopover log={log} onSuccess={fetchLogs} />
-                    </td>
                   </motion.tr>
                 ))}
               </AnimatePresence>

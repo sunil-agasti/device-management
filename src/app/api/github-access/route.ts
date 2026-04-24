@@ -52,7 +52,7 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
 
   const revokeScript = `/tmp/github_revoke_${Date.now()}.sh`;
   try {
-    const content = `#!/bin/bash\nsleep ${duration * 60}\necho "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null\necho "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null\nsudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder\nosascript -e 'display notification "GitHub access revoked." with title "GitHub Access Removed" sound name "Glass"'\nrm -f "${revokeScript}"`;
+    const content = `#!/bin/bash\nsleep ${duration * 60}\necho "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null\necho "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null\nsudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder\nosascript -e 'display dialog "** GitHub Access Revoked **\n\nYour public GitHub access has been revoked.\n\nIf you need GitHub access again, please request through the TCS Admin Portal." with title "** GitHub Access Revoked **" buttons {"OK"} default button "OK" giving up after 300'\nrm -f "${revokeScript}"`;
     await execAsync(`echo '${content.replace(/'/g, "'\\''")}' > "${revokeScript}" && chmod +x "${revokeScript}" && nohup bash "${revokeScript}" &>/dev/null &`);
     steps.push({ id: 'schedule', label: 'Scheduling auto-revoke', success: true, log: `Revoke scheduled in ${duration} minutes\n> echo "127.0.0.1 github.com" >> /etc/hosts\n> dscacheutil -flushcache` });
   } catch (e) {
@@ -97,25 +97,50 @@ function grantGithubRemote(vpnIp: string, duration: number): { success: boolean;
     log: `JAMF policies running in background\n> jamf manage\n> jamf policy\n> jamf recon`,
   });
 
-  // Schedule revoke on remote machine
-  const revokeCmd = `sudo tee /usr/local/bin/github_revoke.sh > /dev/null <<'REVOKE'
+  // Schedule revoke on remote machine (epoch-based, survives reboot)
+  const expiryEpoch = Math.floor(Date.now() / 1000) + durationSec;
+  const revokeCmd = `echo '${safePass}' | sudo -S tee /usr/local/bin/github_revoke.sh > /dev/null <<'REVOKE'
 #!/bin/bash
-sleep ${durationSec}
+EXPIRY=${expiryEpoch}
+PASSWORD='${safePass}'
+while [ \\$(date +%s) -lt \\$EXPIRY ]; do sleep 30; done
+echo "\\$PASSWORD" | sudo -S sed -i '' '/github.com/d' /etc/hosts
 echo "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null
 echo "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null
-sudo dscacheutil -flushcache
-sudo killall -HUP mDNSResponder
-CONSOLE_USER=$(stat -f%Su /dev/console)
-USER_ID=$(id -u $CONSOLE_USER)
-sudo launchctl asuser $USER_ID sudo -u $CONSOLE_USER osascript -e 'display notification "GitHub access revoked." with title "GitHub Access Removed"'
-rm -f /usr/local/bin/github_revoke.sh
+echo "\\$PASSWORD" | sudo -S dscacheutil -flushcache
+echo "\\$PASSWORD" | sudo -S killall -HUP mDNSResponder
+CONSOLE_USER=\\$(stat -f%Su /dev/console)
+USER_ID=\\$(id -u \\$CONSOLE_USER)
+sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display dialog "** GitHub Access Revoked **
+
+Hello '\\$CONSOLE_USER', your public GitHub access has been revoked.
+
+If you need GitHub access again, please request through the TCS Admin Portal." with title "** GitHub Access Revoked **" buttons {"OK"} default button "OK" giving up after 300'
+sudo rm -f /usr/local/bin/github_revoke.sh
+sudo launchctl bootout system/com.tcs.github.revoke 2>/dev/null
+sudo rm -f /Library/LaunchDaemons/com.tcs.github.revoke.plist
 REVOKE
-sudo chmod +x /usr/local/bin/github_revoke.sh && nohup sudo /usr/local/bin/github_revoke.sh &>/dev/null & echo "SCHEDULE_OK"`;
+echo '${safePass}' | sudo -S chmod 700 /usr/local/bin/github_revoke.sh
+echo '${safePass}' | sudo -S chown root:wheel /usr/local/bin/github_revoke.sh
+echo '${safePass}' | sudo -S tee /Library/LaunchDaemons/com.tcs.github.revoke.plist > /dev/null <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+<key>Label</key><string>com.tcs.github.revoke</string>
+<key>ProgramArguments</key><array><string>/bin/bash</string><string>/usr/local/bin/github_revoke.sh</string></array>
+<key>RunAtLoad</key><true/>
+<key>KeepAlive</key><true/>
+</dict></plist>
+PLIST
+echo '${safePass}' | sudo -S chown root:wheel /Library/LaunchDaemons/com.tcs.github.revoke.plist
+echo '${safePass}' | sudo -S chmod 644 /Library/LaunchDaemons/com.tcs.github.revoke.plist
+echo '${safePass}' | sudo -S launchctl bootstrap system /Library/LaunchDaemons/com.tcs.github.revoke.plist 2>/dev/null || echo '${safePass}' | sudo -S launchctl load -w /Library/LaunchDaemons/com.tcs.github.revoke.plist
+echo "SCHEDULE_OK"`;
 
   const schedResult = sshRunCommand(vpnIp, revokeCmd);
+  const schedOk = schedResult.success && schedResult.output.includes('SCHEDULE_OK');
   steps.push({
-    id: 'schedule', label: 'Scheduling auto-revoke', success: schedResult.success,
-    log: `Auto-revoke in ${duration} minutes on remote machine\n> Block github.com in /etc/hosts\n> Flush DNS\n> Send revoke notification\n${schedResult.output}`,
+    id: 'schedule', label: 'Scheduling auto-revoke', success: schedOk,
+    log: `LaunchDaemon on remote machine (KeepAlive + RunAtLoad)\n> Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\n> Survives: reboot, shutdown, VPN disconnect, network loss\n> Re-blocks github.com in /etc/hosts, flushes DNS\n> Notification on revoke, cleanup after\n${schedResult.output}`,
   });
 
   return { success: true, steps };
@@ -174,18 +199,18 @@ export async function POST(req: NextRequest) {
 
     // Notification
     const notified = await sendNotification(vpnIp, 'GitHub Access Granted',
-      `GitHub access granted for ${duration} minutes.`);
+      `Hello ${username || 'User'}, you have been granted public GitHub access for ${duration} minutes. Your access will be automatically revoked after the timer expires.`);
     result.steps.push({
       id: 'notify', label: 'Sending notification', success: notified,
       log: notified ? `Notification sent to ${vpnIp}` : 'Notification failed (device may be unreachable)',
     });
 
-    if (duration > 5) {
+    if (duration > 1) {
       setTimeout(async () => {
         const user = findUserByUsername(username || '');
         await sendNotification(user?.vpnIp || vpnIp, 'Access Expiring Soon',
-          'Your GitHub access will expire in 5 minutes.');
-      }, (duration - 5) * 60 * 1000);
+          `Hello ${username || 'User'}, your GitHub access will expire in 1 minute. Save your work.`);
+      }, (duration - 1) * 60 * 1000);
     }
 
     setTimeout(() => { updateLogStatus(logId, 'github', 'REVOKED'); }, duration * 60 * 1000);
