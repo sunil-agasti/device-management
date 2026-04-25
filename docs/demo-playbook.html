@@ -54,8 +54,8 @@
 
 <h2>Dummy Test Data</h2>
 <div class="dummy-data">
-  <strong>Test Machine 1:</strong> IP: 17.233.58.245 | User: ranjankumar | Hostname: 02HW065893 | ID: 1070257 | Email: praveen_ranjan@apple.com<br>
-  <strong>Test Machine 2:</strong> IP: 17.233.40.248 | User: praveenranjan | Hostname: 02HW071128 | ID: 1070257 | Email: praveen_ranjan@apple.com<br>
+  <strong>Test Machine 1:</strong> IP: 17.233.58.100 | User: johndoe | Hostname: 02HW098712 | ID: 1082456 | Email: johndoe@apple.com<br>
+  <strong>Test Machine 2:</strong> IP: 17.233.40.200 | User: janesmith | Hostname: 02HW054321 | ID: 1093678 | Email: janesmith@apple.com<br>
   <strong>Invalid IP:</strong> 17.999.999.999 (unreachable)<br>
   <strong>Invalid Hostname:</strong> MYCOMPUTER (wrong prefix)<br>
   <strong>Admin User:</strong> sunilkumaragasti (portal operator)
@@ -68,14 +68,14 @@
     <span class="badge badge-pass">PASS</span>
   </div>
   <ol class="steps">
-    <li>Type: <strong>"grant admin to 17.233.58.245 for 5 minutes"</strong></li>
-    <li>AI checks IP via SSH → shows "Found: ranjankumar on 02HW065893"</li>
+    <li>Type: <strong>"grant admin to 17.233.58.100 for 5 minutes"</strong></li>
+    <li>AI checks IP via SSH → shows "Found: johndoe on 02HW098712"</li>
     <li>AI shows confirmation with user details and [Confirm] / [Cancel] buttons</li>
     <li>Click <strong>Confirm</strong></li>
     <li>Live progress: ✅ Granting admin → ✅ JAMF → ✅ Scheduling revoke → ✅ Notification</li>
     <li>Success message appears, form resets</li>
   </ol>
-  <div class="expected">Expected: User gets macOS dialog "Hello ranjankumar, you have been granted temporary admin access for 5 minutes." Access log shows GRANTED.</div>
+  <div class="expected">Expected: User gets macOS dialog "Hello johndoe, you have been granted temporary admin access for 5 minutes." Access log shows GRANTED.</div>
 </div>
 
 <h2>Scenario 2: AI Chat — Invalid IP</h2>
@@ -99,12 +99,12 @@
     <span class="badge badge-pass">PASS</span>
   </div>
   <ol class="steps">
-    <li>Type: <strong>"grant admin to 17.233.40.248 for 10 minutes"</strong> (new user not in DB)</li>
+    <li>Type: <strong>"grant admin to 17.233.40.200 for 10 minutes"</strong> (new user not in DB)</li>
     <li>AI finds username/hostname via SSH</li>
-    <li>AI asks: "I need the employee ID for praveenranjan. What is it?"</li>
-    <li>Type: <strong>1070257</strong></li>
+    <li>AI asks: "I need the employee ID for janesmith. What is it?"</li>
+    <li>Type: <strong>1093678</strong></li>
     <li>AI asks: "What's the Apple email?"</li>
-    <li>Type: <strong>praveen_ranjan@apple.com</strong></li>
+    <li>Type: <strong>janesmith@apple.com</strong></li>
     <li>AI shows confirmation → Confirm → Executes</li>
   </ol>
   <div class="expected">Expected: All info collected through conversation. Grant proceeds normally.</div>
@@ -117,7 +117,7 @@
     <span class="badge badge-pass">PASS</span>
   </div>
   <ol class="steps">
-    <li>Type: <strong>"give github access to 17.233.58.245 for 30 minutes"</strong></li>
+    <li>Type: <strong>"give github access to 17.233.58.100 for 30 minutes"</strong></li>
     <li>AI checks IP → finds user → shows confirmation</li>
     <li>Click Confirm → ✅ Unblocking GitHub → ✅ JAMF → ✅ Scheduling revoke</li>
   </ol>
@@ -131,8 +131,8 @@
     <span class="badge badge-pass">PASS</span>
   </div>
   <ol class="steps">
-    <li>Type: <strong>"update hostname on 17.233.58.245"</strong></li>
-    <li>AI checks IP → "Current hostname is 02HW065893. What should the new hostname be?"</li>
+    <li>Type: <strong>"update hostname on 17.233.58.100"</strong></li>
+    <li>AI checks IP → "Current hostname is 02HW098712. What should the new hostname be?"</li>
     <li>Type: <strong>02HW067534</strong></li>
     <li>AI confirms → Click Confirm → ✅ Hostname updated</li>
   </ol>
@@ -146,7 +146,7 @@
     <span class="badge badge-fail">EXPECTED FAIL</span>
   </div>
   <ol class="steps">
-    <li>Type: <strong>"update hostname on 17.233.58.245"</strong></li>
+    <li>Type: <strong>"update hostname on 17.233.58.100"</strong></li>
     <li>AI asks for new hostname</li>
     <li>Type: <strong>MYCOMPUTER</strong></li>
     <li>AI responds: "Hostname must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0"</li>
@@ -162,7 +162,7 @@
   </div>
   <ol class="steps">
     <li>Grant admin to a user who already has admin rights</li>
-    <li>AI detects: "ranjankumar is already an admin on this device. No changes made."</li>
+    <li>AI detects: "johndoe is already an admin on this device. No changes made."</li>
   </ol>
   <div class="expected">Expected: No log entry, no revoke scheduled. Informational message only.</div>
 </div>
@@ -191,7 +191,7 @@
   </div>
   <ol class="steps">
     <li>Navigate to Admin Access page</li>
-    <li>Enter VPN IP: <strong>17.233.58.245</strong> → Tab out</li>
+    <li>Enter VPN IP: <strong>17.233.58.100</strong> → Tab out</li>
     <li>Username and hostname auto-populate via SSH</li>
     <li>Employee ID and email auto-populate from database</li>
     <li>Set duration: 5 minutes → Click "Request Admin Access"</li>
@@ -207,7 +207,7 @@
     <span class="badge badge-pass">PASS</span>
   </div>
   <ol class="steps">
-    <li>Type: <strong>"search employee 1070257"</strong></li>
+    <li>Type: <strong>"search employee 1082456"</strong></li>
     <li>AI shows inline result: username, hostname, email, VPN IP</li>
   </ol>
   <div class="expected">Expected: User details shown in chat without page navigation.</div>
@@ -242,6 +242,156 @@
     <li>Toggle manually via portal theme button — persists across sessions</li>
   </ol>
   <div class="expected">Expected: Theme follows system preference by default, manual toggle overrides and persists.</div>
+</div>
+
+<h2 class="print-break">Screen Storyboard</h2>
+<p>Visual reference for each key screen during the demo recording.</p>
+
+<h3>Screen 1: Dashboard (Opening Shot)</h3>
+<div class="dummy-data" style="line-height:1.4">
+┌──────────────────────────────────────────────────────────┐
+│  TCS Admin Portal                    sunilkumaragasti ▾  │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│            AI-Powered Admin Portal                       │
+│   Manage MacBook access with natural language commands    │
+│                                                          │
+│  ┌─────────────────────────────────────────────┐         │
+│  │ ⚡ Ask AI: "grant admin to 17.x.x.x"  [Run]│         │
+│  └─────────────────────────────────────────────┘         │
+│                                                          │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐       │
+│  │  Admin  │ │ GitHub  │ │Hostname │ │ Reports │       │
+│  │ Access  │ │ Access  │ │ Update  │ │Dashboard│       │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘       │
+│                                                          │
+│  Recent Access Logs    [Search...] [CSV] [Refresh]       │
+│  ─────────────────────────────────────────────────       │
+│  HOSTNAME    USER       IP           STATUS              │
+│  02HW098712  johndoe    17.233.58.100  GRANTED           │
+└──────────────────────────────────────────────────────────┘
+</div>
+
+<h3>Screen 2: AI Chat — Grant Admin (Interactive)</h3>
+<div class="dummy-data" style="line-height:1.4">
+┌─────────────────────────────────────────────────┐
+│ ⚡ grant admin to 17.233.58.100 for 5 minutes   │
+└─────────────────────────────────────────────────┘
+┌─ AI Assistant ──────────────────────── [Clear] ─┐
+│                                                  │
+│  You: grant admin to 17.233.58.100 for 5 min    │
+│                                                  │
+│  AI: ○ ○ ○  (checking...)                       │
+│                                                  │
+│  AI: Found: johndoe on 02HW098712               │
+│                                                  │
+│  AI: Ready to grant admin access:                │
+│      • User: johndoe                             │
+│      • Device: 02HW098712                        │
+│      • IP: 17.233.58.100                         │
+│      • Duration: 5 minutes                       │
+│      • Employee ID: 1082456                      │
+│      • Email: johndoe@apple.com                  │
+│      [Confirm]  [Cancel]                         │
+│                                                  │
+│  You: Confirm                                    │
+│                                                  │
+│  AI: ✅ Granting admin access                    │
+│  AI: ✅ Running JAMF Commands                    │
+│  AI: ✅ Scheduling auto-revoke                   │
+│  AI: ✅ Sending notification                     │
+│                                                  │
+│  AI: 🎉 Admin access granted to johndoe on      │
+│      02HW098712. Will auto-revoke in 5 minutes.  │
+└──────────────────────────────────────────────────┘
+</div>
+
+<h3>Screen 3: macOS Notification (on Target Machine)</h3>
+<div class="dummy-data" style="line-height:1.4">
+┌──────────────────────────────────────────────┐
+│  ** Admin Access Granted **                   │
+│                                               │
+│  Hello johndoe, you have been granted         │
+│  temporary admin access for 5 minutes.        │
+│  Your privileges will be automatically        │
+│  revoked after the timer expires.             │
+│                                               │
+│                                     [  OK  ]  │
+└──────────────────────────────────────────────┘
+</div>
+
+<h3>Screen 4: Revoke Notification (After Timer Expires)</h3>
+<div class="dummy-data" style="line-height:1.4">
+┌──────────────────────────────────────────────┐
+│  ** User Privileges Updated **                │
+│                                               │
+│  Hello johndoe, your admin privileges have    │
+│  been revoked and updated to Standard User.   │
+│                                               │
+│  If you require elevated access (Admin        │
+│  Rights) on your MacBook, please request      │
+│  through the TCS Admin Portal.                │
+│                                               │
+│                                     [  OK  ]  │
+└──────────────────────────────────────────────┘
+</div>
+
+<h3>Screen 5: Form-Based Admin Access Page</h3>
+<div class="dummy-data" style="line-height:1.4">
+┌──────────────────────────────────────────────────────────┐
+│  ← Portal    Temporary Admin Access Request              │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  TCS Employee ID *        Apple Email *                  │
+│  ┌──────────────┐        ┌────────────────────┐         │
+│  │ 1082456      │        │ johndoe@apple.com  │         │
+│  └──────────────┘        └────────────────────┘         │
+│                                                          │
+│  Hostname * (via SSH)     VPN IP *                       │
+│  ┌──────────────┐        ┌────────────────────┐         │
+│  │ 02HW098712 🔒│        │ 17.233.58.100      │         │
+│  └──────────────┘        └────────────────────┘         │
+│                           ▸ View Connection Logs         │
+│                                                          │
+│  Username * (via SSH)     Access Duration *               │
+│  ┌──────────────┐        ┌──────┐                       │
+│  │ johndoe   🔒 │        │ 5    │ min                   │
+│  └──────────────┘        └──────┘                       │
+│                                                          │
+│           [ 🛡️ Request Admin Access ]                    │
+│                                                          │
+│  ┌─ Processing ─────────────────────────────────┐       │
+│  │  ✅ Granting    ✅ JAMF    ✅ Revoke          │       │
+│  │  ▸ Granting admin access — View Log           │       │
+│  │  ▸ Running JAMF Commands — View Log           │       │
+│  │  ▸ Scheduling auto-revoke — View Log          │       │
+│  └───────────────────────────────────────────────┘       │
+└──────────────────────────────────────────────────────────┘
+</div>
+
+<h3>Screen 6: Leadership Reports</h3>
+<div class="dummy-data" style="line-height:1.4">
+┌──────────────────────────────────────────────────────────┐
+│  ← Portal    Leadership Reports   [Today][Week][Month]   │
+│                                    [CSV] [Excel]         │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐│
+│  │  24    │ │  12    │ │   3    │ │  45m   │ │  96%   ││
+│  │Requests│ │ Users  │ │ Active │ │Avg Dur │ │Success ││
+│  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘│
+│                                                          │
+│  Admin Access: 18        GitHub Access: 6                │
+│  ████████████ 75%        ██████ 25%                      │
+│  ✅12 ⚠️4 ⬜1 ❌1        ✅4 ⚠️1 ⬜0 ❌1                │
+│                                                          │
+│  Monthly Trend (Last 12 Months)                          │
+│  █                                                       │
+│  █ █     █                                               │
+│  █ █ █ █ █     █                                         │
+│  █ █ █ █ █ █ █ █ █                                       │
+│  J F M A M J J A S O N D                                 │
+└──────────────────────────────────────────────────────────┘
 </div>
 
 <h2 class="print-break">Demo Recording Script</h2>
