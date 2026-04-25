@@ -24,20 +24,16 @@ export default function Home() {
   const handleAIResult = (result: { action: string; message: string; formData?: Record<string, unknown>; user?: Record<string, unknown>; found?: boolean; suggestions?: string[] }) => {
     setAiResult(result as { action: string; message: string; user?: Record<string, string>; found?: boolean; suggestions?: string[] });
 
-    if (result.action === 'admin') {
-      const params = new URLSearchParams();
-      if (result.formData) Object.entries(result.formData).forEach(([k, v]) => params.set(k, String(v)));
-      router.push(`/admin-access?${params.toString()}`);
-    } else if (result.action === 'github') {
-      const params = new URLSearchParams();
-      if (result.formData) Object.entries(result.formData).forEach(([k, v]) => params.set(k, String(v)));
-      router.push(`/github-access?${params.toString()}`);
-    } else if (result.action === 'hostname') {
+    if (result.action === 'hostname') {
       router.push('/update-hostname');
     } else if (result.action === 'cleanup') {
       router.push('/cleanup');
     }
   };
+
+  const requestedBy = systemInfo?.serverUsername
+    ? `${systemInfo.serverUsername} (${systemInfo.serverHostname || ''})`
+    : 'system';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -57,7 +53,7 @@ export default function Home() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <AIPromptBar onResult={handleAIResult} />
+          <AIPromptBar onResult={handleAIResult} requestedBy={requestedBy} />
         </motion.div>
 
         {aiResult && aiResult.action === 'search' && (
