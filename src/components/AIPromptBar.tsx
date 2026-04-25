@@ -29,6 +29,9 @@ type ConvoState =
   | { step: 'need_employee_id'; action: string; ip: string; duration: number; username: string; hostname: string; email: string }
   | { step: 'need_email'; action: string; ip: string; duration: number; username: string; hostname: string; employeeId: string }
   | { step: 'confirm'; action: string; ip: string; duration: number; username: string; hostname: string; employeeId: string; email: string }
+  | { step: 'need_ip_for_hostname'; newHostname: string }
+  | { step: 'need_new_hostname'; ip: string; currentHostname: string; username: string }
+  | { step: 'confirm_hostname'; ip: string; currentHostname: string; newHostname: string; username: string }
   | { step: 'executing'; action: string }
   | { step: 'done' };
 
@@ -222,6 +225,56 @@ export default function AIPromptBar({ onResult, requestedBy }: AIPromptBarProps)
       return;
     }
 
+    // Hostname conversation states
+    if (convo.step === 'need_ip_for_hostname') {
+      const ipMatch = text.match(/\b(17\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/);
+      if (!ipMatch) { addMsg('assistant', 'Please enter a valid VPN IP starting with 17.'); return; }
+      const loadId = addLoading();
+      const result = await checkIp(ipMatch[1]);
+      if (!result.success) { replaceMsg(loadId, `❌ Cannot reach ${ipMatch[1]}: ${result.error}`); setConvo({ step: 'idle' }); return; }
+      replaceMsg(loadId, `Found: **${result.username}** on **${result.hostname}**`);
+      addMsg('assistant', `Current hostname is **${result.hostname}**. What should the new hostname be?`);
+      setConvo({ step: 'need_new_hostname', ip: ipMatch[1], currentHostname: result.hostname!, username: result.username! });
+      return;
+    }
+
+    if (convo.step === 'need_new_hostname') {
+      const name = text.trim();
+      if (!['02HW0','01HW0','34HW0','3HW0','4HW0'].some(p => name.toUpperCase().startsWith(p))) {
+        addMsg('assistant', 'Hostname must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0. Try again.');
+        return;
+      }
+      setConvo({ step: 'confirm_hostname', ip: convo.ip, currentHostname: convo.currentHostname, newHostname: name, username: convo.username });
+      addMsg('assistant',
+        `Update hostname:\n\n• Device: ${convo.currentHostname} → **${name}**\n• User: ${convo.username}\n• IP: ${convo.ip}`,
+        [{ label: 'Confirm', value: 'confirm', variant: 'primary' }, { label: 'Cancel', value: 'cancel', variant: 'danger' }]
+      );
+      return;
+    }
+
+    if (convo.step === 'confirm_hostname') {
+      if (/yes|confirm|proceed|ok|go/i.test(text)) {
+        setConvo({ step: 'executing', action: 'hostname' });
+        const loadId = addLoading();
+        try {
+          const csrfMatch = document.cookie.match(/csrf_token=([^;]+)/);
+          const res = await fetch('/api/update-hostname', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfMatch?.[1] || '' },
+            body: JSON.stringify({ vpnIp: convo.ip, newHostname: convo.newHostname }),
+            credentials: 'same-origin',
+          });
+          const data = await res.json();
+          replaceMsg(loadId, res.ok ? `✅ ${data.message}` : `❌ ${data.error}`);
+        } catch (err) { replaceMsg(loadId, `❌ Failed: ${err}`); }
+        setConvo({ step: 'done' });
+      } else {
+        addMsg('assistant', 'Cancelled. Type a new command to start over.');
+        setConvo({ step: 'idle' });
+      }
+      return;
+    }
+
     // New command
     const parsed = parseCommand(text);
 
@@ -244,9 +297,17 @@ export default function AIPromptBar({ onResult, requestedBy }: AIPromptBarProps)
     }
 
     if (parsed.action === 'hostname') {
-      addMsg('assistant', 'Opening hostname update page...');
-      onResult({ action: 'hostname', message: '' });
-      setConvo({ step: 'idle' });
+      if (!parsed.ip) {
+        addMsg('assistant', "What's the VPN IP of the device to update? (must start with 17.)");
+        setConvo({ step: 'need_ip_for_hostname', newHostname: '' });
+        return;
+      }
+      const loadId = addLoading();
+      const result = await checkIp(parsed.ip);
+      if (!result.success) { replaceMsg(loadId, `❌ Cannot reach ${parsed.ip}: ${result.error}`); setConvo({ step: 'idle' }); return; }
+      replaceMsg(loadId, `Found: **${result.username}** on **${result.hostname}**`);
+      addMsg('assistant', `Current hostname is **${result.hostname}**. What should the new hostname be?`);
+      setConvo({ step: 'need_new_hostname', ip: parsed.ip, currentHostname: result.hostname!, username: result.username! });
       return;
     }
 

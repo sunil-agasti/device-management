@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec, execSync } from 'child_process';
-import { promisify } from 'util';
+import { execSync } from 'child_process';
 import { validateVpnIp, validateHostname } from '@/lib/validation';
 import { sanitizeIp, sanitizeHostname } from '@/lib/sanitize';
-import { getSshCredentials } from '@/lib/ssh';
+import { sshRunCommand, getSshCredentials } from '@/lib/ssh';
 import { isLocalIp } from '@/lib/notify';
 import { formatSSHError } from '@/lib/errors';
-
-const execAsync = promisify(exec);
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,47 +26,27 @@ export async function POST(req: NextRequest) {
         execSync(`sudo scutil --set HostName '${safeHostname}'`, { timeout: 10000 });
         execSync(`sudo scutil --set ComputerName '${safeHostname}'`, { timeout: 10000 });
         execSync(`sudo scutil --set LocalHostName '${safeHostname}'`, { timeout: 10000 });
-
-        try {
-          await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
-          await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
-          await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
-        } catch { /* JAMF not available */ }
-
-        return NextResponse.json({ success: true, message: `Hostname updated to ${safeHostname} (local). JAMF synced.` });
+        return NextResponse.json({ success: true, message: `Hostname updated to ${safeHostname} (local).` });
       } catch (err) {
         return NextResponse.json({ error: 'Local hostname update failed: ' + String(err) }, { status: 500 });
       }
     }
 
-    const { user, passwords } = getSshCredentials();
-    let password = '';
-    for (const p of passwords) {
-      try {
-        execSync(`sshpass -p '${p}' ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${user}@${safeIp} "exit"`, { timeout: 10000 });
-        password = p;
-        break;
-      } catch { continue; }
-    }
-    if (!password) return NextResponse.json({ error: `SSH authentication failed for ${safeIp}. Verify the device is online and SSH credentials are correct in your .env configuration.` }, { status: 500 });
+    const { passwords } = getSshCredentials();
+    const pass = passwords[0] || '';
+    const safePass = pass.replace(/'/g, "'\\''");
 
-    const output = execSync(
-      `sshpass -p '${password}' ssh -o StrictHostKeyChecking=no ${user}@${safeIp} "
-        echo '${password}' | sudo -S scutil --set HostName '${safeHostname}'
-        echo '${password}' | sudo -S scutil --set ComputerName '${safeHostname}'
-        echo '${password}' | sudo -S scutil --set LocalHostName '${safeHostname}'
-        echo '${password}' | sudo -S /usr/local/bin/jamf manage 2>/dev/null
-        echo '${password}' | sudo -S /usr/local/bin/jamf policy 2>/dev/null
-        echo '${password}' | sudo -S /usr/local/bin/jamf recon 2>/dev/null
-        echo SUCCESS
-      "`,
-      { encoding: 'utf-8', timeout: 120000 }
-    ).trim();
+    const result = sshRunCommand(safeIp,
+      `echo '${safePass}' | sudo -S scutil --set HostName '${safeHostname}'; ` +
+      `echo '${safePass}' | sudo -S scutil --set ComputerName '${safeHostname}'; ` +
+      `echo '${safePass}' | sudo -S scutil --set LocalHostName '${safeHostname}'; ` +
+      `echo SUCCESS`
+    );
 
-    if (output.includes('SUCCESS')) {
-      return NextResponse.json({ success: true, message: `Hostname updated to ${safeHostname}. JAMF synced.` });
+    if (result.success && result.output.includes('SUCCESS')) {
+      return NextResponse.json({ success: true, message: `Hostname updated to ${safeHostname}. Run JAMF from admin page if needed.` });
     }
-    return NextResponse.json({ error: 'Failed to update hostname' }, { status: 500 });
+    return NextResponse.json({ error: result.output || 'Failed to update hostname' }, { status: 500 });
   } catch (err) {
     return NextResponse.json({ error: formatSSHError('target', String(err)) }, { status: 500 });
   }
