@@ -109,7 +109,15 @@ export default function UpdateHostnamePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">New Hostname *</label>
-            <input type="text" value={newHostname} onChange={e => setNewHostname(e.target.value)} placeholder="e.g. 02HW062504" className={fieldClass('hostname')} />
+            <input type="text" value={newHostname} onChange={e => {
+              setNewHostname(e.target.value);
+              const val = e.target.value;
+              if (val && !['02HW0','01HW0','34HW0','3HW0','4HW0'].some(p => val.toUpperCase().startsWith(p))) {
+                setErrors(prev => ({ ...prev, hostname: 'Must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0' }));
+              } else {
+                setErrors(prev => { const { hostname, ...rest } = prev; return rest; });
+              }
+            }} placeholder="e.g. 02HW062504" className={fieldClass('hostname')} />
             {errors.hostname && <p className="mt-1 text-xs text-red-500">{errors.hostname}</p>}
           </div>
           <div className="flex justify-center">
