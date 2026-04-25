@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCS Admin Portal — Project Showcase</title>
+<style>
+  :root { --bg: #fff; --surface: #f8fafc; --border: #e2e8f0; --text: #1e293b; --muted: #64748b; --accent: #3b82f6; --violet: #8b5cf6; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+  .container { max-width: 860px; margin: 0 auto; padding: 48px 24px; }
+  .hero { text-align: center; padding: 40px 0; }
+  .hero h1 { font-size: 2.4rem; font-weight: 800; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
+  .hero p { color: var(--muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+  .tag { padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 48px 0 16px; }
+  h3 { font-size: 1.05rem; font-weight: 600; margin: 24px 0 8px; color: var(--violet); }
+  p, li { color: var(--muted); font-size: 0.95rem; }
+  ul { padding-left: 20px; margin-bottom: 16px; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--text); }
+  .highlight { background: linear-gradient(135deg, #eff6ff, #f5f3ff); border-radius: 16px; padding: 28px; margin: 24px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+  .card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+  .card p { font-size: 0.88rem; margin: 0; }
+  .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+  .metric { text-align: center; padding: 20px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); }
+  .metric .val { font-size: 1.6rem; font-weight: 800; color: var(--accent); }
+  .metric .lbl { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+  .flow-box { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+  .flow-item { padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; }
+  .flow-arrow { color: var(--muted); font-size: 1.2rem; }
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 20px 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
+  .ba-col { padding: 24px; }
+  .ba-col:first-child { background: #fef2f2; }
+  .ba-col:last-child { background: #f0fdf4; }
+  .ba-col h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; }
+  .ba-col ul { padding-left: 16px; font-size: 0.85rem; }
+  .ba-col li { margin-bottom: 4px; }
+  .footer { text-align: center; margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>TCS Admin Portal</h1>
+  <p>An intelligent, self-service IT administration platform that manages temporary access privileges on 500+ enterprise MacBooks — with zero manual intervention.</p>
+  <div class="tags">
+    <span class="tag">Next.js</span>
+    <span class="tag">TypeScript</span>
+    <span class="tag">React</span>
+    <span class="tag">Tailwind CSS</span>
+    <span class="tag">SSH Automation</span>
+    <span class="tag">macOS APIs</span>
+    <span class="tag">Real-time Streaming</span>
+  </div>
+</div>
+
+<h2>The Problem</h2>
+<p>IT administrators needed to grant temporary elevated access to MacBook users — admin privileges for software installs, GitHub access for development — across hundreds of machines. The old process was fully manual: SSH into each machine, run commands, track who got access in spreadsheets, and hope someone remembered to revoke it.</p>
+
+<div class="before-after">
+  <div class="ba-col">
+    <h4 style="color:#991b1b">Before: Manual Process</h4>
+    <ul style="color:#991b1b">
+      <li>SSH manually into each machine</li>
+      <li>Type commands from memory</li>
+      <li>Track access in spreadsheets</li>
+      <li>Revoke manually (often forgotten)</li>
+      <li>No audit trail</li>
+      <li>5–10 minutes per request</li>
+      <li>Errors on every other request</li>
+    </ul>
+  </div>
+  <div class="ba-col">
+    <h4 style="color:#166534">After: Automated Portal</h4>
+    <ul style="color:#166534">
+      <li>Type one sentence in AI chat</li>
+      <li>System handles everything</li>
+      <li>Complete audit log with search</li>
+      <li>Guaranteed auto-revoke on timer</li>
+      <li>Full audit trail + reports</li>
+      <li>Under 30 seconds per request</li>
+      <li>Validation prevents all errors</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Key Impact</h2>
+<div class="metric-row">
+  <div class="metric"><div class="val">95%</div><div class="lbl">Time Saved</div></div>
+  <div class="metric"><div class="val">100%</div><div class="lbl">Revoke Success</div></div>
+  <div class="metric"><div class="val">500+</div><div class="lbl">Devices Managed</div></div>
+  <div class="metric"><div class="val">0</div><div class="lbl">Security Incidents</div></div>
+</div>
+
+<h2>What It Does</h2>
+
+<div class="highlight">
+  <h3>Conversational AI Interface</h3>
+  <p>Instead of filling forms, administrators type natural language commands like "grant admin to 17.233.8.2 for 60 minutes." The system intelligently validates the request, connects to the target machine, auto-fills user details, and asks for confirmation — all in a chat-style conversation. No page navigation required.</p>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h4>Temporary Admin Access</h4>
+    <p>Grants administrator privileges on remote MacBooks with automatic time-based revocation. Users are notified when access is granted, warned before expiry, and informed when revoked.</p>
+  </div>
+  <div class="card">
+    <h4>GitHub Access Control</h4>
+    <p>Manages public GitHub access on restricted machines by controlling network-level blocks. Access is granted for a set duration and automatically revoked — even if the machine restarts.</p>
+  </div>
+  <div class="card">
+    <h4>Remote Hostname Management</h4>
+    <p>Updates machine hostnames remotely through a guided conversation, with validation to ensure naming standards are followed across the fleet.</p>
+  </div>
+  <div class="card">
+    <h4>Leadership Reports</h4>
+    <p>Dashboards showing access patterns, usage trends, success rates, and device breakdowns. Exportable to CSV and Excel for stakeholder reviews.</p>
+  </div>
+</div>
+
+<h2>How It Works</h2>
+
+<h3>Access Grant Flow</h3>
+<div class="flow-box">
+  <span class="flow-item" style="background:#dbeafe; color:#1e40af">User Command</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item" style="background:#e0e7ff; color:#3730a3">Validate & Connect</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item" style="background:#dcfce7; color:#166534">Grant Access</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item" style="background:#fef3c7; color:#92400e">Notify User</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item" style="background:#fce7f3; color:#9d174d">Auto-Revoke</span>
+</div>
+<p>Every step is streamed to the administrator in real-time. The revocation mechanism is installed directly on the target machine, ensuring it executes even if the management server goes offline or the machine restarts.</p>
+
+<h3>Guaranteed Revocation</h3>
+<p>Access revocation is the most critical security feature. The system installs a persistent background process on the target machine that:</p>
+<ul>
+  <li>Uses a fixed timestamp (not a countdown) so it survives machine restarts</li>
+  <li>Automatically recovers if the process is interrupted</li>
+  <li>Retries up to 5 times if the first revocation attempt fails</li>
+  <li>Notifies the end user with a clear on-screen message when access is removed</li>
+  <li>Cleans up after itself — no residual files or processes</li>
+</ul>
+
+<h2>Technical Highlights</h2>
+
+<div class="grid-2">
+  <div class="card">
+    <h4>Real-time Streaming</h4>
+    <p>Progress updates stream to the browser as each step completes using newline-delimited JSON. No polling, no waiting for the full operation to finish.</p>
+  </div>
+  <div class="card">
+    <h4>Secure Remote Execution</h4>
+    <p>All remote operations use secure, authenticated SSH connections. Credentials are never exposed in logs, network traffic, or the browser. Password-protected scripts on target machines are root-readable only.</p>
+  </div>
+  <div class="card">
+    <h4>Smart User Detection</h4>
+    <p>When an IP address is entered, the system automatically identifies who is logged in on that machine and retrieves their details from the employee database — reducing data entry to near zero.</p>
+  </div>
+  <div class="card">
+    <h4>Adaptive Theme</h4>
+    <p>The interface follows the user's macOS system appearance preference, switching between light and dark modes automatically. Manual override persists across sessions.</p>
+  </div>
+</div>
+
+<h2>Architecture Overview</h2>
+<div class="highlight">
+  <p><strong>Frontend:</strong> React with server-side rendering, component-based UI with real-time state management and streaming data consumption.</p>
+  <p><strong>Backend:</strong> API routes handling validation, SSH orchestration, database operations, and streaming responses — all in a single deployable package.</p>
+  <p><strong>Remote Execution:</strong> Secure shell connections to target machines for privilege management, system configuration, and user notifications.</p>
+  <p><strong>Data:</strong> Lightweight file-based storage for user records and audit logs. No external database dependencies — the portal is fully self-contained.</p>
+  <p><strong>Security:</strong> VPN-gated access, CSRF protection, input sanitization, credential isolation, and comprehensive audit logging.</p>
+</div>
+
+<h2>My Role</h2>
+<p>I designed, built, and deployed this system end-to-end as the sole developer. This involved:</p>
+<ul>
+  <li><strong>System design</strong> — Architecting a self-contained portal that handles secure remote execution, real-time feedback, and guaranteed revocation</li>
+  <li><strong>Full-stack development</strong> — Building the React frontend, Node.js API layer, SSH automation, and macOS system integration</li>
+  <li><strong>Security engineering</strong> — Implementing credential isolation, CSRF protection, VPN gating, and tamper-proof revocation</li>
+  <li><strong>UX design</strong> — Creating the conversational AI interface, real-time progress streaming, and responsive dark/light theme</li>
+  <li><strong>Operations</strong> — Managing deployment across 500+ devices, monitoring access patterns, and generating leadership reports</li>
+</ul>
+
+<div class="footer">
+  Built with Next.js, TypeScript, React, Tailwind CSS, and SSH automation for macOS fleet management.
+</div>
+
+</div>
+</body>
+</html>
