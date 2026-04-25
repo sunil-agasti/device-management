@@ -123,12 +123,15 @@
 
   <div class="tabs">
     <button class="tab active" onclick="showScreen('dashboard')">Dashboard</button>
-    <button class="tab" onclick="showScreen('ai-chat')">AI Chat: Admin Grant</button>
-    <button class="tab" onclick="showScreen('ai-github')">AI Chat: GitHub</button>
-    <button class="tab" onclick="showScreen('ai-hostname')">AI Chat: Hostname</button>
-    <button class="tab" onclick="showScreen('form')">Form: Admin Access</button>
-    <button class="tab" onclick="showScreen('notify-grant')">Notification: Grant</button>
-    <button class="tab" onclick="showScreen('notify-revoke')">Notification: Revoke</button>
+    <button class="tab" onclick="showScreen('ai-chat')">AI: Admin</button>
+    <button class="tab" onclick="showScreen('ai-github')">AI: GitHub</button>
+    <button class="tab" onclick="showScreen('ai-hostname')">AI: Hostname</button>
+    <button class="tab" onclick="showScreen('form')">Form: Admin</button>
+    <button class="tab" onclick="showScreen('form-github')">Form: GitHub</button>
+    <button class="tab" onclick="showScreen('form-hostname')">Form: Hostname</button>
+    <button class="tab" onclick="showScreen('form-cleanup')">Cleanup Utility</button>
+    <button class="tab" onclick="showScreen('notify-grant')">Notify: Grant</button>
+    <button class="tab" onclick="showScreen('notify-revoke')">Notify: Revoke</button>
     <button class="tab" onclick="showScreen('reports')">Reports</button>
   </div>
 
@@ -264,9 +267,113 @@
           <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Scheduling<br>revoke</div></div>
         </div>
         <div style="text-align:center; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ Admin access granted to johndoe on 02HW098712. Will auto-revoke in 5 minutes.</div>
+        <div style="font-size:0.82rem; font-weight:600; margin-top:20px;">Recent Access Logs</div>
+        <table class="logs-table">
+          <thead><tr><th>Hostname</th><th>Username</th><th>VPN IP</th><th>Granted</th><th>Duration</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:monospace">02HW098712</td><td>johndoe</td><td style="font-family:monospace">17.233.58.100</td><td>Apr 25, 10:30</td><td>5m</td><td><span class="status s-granted">GRANTED</span></td></tr>
+            <tr><td style="font-family:monospace">02HW054321</td><td>janesmith</td><td style="font-family:monospace">17.233.40.200</td><td>Apr 25, 09:15</td><td>60m</td><td><span class="status s-revoked">REVOKED</span></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
     <div class="desc"><strong>Form-Based Access:</strong> Enter a VPN IP and all fields auto-populate via SSH. Real-time progress streams as each step completes. Expandable logs under each step (admin only).</div>
+  </div>
+
+  <!-- FORM: GITHUB ACCESS -->
+  <div id="form-github" class="screen">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/github-access</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti</div></div>
+        <div style="text-align:center; margin-bottom:20px;"><span style="display:inline-block; padding:6px 20px; border-radius:20px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.3); font-size:0.85rem; font-weight:600; color:var(--violet);">💻 Temporary GitHub Access Request</span></div>
+        <div class="form-grid">
+          <div class="field"><label>TCS Employee ID * <span class="tag">(from DB)</span></label><input value="1082456" readonly></div>
+          <div class="field"><label>Apple Email * <span class="tag">(from DB)</span></label><input value="johndoe@apple.com" readonly></div>
+          <div class="field"><label>Hostname <span class="tag">(via SSH)</span></label><input value="02HW098712" readonly style="opacity:0.7"></div>
+          <div class="field"><label>VPN IP *</label><input value="17.233.58.100" readonly></div>
+          <div class="field"><label>Username <span class="tag">(via SSH)</span></label><input value="johndoe" readonly style="opacity:0.7"></div>
+          <div class="field"><label>Access Duration *</label><input value="30" readonly></div>
+        </div>
+        <div style="text-align:center; margin:20px 0;"><button style="padding:12px 28px; border-radius:12px; background:linear-gradient(135deg,var(--violet),#a855f7); color:white; font-weight:600; font-size:0.88rem; border:none; cursor:pointer;">💻 Request GitHub Access</button></div>
+        <div style="text-align:center; font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Request Complete</div>
+        <div class="progress-row">
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Unblocking<br>GitHub</div></div>
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Running<br>JAMF</div></div>
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Scheduling<br>revoke</div></div>
+        </div>
+        <div style="text-align:center; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ GitHub access granted for johndoe. Will auto-revoke in 30 minutes.</div>
+        <div style="font-size:0.82rem; font-weight:600; margin-top:20px;">Recent Access Logs</div>
+        <table class="logs-table">
+          <thead><tr><th>Hostname</th><th>Username</th><th>VPN IP</th><th>Granted</th><th>Duration</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:monospace">02HW098712</td><td>johndoe</td><td style="font-family:monospace">17.233.58.100</td><td>Apr 25, 10:45</td><td>30m</td><td><span class="status s-granted">GRANTED</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="desc"><strong>Form — GitHub Access:</strong> Same auto-populate flow as admin. Removes github.com from /etc/hosts, flushes DNS, and schedules auto-revoke via LaunchDaemon.</div>
+  </div>
+
+  <!-- FORM: HOSTNAME UPDATE -->
+  <div id="form-hostname" class="screen">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/update-hostname</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti</div></div>
+        <div style="text-align:center; margin-bottom:20px;"><span style="display:inline-block; padding:6px 20px; border-radius:20px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.85rem; font-weight:600; color:var(--green);">🏷️ Update Hostname</span></div>
+        <div class="form-grid">
+          <div class="field"><label>VPN IP *</label><input value="17.233.58.100" readonly></div>
+          <div class="field"><label>Current Hostname <span class="tag">(via SSH)</span></label><input value="02HW098712" readonly style="opacity:0.7"></div>
+          <div class="field" style="grid-column:span 2"><label>New Hostname *</label><input value="02HW067534" readonly style="border-color:var(--green)"></div>
+        </div>
+        <div style="text-align:center; margin:20px 0;"><button style="padding:12px 28px; border-radius:12px; background:linear-gradient(135deg,var(--green),#10b981); color:white; font-weight:600; font-size:0.88rem; border:none; cursor:pointer;">🏷️ Update Hostname</button></div>
+        <div class="progress-row">
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Getting<br>hostname</div></div>
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Updating<br>hostname</div></div>
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Running<br>JAMF</div></div>
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Complete</div></div>
+        </div>
+        <div style="text-align:center; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ Hostname updated to 02HW067534.</div>
+      </div>
+    </div>
+    <div class="desc"><strong>Form — Hostname Update:</strong> Enter VPN IP to detect current hostname. Type the new hostname (validated prefix: 02HW0, 01HW0, etc). Updates HostName, ComputerName, and LocalHostName remotely.</div>
+  </div>
+
+  <!-- CLEANUP UTILITY -->
+  <div id="form-cleanup" class="screen">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/cleanup</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti</div></div>
+        <div style="text-align:center; margin-bottom:20px;"><span style="display:inline-block; padding:6px 20px; border-radius:20px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); font-size:0.85rem; font-weight:600; color:var(--amber);">🧹 Cleanup Utility</span></div>
+        <p style="text-align:center; font-size:0.82rem; margin-bottom:20px;">Fix orphaned entries, deduplicate records, and maintain database integrity</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:28px; height:28px; border-radius:8px; background:rgba(239,68,68,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem;">🔴</div><span style="font-size:0.82rem; font-weight:600;">Fix Expired Grants</span></div>
+            <p style="font-size:0.72rem;">Find GRANTED entries past their duration and mark as EXPIRED</p>
+            <div style="margin-top:8px; padding:6px 10px; border-radius:6px; background:rgba(34,197,94,0.1); font-size:0.7rem; color:var(--green);">✅ 3 entries fixed</div>
+          </div>
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:28px; height:28px; border-radius:8px; background:rgba(59,130,246,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem;">🔵</div><span style="font-size:0.82rem; font-weight:600;">Deduplicate Records</span></div>
+            <p style="font-size:0.72rem;">Remove duplicate log entries keeping the most recent</p>
+            <div style="margin-top:8px; padding:6px 10px; border-radius:6px; background:rgba(34,197,94,0.1); font-size:0.7rem; color:var(--green);">✅ 1 duplicate removed</div>
+          </div>
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:28px; height:28px; border-radius:8px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem;">🟡</div><span style="font-size:0.82rem; font-weight:600;">Archive Old Logs</span></div>
+            <p style="font-size:0.72rem;">Move logs older than 90 days to backup</p>
+            <div style="margin-top:8px; padding:6px 10px; border-radius:6px; background:rgba(34,197,94,0.1); font-size:0.7rem; color:var(--green);">✅ 12 entries archived</div>
+          </div>
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:28px; height:28px; border-radius:8px; background:rgba(139,92,246,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem;">🟣</div><span style="font-size:0.82rem; font-weight:600;">Detect Orphans</span></div>
+            <p style="font-size:0.72rem;">Find users with no recent activity</p>
+            <div style="margin-top:8px; padding:6px 10px; border-radius:6px; background:rgba(34,197,94,0.1); font-size:0.7rem; color:var(--green);">✅ 0 orphans found</div>
+          </div>
+        </div>
+        <div style="text-align:center; margin-top:16px; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ Cleanup complete: 3 expired fixed, 1 dedup, 12 archived, 0 orphans</div>
+      </div>
+    </div>
+    <div class="desc"><strong>Cleanup Utility:</strong> Four maintenance tasks — fix expired grants, remove duplicates, archive old logs, and detect orphaned user records. Run periodically to keep the database clean.</div>
   </div>
 
   <!-- NOTIFICATION: GRANT -->
