@@ -3,414 +3,383 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TCS Admin Portal - Demo Playbook</title>
+<title>TCS Admin Portal - Interactive Demo</title>
 <style>
-  :root { --bg: #fff; --surface: #f8fafc; --border: #e2e8f0; --text: #1e293b; --muted: #64748b; --accent: #3b82f6; --green: #22c55e; --red: #ef4444; --amber: #f59e0b; }
+  :root { --bg: #0f172a; --surface: #1e293b; --surface2: #334155; --border: #475569; --text: #f1f5f9; --muted: #94a3b8; --accent: #3b82f6; --violet: #8b5cf6; --green: #22c55e; --red: #ef4444; --amber: #f59e0b; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
-  .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
-  h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
-  .subtitle { color: var(--muted); margin-bottom: 40px; }
-  h2 { font-size: 1.3rem; font-weight: 700; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
-  h3 { font-size: 1rem; font-weight: 600; margin: 24px 0 8px; color: var(--accent); }
-  p { color: var(--muted); margin-bottom: 12px; }
-  .scenario { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 16px 0; }
-  .scenario-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .scenario-title { font-weight: 600; font-size: 0.95rem; }
-  .badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
-  .badge-pass { background: #dcfce7; color: #166534; }
-  .badge-fail { background: #fee2e2; color: #991b1b; }
-  .badge-warn { background: #fef3c7; color: #92400e; }
-  .steps { margin: 12px 0; padding-left: 0; list-style: none; counter-reset: step; }
-  .steps li { counter-increment: step; padding: 8px 0 8px 36px; position: relative; color: var(--muted); font-size: 0.9rem; border-left: 2px solid var(--border); margin-left: 12px; }
-  .steps li::before { content: counter(step); position: absolute; left: -13px; top: 6px; width: 24px; height: 24px; background: var(--accent); color: white; border-radius: 50%; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-  .steps li:last-child { border-left-color: transparent; }
-  .expected { background: #f0f9ff; border-left: 3px solid var(--accent); padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 8px 0; font-size: 0.85rem; color: #1e40af; }
-  .dummy-data { background: #f1f5f9; border-radius: 8px; padding: 12px 16px; font-family: 'SF Mono', monospace; font-size: 0.82rem; margin: 8px 0; color: var(--text); }
-  .section-intro { background: linear-gradient(135deg, #eff6ff, #f5f3ff); border-radius: 12px; padding: 20px; margin: 16px 0; }
-  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.85rem; }
-  th { background: var(--surface); text-align: left; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid var(--border); }
-  td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
-  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
-  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
-  .summary-card .num { font-size: 1.8rem; font-weight: 800; }
-  .summary-card .label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
-  .print-break { page-break-before: always; }
-  @media print { .container { max-width: 100%; } }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+  h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+  .sub { color: var(--muted); margin-bottom: 32px; }
+  h2 { font-size: 1.2rem; font-weight: 700; margin: 36px 0 12px; color: var(--accent); }
+  p { color: var(--muted); font-size: 0.9rem; margin-bottom: 10px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 12px; padding: 4px; margin-bottom: 24px; overflow-x: auto; }
+  .tab { padding: 10px 18px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; cursor: pointer; color: var(--muted); border: none; background: none; white-space: nowrap; transition: all 0.2s; }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active { background: var(--accent); color: white; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* App mockup frame */
+  .mockup { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .mockup-bar { background: var(--surface2); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ef4444; }
+  .dot-y { background: #f59e0b; }
+  .dot-g { background: #22c55e; }
+  .mockup-url { flex: 1; text-align: center; font-size: 0.72rem; color: var(--muted); background: var(--bg); padding: 4px 12px; border-radius: 6px; margin: 0 40px; }
+  .mockup-body { padding: 24px; }
+
+  /* Navbar */
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(30,41,59,0.8); border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
+  .nav-brand { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+  .nav-brand-icon { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--violet)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; }
+  .nav-user { font-size: 0.75rem; color: var(--muted); }
+
+  /* AI Bar */
+  .ai-bar { position: relative; margin: 16px 0; }
+  .ai-bar input { width: 100%; padding: 14px 80px 14px 44px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.88rem; outline: none; }
+  .ai-bar .icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--violet); font-size: 1rem; }
+  .ai-bar .btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 8px 16px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--violet)); color: white; font-size: 0.78rem; font-weight: 600; border: none; cursor: pointer; }
+
+  /* Chat */
+  .chat { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; margin-top: 12px; overflow: hidden; }
+  .chat-header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+  .chat-body { padding: 16px; max-height: 360px; overflow-y: auto; }
+  .msg { margin-bottom: 10px; display: flex; }
+  .msg-user { justify-content: flex-end; }
+  .msg-ai { justify-content: flex-start; }
+  .bubble { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 0.82rem; line-height: 1.5; }
+  .bubble-user { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+  .bubble-ai { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; }
+  .bubble strong { color: #93c5fd; }
+  .bubble .check { color: var(--green); }
+  .bubble .fail { color: var(--red); }
+  .btn-confirm { display: inline-block; margin-top: 8px; padding: 6px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; }
+  .btn-c { background: var(--accent); color: white; }
+  .btn-x { background: rgba(239,68,68,0.2); color: var(--red); margin-left: 6px; }
+
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 16px 0; }
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+  .card-icon { width: 36px; height: 36px; border-radius: 10px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+  .card h4 { font-size: 0.78rem; font-weight: 600; margin-bottom: 4px; }
+  .card p { font-size: 0.68rem; color: var(--muted); margin: 0; }
+
+  /* Form */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field label { font-size: 0.72rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px; }
+  .field input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 0.82rem; }
+  .field .tag { font-size: 0.65rem; color: var(--accent); margin-left: 4px; }
+
+  /* Progress */
+  .progress-row { display: flex; gap: 16px; justify-content: center; margin: 20px 0; }
+  .progress-step { text-align: center; }
+  .progress-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 0.9rem; }
+  .pc-done { background: rgba(34,197,94,0.15); border: 2px solid var(--green); color: var(--green); }
+  .pc-active { background: rgba(59,130,246,0.15); border: 2px solid var(--accent); color: var(--accent); animation: pulse 1.5s infinite; }
+  .pc-pending { background: var(--surface2); border: 2px solid var(--border); color: var(--muted); }
+  .progress-label { font-size: 0.65rem; color: var(--muted); }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+
+  /* Logs table */
+  .logs-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; margin-top: 12px; }
+  .logs-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  .logs-table td { padding: 8px 10px; border-bottom: 1px solid var(--surface2); color: var(--text); }
+  .status { padding: 3px 10px; border-radius: 12px; font-size: 0.65rem; font-weight: 600; }
+  .s-granted { background: rgba(34,197,94,0.15); color: var(--green); }
+  .s-revoked { background: rgba(245,158,11,0.15); color: var(--amber); }
+
+  /* macOS dialog */
+  .macos-dialog { background: #f5f5f7; border-radius: 12px; padding: 24px 28px; max-width: 440px; margin: 0 auto; color: #1d1d1f; border: 1px solid #d2d2d7; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+  .macos-dialog h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: #1d1d1f; }
+  .macos-dialog p { font-size: 0.82rem; color: #424245; line-height: 1.6; margin-bottom: 8px; }
+  .macos-btn { display: block; margin: 16px auto 0; padding: 6px 32px; background: #0071e3; color: white; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: 500; cursor: pointer; }
+
+  /* Metrics */
+  .metrics { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin: 16px 0; }
+  .metric { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .metric .val { font-size: 1.5rem; font-weight: 800; }
+  .metric .lbl { font-size: 0.65rem; color: var(--muted); }
+
+  /* Bar chart */
+  .chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin: 16px 0; padding: 0 10px; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; justify-content: flex-end; }
+  .bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; }
+  .bar-admin { background: var(--accent); }
+  .bar-github { background: var(--violet); }
+  .bar-label { font-size: 0.55rem; color: var(--muted); margin-top: 4px; }
+
+  .desc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-top: 12px; font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+  .desc strong { color: var(--text); }
 </style>
 </head>
 <body>
 <div class="container">
+  <h1>TCS Admin Portal — Interactive Demo</h1>
+  <p class="sub">Click each tab to see how the portal works. These are visual mockups of each screen.</p>
 
-<h1>TCS Admin Portal — Demo Playbook</h1>
-<p class="subtitle">Test scenarios for video recording and leadership demo. Use dummy data below for each scenario.</p>
-
-<div class="summary-grid">
-  <div class="summary-card"><div class="num" style="color:#3b82f6">12</div><div class="label">Total Scenarios</div></div>
-  <div class="summary-card"><div class="num" style="color:#22c55e">10</div><div class="label">Expected Pass</div></div>
-  <div class="summary-card"><div class="num" style="color:#ef4444">2</div><div class="label">Expected Fail (by design)</div></div>
-  <div class="summary-card"><div class="num" style="color:#8b5cf6">5</div><div class="label">Features Covered</div></div>
-</div>
-
-<h2>Dummy Test Data</h2>
-<div class="dummy-data">
-  <strong>Test Machine 1:</strong> IP: 17.233.58.100 | User: johndoe | Hostname: 02HW098712 | ID: 1082456 | Email: johndoe@apple.com<br>
-  <strong>Test Machine 2:</strong> IP: 17.233.40.200 | User: janesmith | Hostname: 02HW054321 | ID: 1093678 | Email: janesmith@apple.com<br>
-  <strong>Invalid IP:</strong> 17.999.999.999 (unreachable)<br>
-  <strong>Invalid Hostname:</strong> MYCOMPUTER (wrong prefix)<br>
-  <strong>Admin User:</strong> sunilkumaragasti (portal operator)
-</div>
-
-<h2>Scenario 1: AI Chat — Grant Admin Access</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Interactive admin grant via AI command bar</span>
-    <span class="badge badge-pass">PASS</span>
+  <div class="tabs">
+    <button class="tab active" onclick="showScreen('dashboard')">Dashboard</button>
+    <button class="tab" onclick="showScreen('ai-chat')">AI Chat: Admin Grant</button>
+    <button class="tab" onclick="showScreen('ai-github')">AI Chat: GitHub</button>
+    <button class="tab" onclick="showScreen('ai-hostname')">AI Chat: Hostname</button>
+    <button class="tab" onclick="showScreen('form')">Form: Admin Access</button>
+    <button class="tab" onclick="showScreen('notify-grant')">Notification: Grant</button>
+    <button class="tab" onclick="showScreen('notify-revoke')">Notification: Revoke</button>
+    <button class="tab" onclick="showScreen('reports')">Reports</button>
   </div>
-  <ol class="steps">
-    <li>Type: <strong>"grant admin to 17.233.58.100 for 5 minutes"</strong></li>
-    <li>AI checks IP via SSH → shows "Found: johndoe on 02HW098712"</li>
-    <li>AI shows confirmation with user details and [Confirm] / [Cancel] buttons</li>
-    <li>Click <strong>Confirm</strong></li>
-    <li>Live progress: ✅ Granting admin → ✅ JAMF → ✅ Scheduling revoke → ✅ Notification</li>
-    <li>Success message appears, form resets</li>
-  </ol>
-  <div class="expected">Expected: User gets macOS dialog "Hello johndoe, you have been granted temporary admin access for 5 minutes." Access log shows GRANTED.</div>
-</div>
 
-<h2>Scenario 2: AI Chat — Invalid IP</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Error handling for unreachable device</span>
-    <span class="badge badge-fail">EXPECTED FAIL</span>
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="screen active">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti · 02HW067534</div></div>
+        <div style="text-align:center; margin: 20px 0;">
+          <div style="font-size:1.5rem; font-weight:800; background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AI-Powered Admin Portal</div>
+          <p style="font-size:0.8rem; margin-top:6px;">Manage MacBook access, grant permissions, and run diagnostics with natural language commands</p>
+        </div>
+        <div class="ai-bar"><span class="icon">⚡</span><input type="text" value='grant admin to 17.233.58.100 for 5 minutes' readonly><span class="btn">Run →</span></div>
+        <div class="cards">
+          <div class="card"><div class="card-icon" style="background:rgba(59,130,246,0.15)">🔐</div><h4>Admin Access</h4><p>Grant temporary admin privileges</p></div>
+          <div class="card"><div class="card-icon" style="background:rgba(139,92,246,0.15)">💻</div><h4>GitHub Access</h4><p>Unblock public GitHub</p></div>
+          <div class="card"><div class="card-icon" style="background:rgba(34,197,94,0.15)">🏷️</div><h4>Update Hostname</h4><p>Rename managed Macs</p></div>
+          <div class="card"><div class="card-icon" style="background:rgba(245,158,11,0.15)">🧹</div><h4>Cleanup</h4><p>Fix expired entries</p></div>
+          <div class="card"><div class="card-icon" style="background:rgba(6,182,212,0.15)">📊</div><h4>Reports</h4><p>Leadership dashboard</p></div>
+        </div>
+        <div style="font-size:0.82rem; font-weight:600; margin-top:20px;">Recent Access Logs</div>
+        <table class="logs-table">
+          <thead><tr><th>Hostname</th><th>Username</th><th>VPN IP</th><th>Granted</th><th>Duration</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:monospace">02HW098712</td><td>johndoe</td><td style="font-family:monospace">17.233.58.100</td><td>Apr 25, 10:30</td><td>5m</td><td><span class="status s-granted">GRANTED</span></td></tr>
+            <tr><td style="font-family:monospace">02HW054321</td><td>janesmith</td><td style="font-family:monospace">17.233.40.200</td><td>Apr 25, 09:15</td><td>60m</td><td><span class="status s-revoked">REVOKED</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="desc"><strong>Dashboard:</strong> The home screen shows the AI command bar, quick-access feature cards, and recent access logs with search, sort, and CSV export.</div>
   </div>
-  <ol class="steps">
-    <li>Type: <strong>"grant admin to 17.999.999.999 for 60 minutes"</strong></li>
-    <li>AI shows "Checking 17.999.999.999..."</li>
-    <li>After timeout: "❌ Cannot reach 17.999.999.999: Device unreachable"</li>
-  </ol>
-  <div class="expected">Expected: No log entry created, no access granted. User prompted to try again.</div>
-</div>
 
-<h2>Scenario 3: AI Chat — Missing Employee Info</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">AI asks for missing data interactively</span>
-    <span class="badge badge-pass">PASS</span>
+  <!-- AI CHAT: ADMIN -->
+  <div id="ai-chat" class="screen">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti</div></div>
+        <div class="ai-bar"><span class="icon">⚡</span><input type="text" value='grant admin to 17.233.58.100 for 5 minutes' readonly><span class="btn">→</span></div>
+        <div class="chat">
+          <div class="chat-header"><span>🤖 AI Assistant</span><span style="color:#ef4444;cursor:pointer">Clear</span></div>
+          <div class="chat-body">
+            <div class="msg msg-user"><div class="bubble bubble-user">grant admin to 17.233.58.100 for 5 minutes</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Checking 17.233.58.100...</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Found: <strong>johndoe</strong> on <strong>02HW098712</strong></div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Ready to grant admin access:<br><br>• User: <strong>johndoe</strong><br>• Device: <strong>02HW098712</strong><br>• IP: 17.233.58.100<br>• Duration: 5 minutes<br>• Employee ID: 1082456<br>• Email: johndoe@apple.com<br><br><button class="btn-confirm btn-c">Confirm</button><button class="btn-confirm btn-x">Cancel</button></div></div>
+            <div class="msg msg-user"><div class="bubble bubble-user">Confirm</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Granting admin access</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Running JAMF Commands</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Scheduling auto-revoke</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Sending notification</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">🎉 Admin access granted to <strong>johndoe</strong> on <strong>02HW098712</strong>. Will auto-revoke in 5 minutes.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>AI Chat — Admin Grant:</strong> Type a natural language command. The AI checks the device, auto-fills user details, asks for confirmation, then streams each step live. No page navigation needed.</div>
   </div>
-  <ol class="steps">
-    <li>Type: <strong>"grant admin to 17.233.40.200 for 10 minutes"</strong> (new user not in DB)</li>
-    <li>AI finds username/hostname via SSH</li>
-    <li>AI asks: "I need the employee ID for janesmith. What is it?"</li>
-    <li>Type: <strong>1093678</strong></li>
-    <li>AI asks: "What's the Apple email?"</li>
-    <li>Type: <strong>janesmith@apple.com</strong></li>
-    <li>AI shows confirmation → Confirm → Executes</li>
-  </ol>
-  <div class="expected">Expected: All info collected through conversation. Grant proceeds normally.</div>
-</div>
 
-<h2>Scenario 4: AI Chat — GitHub Access</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Grant GitHub access via AI chat</span>
-    <span class="badge badge-pass">PASS</span>
+  <!-- AI CHAT: GITHUB -->
+  <div id="ai-github" class="screen">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti</div></div>
+        <div class="ai-bar"><span class="icon">⚡</span><input type="text" value='give github access to 17.233.58.100 for 30 minutes' readonly><span class="btn">→</span></div>
+        <div class="chat">
+          <div class="chat-header"><span>🤖 AI Assistant</span><span style="color:#ef4444;cursor:pointer">Clear</span></div>
+          <div class="chat-body">
+            <div class="msg msg-user"><div class="bubble bubble-user">give github access to 17.233.58.100 for 30 minutes</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Checking 17.233.58.100...</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Found: <strong>johndoe</strong> on <strong>02HW098712</strong></div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Ready to grant GitHub access:<br><br>• User: <strong>johndoe</strong><br>• Device: <strong>02HW098712</strong><br>• Duration: 30 minutes<br><br><button class="btn-confirm btn-c">Confirm</button><button class="btn-confirm btn-x">Cancel</button></div></div>
+            <div class="msg msg-user"><div class="bubble bubble-user">Confirm</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Unblocking GitHub</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Running JAMF Commands</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Scheduling auto-revoke</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">🎉 GitHub access granted for <strong>johndoe</strong>. Will auto-revoke in 30 minutes.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>AI Chat — GitHub Access:</strong> Same conversational flow. Removes github.com from /etc/hosts, flushes DNS, and installs a persistent auto-revoke timer.</div>
   </div>
-  <ol class="steps">
-    <li>Type: <strong>"give github access to 17.233.58.100 for 30 minutes"</strong></li>
-    <li>AI checks IP → finds user → shows confirmation</li>
-    <li>Click Confirm → ✅ Unblocking GitHub → ✅ JAMF → ✅ Scheduling revoke</li>
-  </ol>
-  <div class="expected">Expected: github.com removed from /etc/hosts, DNS flushed, user notified via dialog.</div>
-</div>
 
-<h2>Scenario 5: AI Chat — Hostname Update</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Update hostname interactively</span>
-    <span class="badge badge-pass">PASS</span>
+  <!-- AI CHAT: HOSTNAME -->
+  <div id="ai-hostname" class="screen">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti</div></div>
+        <div class="ai-bar"><span class="icon">⚡</span><input type="text" value='update hostname on 17.233.58.100' readonly><span class="btn">→</span></div>
+        <div class="chat">
+          <div class="chat-header"><span>🤖 AI Assistant</span><span style="color:#ef4444;cursor:pointer">Clear</span></div>
+          <div class="chat-body">
+            <div class="msg msg-user"><div class="bubble bubble-user">update hostname on 17.233.58.100</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Checking 17.233.58.100...</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Found: <strong>johndoe</strong> on <strong>02HW098712</strong></div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Current hostname is <strong>02HW098712</strong>. What should the new hostname be?</div></div>
+            <div class="msg msg-user"><div class="bubble bubble-user">02HW067534</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai">Update hostname:<br><br>• Device: <strong>02HW098712</strong> → <strong>02HW067534</strong><br>• User: johndoe<br>• IP: 17.233.58.100<br><br><button class="btn-confirm btn-c">Confirm</button><button class="btn-confirm btn-x">Cancel</button></div></div>
+            <div class="msg msg-user"><div class="bubble bubble-user">Confirm</div></div>
+            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Hostname updated to 02HW067534.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>AI Chat — Hostname Update:</strong> The AI detects the current hostname and asks for the new one. Validates the naming convention before applying.</div>
   </div>
-  <ol class="steps">
-    <li>Type: <strong>"update hostname on 17.233.58.100"</strong></li>
-    <li>AI checks IP → "Current hostname is 02HW098712. What should the new hostname be?"</li>
-    <li>Type: <strong>02HW067534</strong></li>
-    <li>AI confirms → Click Confirm → ✅ Hostname updated</li>
-  </ol>
-  <div class="expected">Expected: HostName, ComputerName, and LocalHostName all updated on remote machine.</div>
-</div>
 
-<h2>Scenario 6: Invalid Hostname Prefix</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Hostname validation in chat</span>
-    <span class="badge badge-fail">EXPECTED FAIL</span>
+  <!-- FORM -->
+  <div id="form" class="screen">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/admin-access</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti</div></div>
+        <div style="text-align:center; margin-bottom:20px;"><span style="display:inline-block; padding:6px 20px; border-radius:20px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); font-size:0.85rem; font-weight:600; color:var(--accent);">🛡️ Temporary Admin Access Request</span></div>
+        <div class="form-grid">
+          <div class="field"><label>TCS Employee ID * <span class="tag">(from DB)</span></label><input value="1082456" readonly></div>
+          <div class="field"><label>Apple Email * <span class="tag">(from DB)</span></label><input value="johndoe@apple.com" readonly></div>
+          <div class="field"><label>Hostname * <span class="tag">(via SSH)</span></label><input value="02HW098712" readonly style="opacity:0.7"></div>
+          <div class="field"><label>VPN IP *</label><input value="17.233.58.100" readonly></div>
+          <div class="field"><label>Username * <span class="tag">(via SSH)</span></label><input value="johndoe" readonly style="opacity:0.7"></div>
+          <div class="field"><label>Access Duration *</label><input value="5" readonly></div>
+        </div>
+        <div style="text-align:center; margin:20px 0;"><button style="padding:12px 28px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--violet)); color:white; font-weight:600; font-size:0.88rem; border:none; cursor:pointer;">🛡️ Request Admin Access</button></div>
+        <div style="text-align:center; font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Request Complete</div>
+        <div class="progress-row">
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Granting<br>admin</div></div>
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Running<br>JAMF</div></div>
+          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Scheduling<br>revoke</div></div>
+        </div>
+        <div style="text-align:center; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ Admin access granted to johndoe on 02HW098712. Will auto-revoke in 5 minutes.</div>
+      </div>
+    </div>
+    <div class="desc"><strong>Form-Based Access:</strong> Enter a VPN IP and all fields auto-populate via SSH. Real-time progress streams as each step completes. Expandable logs under each step (admin only).</div>
   </div>
-  <ol class="steps">
-    <li>Type: <strong>"update hostname on 17.233.58.100"</strong></li>
-    <li>AI asks for new hostname</li>
-    <li>Type: <strong>MYCOMPUTER</strong></li>
-    <li>AI responds: "Hostname must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0"</li>
-  </ol>
-  <div class="expected">Expected: Validation blocks invalid hostname. User can retry with correct prefix.</div>
-</div>
 
-<h2>Scenario 7: Already Admin</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Skip grant if user is already admin</span>
-    <span class="badge badge-pass">PASS</span>
+  <!-- NOTIFICATION: GRANT -->
+  <div id="notify-grant" class="screen">
+    <div style="padding: 60px 0; text-align:center;">
+      <p style="font-size:0.75rem; margin-bottom:20px;">This dialog appears on the <strong style="color:var(--text)">target user's MacBook</strong> when access is granted:</p>
+      <div class="macos-dialog">
+        <h4>** Admin Access Granted **</h4>
+        <p>Hello johndoe, you have been granted temporary admin access for 5 minutes. Your privileges will be automatically revoked after the timer expires.</p>
+        <button class="macos-btn">OK</button>
+      </div>
+      <div style="margin-top:40px;">
+        <p style="font-size:0.75rem; margin-bottom:20px;">1 minute before expiry, the user sees:</p>
+        <div class="macos-dialog">
+          <h4>** Access Expiring Soon **</h4>
+          <p>Hello johndoe, your admin access will expire in 1 minute. Save your work.</p>
+          <button class="macos-btn">OK</button>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>Grant Notification:</strong> A native macOS dialog box appears on the user's screen confirming access and duration. A warning shows 1 minute before expiry.</div>
   </div>
-  <ol class="steps">
-    <li>Grant admin to a user who already has admin rights</li>
-    <li>AI detects: "johndoe is already an admin on this device. No changes made."</li>
-  </ol>
-  <div class="expected">Expected: No log entry, no revoke scheduled. Informational message only.</div>
-</div>
 
-<h2>Scenario 8: Auto-Revoke (Admin)</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Automatic revoke after timer expires</span>
-    <span class="badge badge-pass">PASS</span>
+  <!-- NOTIFICATION: REVOKE -->
+  <div id="notify-revoke" class="screen">
+    <div style="padding: 60px 0; text-align:center;">
+      <p style="font-size:0.75rem; margin-bottom:20px;">When the timer expires, this dialog appears on the <strong style="color:var(--text)">user's MacBook</strong>:</p>
+      <div class="macos-dialog">
+        <h4>** User Privileges Updated **</h4>
+        <p>Hello johndoe, your admin privileges have been revoked and updated to Standard User.</p>
+        <p>If you require elevated access (Admin Rights) on your MacBook, please request through the TCS Admin Portal.</p>
+        <button class="macos-btn">OK</button>
+      </div>
+    </div>
+    <div class="desc"><strong>Revoke Notification:</strong> After the timer expires, a persistent background process removes admin rights and shows this dialog. Works even after reboot — no way to bypass.</div>
   </div>
-  <ol class="steps">
-    <li>Grant admin for 5 minutes</li>
-    <li>At 4 minutes: user gets "Access Expiring Soon — 1 minute left" dialog</li>
-    <li>At 5 minutes: LaunchDaemon triggers revoke</li>
-    <li>User gets dialog: "User Privileges Updated — revoked to Standard User"</li>
-    <li>Verify: <code>dseditgroup -o checkmember -m username admin</code> → "not a member"</li>
-  </ol>
-  <div class="expected">Expected: User demoted to standard. Notification shown. LaunchDaemon + script cleaned up. Survives reboot.</div>
-</div>
 
-<h2>Scenario 9: Form-Based Admin Grant</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Traditional form with auto-populate</span>
-    <span class="badge badge-pass">PASS</span>
+  <!-- REPORTS -->
+  <div id="reports" class="screen">
+    <div class="mockup">
+      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/reports</span></div>
+      <div class="mockup-body">
+        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> TCS Admin Portal</div><div class="nav-user">sunilkumaragasti</div></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="font-size:1.1rem; font-weight:700;">Leadership Reports</div>
+          <div style="display:flex; gap:4px;">
+            <span style="padding:5px 12px; border-radius:8px; background:var(--accent); color:white; font-size:0.7rem; font-weight:600;">This Month</span>
+            <span style="padding:5px 12px; border-radius:8px; background:rgba(34,197,94,0.15); color:var(--green); font-size:0.7rem; font-weight:600; border:1px solid rgba(34,197,94,0.3);">CSV</span>
+            <span style="padding:5px 12px; border-radius:8px; background:rgba(59,130,246,0.15); color:var(--accent); font-size:0.7rem; font-weight:600; border:1px solid rgba(59,130,246,0.3);">Excel</span>
+          </div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="val" style="color:#3b82f6">24</div><div class="lbl">Requests</div></div>
+          <div class="metric"><div class="val" style="color:#8b5cf6">12</div><div class="lbl">Users</div></div>
+          <div class="metric"><div class="val" style="color:#22c55e">3</div><div class="lbl">Active Now</div></div>
+          <div class="metric"><div class="val" style="color:#f59e0b">45m</div><div class="lbl">Avg Duration</div></div>
+          <div class="metric"><div class="val" style="color:#06b6d4">96%</div><div class="lbl">Success Rate</div></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px;">
+            <div style="font-size:0.8rem; font-weight:600; margin-bottom:10px;">🔐 Admin Access <span style="float:right; font-size:1.1rem; font-weight:800;">18</span></div>
+            <div style="display:flex; gap:12px; text-align:center; font-size:0.7rem;">
+              <div><div style="color:var(--green); font-size:1rem; font-weight:700;">12</div>Granted</div>
+              <div><div style="color:var(--amber); font-size:1rem; font-weight:700;">4</div>Revoked</div>
+              <div><div style="color:var(--muted); font-size:1rem; font-weight:700;">1</div>Expired</div>
+              <div><div style="color:var(--red); font-size:1rem; font-weight:700;">1</div>Failed</div>
+            </div>
+            <div style="height:6px; border-radius:3px; background:var(--surface2); margin-top:10px; overflow:hidden; display:flex;">
+              <div style="width:67%; background:var(--green)"></div><div style="width:22%; background:var(--amber)"></div><div style="width:5%; background:var(--muted)"></div><div style="width:6%; background:var(--red)"></div>
+            </div>
+          </div>
+          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px;">
+            <div style="font-size:0.8rem; font-weight:600; margin-bottom:10px;">💻 GitHub Access <span style="float:right; font-size:1.1rem; font-weight:800;">6</span></div>
+            <div style="display:flex; gap:12px; text-align:center; font-size:0.7rem;">
+              <div><div style="color:var(--green); font-size:1rem; font-weight:700;">4</div>Granted</div>
+              <div><div style="color:var(--amber); font-size:1rem; font-weight:700;">1</div>Revoked</div>
+              <div><div style="color:var(--muted); font-size:1rem; font-weight:700;">0</div>Expired</div>
+              <div><div style="color:var(--red); font-size:1rem; font-weight:700;">1</div>Failed</div>
+            </div>
+            <div style="height:6px; border-radius:3px; background:var(--surface2); margin-top:10px; overflow:hidden; display:flex;">
+              <div style="width:67%; background:var(--green)"></div><div style="width:16%; background:var(--amber)"></div><div style="width:17%; background:var(--red)"></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px; font-size:0.8rem; font-weight:600;">Monthly Trend</div>
+        <div class="chart">
+          <div class="bar-group"><div class="bar bar-admin" style="height:30%"></div><div class="bar bar-github" style="height:10%"></div><div class="bar-label">Jan</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:45%"></div><div class="bar bar-github" style="height:15%"></div><div class="bar-label">Feb</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:35%"></div><div class="bar bar-github" style="height:20%"></div><div class="bar-label">Mar</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:60%"></div><div class="bar bar-github" style="height:25%"></div><div class="bar-label">Apr</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:80%"></div><div class="bar bar-github" style="height:30%"></div><div class="bar-label">May</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:50%"></div><div class="bar bar-github" style="height:20%"></div><div class="bar-label">Jun</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:70%"></div><div class="bar bar-github" style="height:35%"></div><div class="bar-label">Jul</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:90%"></div><div class="bar bar-github" style="height:40%"></div><div class="bar-label">Aug</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:65%"></div><div class="bar bar-github" style="height:20%"></div><div class="bar-label">Sep</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:55%"></div><div class="bar bar-github" style="height:25%"></div><div class="bar-label">Oct</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:75%"></div><div class="bar bar-github" style="height:30%"></div><div class="bar-label">Nov</div></div>
+          <div class="bar-group"><div class="bar bar-admin" style="height:100%"></div><div class="bar bar-github" style="height:45%"></div><div class="bar-label">Dec</div></div>
+        </div>
+        <div style="display:flex; gap:16px; justify-content:center; font-size:0.7rem; color:var(--muted);"><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--accent);margin-right:4px;vertical-align:middle;"></span>Admin</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--violet);margin-right:4px;vertical-align:middle;"></span>GitHub</span></div>
+      </div>
+    </div>
+    <div class="desc"><strong>Leadership Reports:</strong> Summary metrics, admin vs GitHub breakdown with progress bars, monthly trend chart, top requesters, and CSV/Excel export for stakeholder reviews.</div>
   </div>
-  <ol class="steps">
-    <li>Navigate to Admin Access page</li>
-    <li>Enter VPN IP: <strong>17.233.58.100</strong> → Tab out</li>
-    <li>Username and hostname auto-populate via SSH</li>
-    <li>Employee ID and email auto-populate from database</li>
-    <li>Set duration: 5 minutes → Click "Request Admin Access"</li>
-    <li>Progress bar streams live: Grant ✅ → JAMF ✅ → Revoke ✅ → Notify ✅</li>
-  </ol>
-  <div class="expected">Expected: All fields auto-filled. Real-time streaming progress. Form resets on success.</div>
 </div>
 
-<h2>Scenario 10: Search Employee</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">AI search by employee ID</span>
-    <span class="badge badge-pass">PASS</span>
-  </div>
-  <ol class="steps">
-    <li>Type: <strong>"search employee 1082456"</strong></li>
-    <li>AI shows inline result: username, hostname, email, VPN IP</li>
-  </ol>
-  <div class="expected">Expected: User details shown in chat without page navigation.</div>
-</div>
-
-<h2>Scenario 11: Reports & Export</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">Leadership reports with CSV/Excel download</span>
-    <span class="badge badge-pass">PASS</span>
-  </div>
-  <ol class="steps">
-    <li>Navigate to Leadership Reports</li>
-    <li>Select period: "This Month"</li>
-    <li>View summary cards, admin/github breakdown, monthly trend chart</li>
-    <li>Click CSV → downloads tcs_report_month_2026-04-25.csv</li>
-    <li>Click Excel → downloads .xls file, opens in Excel/Numbers</li>
-  </ol>
-  <div class="expected">Expected: All report sections included in downloads. Data matches on-screen metrics.</div>
-</div>
-
-<h2>Scenario 12: Theme & Accessibility</h2>
-<div class="scenario">
-  <div class="scenario-header">
-    <span class="scenario-title">System theme preference</span>
-    <span class="badge badge-pass">PASS</span>
-  </div>
-  <ol class="steps">
-    <li>Open portal in browser — theme matches macOS setting (light/dark)</li>
-    <li>Toggle macOS Appearance in System Settings</li>
-    <li>Portal theme updates automatically</li>
-    <li>Toggle manually via portal theme button — persists across sessions</li>
-  </ol>
-  <div class="expected">Expected: Theme follows system preference by default, manual toggle overrides and persists.</div>
-</div>
-
-<h2 class="print-break">Screen Storyboard</h2>
-<p>Visual reference for each key screen during the demo recording.</p>
-
-<h3>Screen 1: Dashboard (Opening Shot)</h3>
-<div class="dummy-data" style="line-height:1.4">
-┌──────────────────────────────────────────────────────────┐
-│  TCS Admin Portal                    sunilkumaragasti ▾  │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│            AI-Powered Admin Portal                       │
-│   Manage MacBook access with natural language commands    │
-│                                                          │
-│  ┌─────────────────────────────────────────────┐         │
-│  │ ⚡ Ask AI: "grant admin to 17.x.x.x"  [Run]│         │
-│  └─────────────────────────────────────────────┘         │
-│                                                          │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐       │
-│  │  Admin  │ │ GitHub  │ │Hostname │ │ Reports │       │
-│  │ Access  │ │ Access  │ │ Update  │ │Dashboard│       │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘       │
-│                                                          │
-│  Recent Access Logs    [Search...] [CSV] [Refresh]       │
-│  ─────────────────────────────────────────────────       │
-│  HOSTNAME    USER       IP           STATUS              │
-│  02HW098712  johndoe    17.233.58.100  GRANTED           │
-└──────────────────────────────────────────────────────────┘
-</div>
-
-<h3>Screen 2: AI Chat — Grant Admin (Interactive)</h3>
-<div class="dummy-data" style="line-height:1.4">
-┌─────────────────────────────────────────────────┐
-│ ⚡ grant admin to 17.233.58.100 for 5 minutes   │
-└─────────────────────────────────────────────────┘
-┌─ AI Assistant ──────────────────────── [Clear] ─┐
-│                                                  │
-│  You: grant admin to 17.233.58.100 for 5 min    │
-│                                                  │
-│  AI: ○ ○ ○  (checking...)                       │
-│                                                  │
-│  AI: Found: johndoe on 02HW098712               │
-│                                                  │
-│  AI: Ready to grant admin access:                │
-│      • User: johndoe                             │
-│      • Device: 02HW098712                        │
-│      • IP: 17.233.58.100                         │
-│      • Duration: 5 minutes                       │
-│      • Employee ID: 1082456                      │
-│      • Email: johndoe@apple.com                  │
-│      [Confirm]  [Cancel]                         │
-│                                                  │
-│  You: Confirm                                    │
-│                                                  │
-│  AI: ✅ Granting admin access                    │
-│  AI: ✅ Running JAMF Commands                    │
-│  AI: ✅ Scheduling auto-revoke                   │
-│  AI: ✅ Sending notification                     │
-│                                                  │
-│  AI: 🎉 Admin access granted to johndoe on      │
-│      02HW098712. Will auto-revoke in 5 minutes.  │
-└──────────────────────────────────────────────────┘
-</div>
-
-<h3>Screen 3: macOS Notification (on Target Machine)</h3>
-<div class="dummy-data" style="line-height:1.4">
-┌──────────────────────────────────────────────┐
-│  ** Admin Access Granted **                   │
-│                                               │
-│  Hello johndoe, you have been granted         │
-│  temporary admin access for 5 minutes.        │
-│  Your privileges will be automatically        │
-│  revoked after the timer expires.             │
-│                                               │
-│                                     [  OK  ]  │
-└──────────────────────────────────────────────┘
-</div>
-
-<h3>Screen 4: Revoke Notification (After Timer Expires)</h3>
-<div class="dummy-data" style="line-height:1.4">
-┌──────────────────────────────────────────────┐
-│  ** User Privileges Updated **                │
-│                                               │
-│  Hello johndoe, your admin privileges have    │
-│  been revoked and updated to Standard User.   │
-│                                               │
-│  If you require elevated access (Admin        │
-│  Rights) on your MacBook, please request      │
-│  through the TCS Admin Portal.                │
-│                                               │
-│                                     [  OK  ]  │
-└──────────────────────────────────────────────┘
-</div>
-
-<h3>Screen 5: Form-Based Admin Access Page</h3>
-<div class="dummy-data" style="line-height:1.4">
-┌──────────────────────────────────────────────────────────┐
-│  ← Portal    Temporary Admin Access Request              │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│  TCS Employee ID *        Apple Email *                  │
-│  ┌──────────────┐        ┌────────────────────┐         │
-│  │ 1082456      │        │ johndoe@apple.com  │         │
-│  └──────────────┘        └────────────────────┘         │
-│                                                          │
-│  Hostname * (via SSH)     VPN IP *                       │
-│  ┌──────────────┐        ┌────────────────────┐         │
-│  │ 02HW098712 🔒│        │ 17.233.58.100      │         │
-│  └──────────────┘        └────────────────────┘         │
-│                           ▸ View Connection Logs         │
-│                                                          │
-│  Username * (via SSH)     Access Duration *               │
-│  ┌──────────────┐        ┌──────┐                       │
-│  │ johndoe   🔒 │        │ 5    │ min                   │
-│  └──────────────┘        └──────┘                       │
-│                                                          │
-│           [ 🛡️ Request Admin Access ]                    │
-│                                                          │
-│  ┌─ Processing ─────────────────────────────────┐       │
-│  │  ✅ Granting    ✅ JAMF    ✅ Revoke          │       │
-│  │  ▸ Granting admin access — View Log           │       │
-│  │  ▸ Running JAMF Commands — View Log           │       │
-│  │  ▸ Scheduling auto-revoke — View Log          │       │
-│  └───────────────────────────────────────────────┘       │
-└──────────────────────────────────────────────────────────┘
-</div>
-
-<h3>Screen 6: Leadership Reports</h3>
-<div class="dummy-data" style="line-height:1.4">
-┌──────────────────────────────────────────────────────────┐
-│  ← Portal    Leadership Reports   [Today][Week][Month]   │
-│                                    [CSV] [Excel]         │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐│
-│  │  24    │ │  12    │ │   3    │ │  45m   │ │  96%   ││
-│  │Requests│ │ Users  │ │ Active │ │Avg Dur │ │Success ││
-│  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘│
-│                                                          │
-│  Admin Access: 18        GitHub Access: 6                │
-│  ████████████ 75%        ██████ 25%                      │
-│  ✅12 ⚠️4 ⬜1 ❌1        ✅4 ⚠️1 ⬜0 ❌1                │
-│                                                          │
-│  Monthly Trend (Last 12 Months)                          │
-│  █                                                       │
-│  █ █     █                                               │
-│  █ █ █ █ █     █                                         │
-│  █ █ █ █ █ █ █ █ █                                       │
-│  J F M A M J J A S O N D                                 │
-└──────────────────────────────────────────────────────────┘
-</div>
-
-<h2 class="print-break">Demo Recording Script</h2>
-<div class="section-intro">
-  <p><strong>Recommended order for video recording (5–7 minutes):</strong></p>
-  <ol style="padding-left:20px; color: var(--text);">
-    <li><strong>0:00</strong> — Open portal, show AI command bar and dashboard</li>
-    <li><strong>0:30</strong> — Demo Scenario 1: AI grant admin (full chat flow)</li>
-    <li><strong>2:00</strong> — Demo Scenario 2: Invalid IP (error handling)</li>
-    <li><strong>2:30</strong> — Demo Scenario 4: GitHub access via AI chat</li>
-    <li><strong>3:30</strong> — Demo Scenario 5: Hostname update via AI chat</li>
-    <li><strong>4:30</strong> — Show auto-revoke notification on target machine</li>
-    <li><strong>5:00</strong> — Demo Scenario 11: Reports page + CSV/Excel download</li>
-    <li><strong>5:30</strong> — Show access logs with search/sort</li>
-    <li><strong>6:00</strong> — Toggle dark/light theme</li>
-    <li><strong>6:30</strong> — End: "All actions are audited, revokes are guaranteed"</li>
-  </ol>
-</div>
-
-</div>
+<script>
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
 </body>
 </html>
