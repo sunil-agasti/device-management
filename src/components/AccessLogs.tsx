@@ -173,7 +173,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
   ], []);
 
   return (
-    <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden">
+    <div className="bg-white dark:bg-[#2d2d2f] rounded-2xl border border-slate-200 dark:border-[#3d3d3f] overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700/50">
         <h3 className="text-base font-semibold text-slate-800 dark:text-white flex items-center gap-2">

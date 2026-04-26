@@ -99,7 +99,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#1d1d1f]">
       <Navbar systemInfo={systemInfo} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-4">

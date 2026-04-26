@@ -74,7 +74,7 @@ export default function CleanupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#1d1d1f]">
       <Navbar systemInfo={systemInfo} />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-orange-500 hover:text-orange-600 transition-colors">

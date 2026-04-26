@@ -248,13 +248,13 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
   };
 
   const fieldClass = (name: string) =>
-    `w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-700/50 border ${
-      errors[name] ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'
-    } text-[#1d1d1f] dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm shadow-sm`;
+    `w-full px-4 py-3 rounded-xl bg-white dark:bg-[#3d3d3f] border ${
+      errors[name] ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-[#4d4d4f]'
+    } text-[#1d1d1f] dark:text-[#f5f5f7] placeholder-slate-500 dark:placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/50 focus:border-[#007AFF] transition-all text-sm shadow-sm`;
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-[#2d2d2f] rounded-2xl border border-slate-200 dark:border-[#3d3d3f] p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">TCS Employee ID * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
@@ -319,7 +319,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
         <div className="mt-6 flex justify-center">
           <button type="submit" disabled={loading || sshLoading || (!form.username && !form.hostname)}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-violet-600 text-white font-medium rounded-xl hover:from-blue-600 hover:to-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center gap-2"
+            className="px-8 py-3 bg-[#007AFF] text-white font-medium rounded-xl hover:bg-[#0066d6] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-2"
           >
             {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
@@ -331,7 +331,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
       {steps.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6"
+          className="bg-white dark:bg-[#2d2d2f] rounded-2xl border border-slate-200 dark:border-[#3d3d3f] p-6"
         >
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 text-center">
             {loading ? 'Processing Request...' : 'Request Complete'}
