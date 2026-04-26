@@ -712,8 +712,9 @@ RootLayout (layout.tsx)
   <h3>Prerequisites</h3>
   <ul>
     <li>Node.js 18+ and npm</li>
-    <li><code>sshpass</code> installed (<code>brew install hudochenkov/sshpass/sshpass</code>)</li>
+    <li>SSH access to managed MacBooks as <code>tcsadmin</code></li>
     <li>Apple VPN connection (IP starting with 17.)</li>
+    <li><code>expect</code> (built into macOS at <code>/usr/bin/expect</code>)</li>
   </ul>
 
   <h3>Quick Start</h3>
@@ -722,26 +723,31 @@ RootLayout (layout.tsx)
 <span class="keyword">cd</span> system-admin-portal
 <span class="keyword">npm</span> install
 
-<span class="comment"># Generate SSL certs</span>
-<span class="keyword">mkdir -p</span> certs
-<span class="keyword">openssl</span> req -x509 -newkey rsa:2048 \
-  -keyout certs/key.pem -out certs/cert.pem \
-  -days 365 -nodes -subj <span class="string">'/CN=localhost'</span>
-
 <span class="comment"># Initialize database</span>
-<span class="keyword">mkdir -p</span> data
+<span class="keyword">mkdir -p</span> data data/backup
 <span class="keyword">echo</span> <span class="string">'[]'</span> > data/users.json
 <span class="keyword">echo</span> <span class="string">'[]'</span> > data/admin_logs.json
 <span class="keyword">echo</span> <span class="string">'[]'</span> > data/github_logs.json
 
 <span class="comment"># Run</span>
-<span class="keyword">npm run</span> dev          <span class="comment"># HTTP dev server</span>
-<span class="keyword">npm run</span> dev:https    <span class="comment"># HTTPS dev server</span>
-<span class="keyword">npm run</span> build &amp;&amp; npm start  <span class="comment"># Production HTTPS</span>
-
-<span class="comment"># Install as background service</span>
-<span class="keyword">bash</span> scripts/install-service.sh</pre>
+<span class="keyword">npm run</span> dev          <span class="comment"># Dev server on port 3000</span>
+<span class="keyword">npm run</span> build &amp;&amp; npm start  <span class="comment"># Production</span></pre>
   </div>
+
+  <h3>Environment Configuration</h3>
+  <p>Create a <code>.env</code> file in the project root with the following:</p>
+  <div class="code-block"><pre><span class="comment"># SSH Credentials (REQUIRED)</span>
+<span class="keyword">SSH_USER</span>=<span class="string">tcsadmin</span>
+<span class="keyword">SSH_PRIMARY_PASS</span>=<span class="string">'your-primary-password'</span>
+<span class="keyword">SSH_BACKUP_PASS</span>=<span class="string">'your-backup-password'</span>
+
+<span class="comment"># App URL</span>
+<span class="keyword">APP_URL</span>=<span class="string">http://localhost:3000</span>
+
+<span class="comment"># IDMS Authentication (optional)</span>
+<span class="keyword">IDMS_ENABLED</span>=<span class="string">false</span></pre>
+  </div>
+  <p><strong>Note:</strong> SSH connections use <code>SSH_ASKPASS</code> which supports both password and keyboard-interactive authentication. The password is never exposed in logs or browser output. Use <code>http://localhost:3000</code> to access (Safari does not support <code>0.0.0.0</code>).</p>
 
   <h3>at.apple.com Setup</h3>
   <ol>

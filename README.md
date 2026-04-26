@@ -334,18 +334,37 @@ cd system-admin-portal
 # Install dependencies
 npm install
 
-# Generate SSL certificates
-mkdir -p certs
-openssl req -x509 -newkey rsa:2048 \
-  -keyout certs/key.pem -out certs/cert.pem \
-  -days 365 -nodes -subj '/CN=localhost'
-
 # Initialize data directory
-mkdir -p data
+mkdir -p data data/backup
 echo '[]' > data/users.json
 echo '[]' > data/admin_logs.json
 echo '[]' > data/github_logs.json
 ```
+
+### Environment Setup
+
+Create a `.env` file in the project root:
+
+```bash
+# SSH Credentials (REQUIRED - used to connect to managed MacBooks)
+SSH_USER=tcsadmin
+SSH_PRIMARY_PASS='your-primary-password'
+SSH_BACKUP_PASS='your-backup-password'
+
+# App URL
+APP_URL=http://localhost:3000
+
+# IDMS Authentication (optional - set to true if registered)
+IDMS_ENABLED=false
+```
+
+### Prerequisites
+
+- **Node.js** 18+ and npm
+- **SSH access** to managed MacBooks as `tcsadmin`
+- **Apple VPN** connection (IP starting with 17.)
+- **sshpass** (optional, SSH_ASKPASS is used by default): `brew install hudochenkov/sshpass/sshpass`
+- **expect** (built into macOS at `/usr/bin/expect`)
 
 ### Running
 
@@ -353,20 +372,11 @@ echo '[]' > data/github_logs.json
 # Development (HTTP on port 3000)
 npm run dev
 
-# Development (HTTPS on port 3000)
-npm run dev:https
-
 # Production build
-npm run build
-
-# Production (HTTPS)
-npm start
-
-# Production (HTTP)
-npm run start:http
+npm run build && npm start
 ```
 
-Access the portal at `http://localhost:3000` or via `https://at.apple.com/tcs-device-management-portal`
+Access the portal at `http://localhost:3000` (use localhost, not 0.0.0.0 for Safari compatibility)
 
 ## Project Structure
 
