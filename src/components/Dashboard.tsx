@@ -54,11 +54,21 @@ const cards = [
     gradient: 'from-pink-500 to-rose-500',
     shadow: 'shadow-pink-500/20',
   },
+  {
+    title: 'Access Logs',
+    description: 'View all admin and GitHub access logs with search, sort, and CSV export',
+    href: '/logs',
+    icon: (
+      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    ),
+    gradient: 'from-slate-500 to-zinc-500',
+    shadow: 'shadow-slate-500/20',
+  },
 ];
 
 export default function Dashboard() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {cards.map((card, i) => (
         <motion.div
           key={card.href}
