@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors font-sans">
+      <body className="min-h-full flex flex-col bg-[#f5f5f7] dark:bg-slate-950 text-[#1d1d1f] dark:text-slate-100 transition-colors font-sans">
         <ThemeProvider>
           <AuthGuard>
             <SessionTimeout />

@@ -162,36 +162,36 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
   };
 
   const fieldClass = (name: string) =>
-    `w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border ${
-      errors[name] ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-600'
-    } text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all text-sm`;
+    `w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-700/50 border ${
+      errors[name] ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'
+    } text-[#1d1d1f] dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all text-sm shadow-sm`;
 
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">TCS Employee ID * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
+            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">TCS Employee ID * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
             <input type="text" inputMode="numeric" value={form.employeeId} onChange={e => setForm({...form, employeeId: e.target.value.replace(/\D/g, '')})} placeholder="e.g. 1255389" className={fieldClass('employeeId')} />
             {errors.employeeId && <p className="mt-1 text-xs text-red-500">{errors.employeeId}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Apple Email * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
+            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Apple Email * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
             <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="name@apple.com" className={fieldClass('email')} />
             {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Hostname <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
+            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Hostname <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
             <input type="text" value={form.hostname} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('hostname')} bg-slate-100 dark:bg-slate-700/70 cursor-not-allowed`} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">VPN IP *</label>
+            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">VPN IP *</label>
             <input type="text" value={form.vpnIp} onChange={e => setForm({...form, vpnIp: e.target.value})} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
             {errors.vpnIp && <p className="mt-1 text-xs text-red-500">{errors.vpnIp}</p>}
             {sshError && <p className="mt-1 text-xs text-red-500 bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Access Duration (minutes) *</label>
+            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Access Duration (minutes) *</label>
             <input type="text" inputMode="numeric" value={form.duration} onChange={e => setForm({...form, duration: e.target.value === '' ? '' as unknown as number : parseInt(e.target.value) || 0})} className={fieldClass('duration')} />
             <p className="mt-1 text-xs text-slate-400">Default: 30 min. Max: 180 min (3 hours)</p>
             {errors.duration && <p className="mt-1 text-xs text-red-500">{errors.duration}</p>}
