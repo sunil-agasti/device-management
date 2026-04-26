@@ -142,10 +142,25 @@ export function getBackupGithubLogs(): AccessLog[] {
 
 export function logsToCSV(logs: AccessLog[]): string {
   if (logs.length === 0) return '';
-  const headers = ['ID', 'Type', 'Employee ID', 'Email', 'Hostname', 'Username', 'VPN IP', 'Granted At', 'Duration (min)', 'Revoked At', 'Status', 'Requested By', 'Device'];
+  const headers = ['ID', 'Type', 'Employee ID', 'Email', 'Hostname', 'Username', 'VPN IP', 'Granted At', 'Duration (min)', 'Scheduled Revoke', 'Revoked At', 'Status', 'Requested By', 'Device'];
   const rows = logs.map(l => [
     l.id, l.type, l.employeeId, l.email, l.hostname, l.username, l.vpnIp,
-    l.grantedAt, l.duration.toString(), l.revokedAt || '', l.status, l.requestedBy, l.device || 'Unknown'
+    l.grantedAt, l.duration.toString(), l.scheduledRevokeAt || '', l.revokedAt || '', l.status, l.requestedBy, l.device || 'Unknown'
   ]);
   return [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+}
+
+export function logFailure(type: string, action: string, username: string, ip: string, status: string, details: string) {
+  const filePath = path.join(DATA_DIR, 'failure_logs.json');
+  ensureFile(filePath);
+  const raw = fs.readFileSync(filePath, 'utf-8').trim();
+  let logs: Record<string, unknown>[] = [];
+  try { if (raw) logs = JSON.parse(raw); } catch { logs = []; }
+  logs.push({
+    timestamp: new Date().toISOString(),
+    type, action, username, ip, status,
+    details: details.slice(0, 500),
+  });
+  if (logs.length > 1000) logs = logs.slice(-500);
+  fs.writeFileSync(filePath, JSON.stringify(logs, null, 2), 'utf-8');
 }

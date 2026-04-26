@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
-import { addLog, updateLogStatus, upsertUser, findUserByUsername } from '@/lib/db';
+import { addLog, updateLogStatus, upsertUser, findUserByUsername, logFailure } from '@/lib/db';
 import { validateVpnIp, validateHostname, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
@@ -25,23 +25,45 @@ async function revokeAdminAccess(username: string, logId: string, originalIp: st
     try {
       await execAsync(`sudo /usr/sbin/dseditgroup -o edit -d ${username} -t user admin`, { timeout: 10000 });
       updateLogStatus(logId, 'admin', 'REVOKED');
-      await sendNotification(currentIp, 'Admin Access Removed', 'Your admin access has been revoked.');
+      await sendNotification(currentIp, 'User Privileges Updated', `Hello ${username}, your admin privileges have been revoked and updated to Standard User.`);
+      logFailure('admin', 'revoke', username, currentIp, 'SUCCESS', 'Local revoke completed');
       return;
-    } catch { /* fall through */ }
+    } catch (e) {
+      logFailure('admin', 'revoke', username, currentIp, 'RETRY', `Local revoke failed: ${e}`);
+    }
   }
 
   const { passwords } = getSshCredentials();
   const safePass = (passwords[0] || '').replace(/'/g, "'\\''");
-  const revokeCmd = `CONSOLE_USER=$(stat -f%Su /dev/console); echo '${safePass}' | sudo -S /usr/sbin/dseditgroup -o edit -d $CONSOLE_USER -t user admin 2>/dev/null; dseditgroup -o checkmember -m $CONSOLE_USER admin 2>/dev/null`;
-  for (const ip of [currentIp, originalIp]) {
-    const result = sshRunCommand(ip, revokeCmd);
-    if (result.success && result.output.includes('not a member')) {
-      updateLogStatus(logId, 'admin', 'REVOKED');
-      await sendNotification(ip, 'Admin Access Removed', 'Your admin access has been revoked.');
-      return;
+
+  // Retry up to 3 times with 30s delay (LaunchDaemon might still be running)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    for (const ip of [currentIp, originalIp]) {
+      // First check if already revoked (LaunchDaemon might have done it)
+      const checkResult = sshRunCommand(ip, `dseditgroup -o checkmember -m $(stat -f%Su /dev/console) admin 2>&1`);
+      if (checkResult.success && /not a member/i.test(checkResult.output)) {
+        updateLogStatus(logId, 'admin', 'REVOKED');
+        logFailure('admin', 'revoke', username, ip, 'SUCCESS', `Already revoked (attempt ${attempt}): ${checkResult.output}`);
+        return;
+      }
+
+      // Try to revoke
+      const revokeCmd = `CONSOLE_USER=$(stat -f%Su /dev/console); echo '${safePass}' | sudo -S /usr/sbin/dseditgroup -o edit -d $CONSOLE_USER -t user admin 2>&1; echo "CHECK:"; dseditgroup -o checkmember -m $CONSOLE_USER admin 2>&1`;
+      const result = sshRunCommand(ip, revokeCmd);
+      if (result.success && /not a member/i.test(result.output)) {
+        updateLogStatus(logId, 'admin', 'REVOKED');
+        await sendNotification(ip, 'User Privileges Updated', `Hello ${username}, your admin privileges have been revoked and updated to Standard User.`);
+        logFailure('admin', 'revoke', username, ip, 'SUCCESS', `Revoked on attempt ${attempt}: ${result.output}`);
+        return;
+      }
+      logFailure('admin', 'revoke', username, ip, 'RETRY', `Attempt ${attempt} failed. SSH: ${result.success}, output: ${result.output}`);
     }
+    // Wait 30s before retry (LaunchDaemon polls every 30s)
+    if (attempt < 3) await new Promise(r => setTimeout(r, 30000));
   }
+
   updateLogStatus(logId, 'admin', 'FAILED');
+  logFailure('admin', 'revoke', username, currentIp, 'FAILED', 'All 3 attempts failed');
 }
 
 export async function POST(req: NextRequest) {

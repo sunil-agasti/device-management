@@ -146,12 +146,17 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
   };
 
   const getTimeRemaining = useCallback((log: Log) => {
-    if (log.status !== 'GRANTED') return null;
+    if (log.status === 'REVOKED' || log.status === 'FAILED') return null;
     const expiry = new Date(log.grantedAt).getTime() + log.duration * 60 * 1000;
     const remaining = expiry - tick;
-    if (remaining <= 0) return 'Expiring...';
+    if (remaining <= 0) {
+      const expiredAt = new Date(expiry).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      return `Expired at ${expiredAt}`;
+    }
     const mins = Math.floor(remaining / 60000);
-    return `${mins}m remaining`;
+    const secs = Math.floor((remaining % 60000) / 1000);
+    if (mins < 1) return `${secs}s remaining`;
+    return `${mins}m ${secs}s remaining`;
   }, [tick]);
 
   const formatDate = (d: string) => {
