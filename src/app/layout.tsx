@@ -5,7 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import SessionTimeout from "@/components/SessionTimeout";
 
 export const metadata: Metadata = {
-  title: "TCS Admin Portal - AI-Powered MacBook Management",
+  title: "Device Management Portal - AI-Powered MacBook Management",
   description: "Secure MacBook Management & Access Control Portal with AI-powered commands",
 };
 

@@ -101,7 +101,7 @@ export default function Home() {
       </main>
 
       <footer className="text-center py-6 text-xs text-slate-400 dark:text-slate-600">
-        TCS Admin Portal &middot; Secure MacBook Management & Access Control
+        Device Management Portal &middot; Secure MacBook Management & Access Control
       </footer>
     </div>
   );

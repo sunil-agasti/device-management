@@ -48,7 +48,7 @@ export default function ReportsPage() {
   const buildReportRows = () => {
     if (!data) return [];
     const rows: string[][] = [];
-    rows.push(['TCS Admin Portal - Report', '', '', '']);
+    rows.push(['Device Management Portal - Report', '', '', '']);
     rows.push(['Period', periods.find(p => p.value === period)?.label || period, '', '']);
     rows.push(['Generated', new Date().toLocaleString(), '', '']);
     rows.push([]);

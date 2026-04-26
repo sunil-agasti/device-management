@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################################
-# Install TCS Admin Portal as a service
+# Install Device Management Portal as a service
 # Runs keepalive on login (caffeinate + VPN + server)
 ############################################
 
@@ -10,7 +10,7 @@ PLIST_SRC="$SCRIPT_DIR/com.tcs.admin-portal.keepalive.plist"
 PLIST_DST="$HOME/Library/LaunchAgents/com.tcs.admin-portal.keepalive.plist"
 
 echo "=========================================="
-echo "TCS Admin Portal - Service Installer"
+echo "Device Management Portal - Service Installer"
 echo "=========================================="
 echo "Portal: $PORTAL_DIR"
 echo ""

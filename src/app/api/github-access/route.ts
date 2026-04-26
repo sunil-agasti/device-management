@@ -52,7 +52,7 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
 
   const revokeScript = `/tmp/github_revoke_${Date.now()}.sh`;
   try {
-    const content = `#!/bin/bash\nsleep ${duration * 60}\nsudo cp /etc/hosts /etc/hosts.bak\nsudo sed -i '' '/^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com/d' /etc/hosts\necho "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null\necho "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null\nsudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder\nosascript -e 'display dialog "** GitHub Access Revoked **\n\nYour public GitHub access has been revoked.\n\nIf you need GitHub access again, please request through the TCS Admin Portal." with title "** GitHub Access Revoked **" buttons {"OK"} default button "OK" giving up after 300'\nrm -f "${revokeScript}"`;
+    const content = `#!/bin/bash\nsleep ${duration * 60}\nsudo cp /etc/hosts /etc/hosts.bak\nsudo sed -i '' '/^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com/d' /etc/hosts\necho "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null\necho "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null\nsudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder\nosascript -e 'display dialog "** GitHub Access Revoked **\n\nYour public GitHub access has been revoked.\n\nIf you need GitHub access again, please request through the Device Management Portal." with title "** GitHub Access Revoked **" buttons {"OK"} default button "OK" giving up after 300'\nrm -f "${revokeScript}"`;
     await execAsync(`echo '${content.replace(/'/g, "'\\''")}' > "${revokeScript}" && chmod +x "${revokeScript}" && nohup bash "${revokeScript}" &>/dev/null &`);
     steps.push({ id: 'schedule', label: 'Scheduling auto-revoke', success: true, log: `Revoke scheduled in ${duration} minutes\n> echo "127.0.0.1 github.com" >> /etc/hosts\n> dscacheutil -flushcache` });
   } catch (e) {
@@ -116,7 +116,7 @@ sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display d
 
 Hello '\\$CONSOLE_USER', your public GitHub access has been revoked.
 
-If you need GitHub access again, please request through the TCS Admin Portal." with title "** GitHub Access Revoked **" buttons {"OK"} default button "OK" giving up after 300'
+If you need GitHub access again, please request through the Device Management Portal." with title "** GitHub Access Revoked **" buttons {"OK"} default button "OK" giving up after 300'
 sudo rm -f /usr/local/bin/github_revoke.sh
 sudo launchctl bootout system/com.tcs.github.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.github.revoke.plist

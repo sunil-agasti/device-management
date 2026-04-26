@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################################
-# TCS Admin Portal - Keep Alive Script
+# Device Management Portal - Keep Alive Script
 # Prevents sleep, monitors VPN, restarts server
 ############################################
 
@@ -97,7 +97,7 @@ handle_ip_change() {
     log "   Direct access: https://$new_ip:$PORT"
 
     # Send desktop notification about IP change
-    osascript -e "display notification \"New VPN IP: $new_ip. Update at.apple.com redirect if needed.\" with title \"TCS Portal - IP Changed\"" 2>/dev/null
+    osascript -e "display notification \"New VPN IP: $new_ip. Update at.apple.com redirect if needed.\" with title \"Device Management Portal - IP Changed\"" 2>/dev/null
   fi
 }
 
@@ -121,7 +121,7 @@ start_server() {
     return 0
   fi
 
-  log "🚀 Starting TCS Admin Portal server..."
+  log "🚀 Starting Device Management Portal server..."
   cd "$PORTAL_DIR"
 
   if [ -d ".next" ]; then
@@ -158,7 +158,7 @@ stop_server() {
 ############################################
 main() {
   log "=========================================="
-  log "TCS Admin Portal Keep-Alive Starting"
+  log "Device Management Portal Keep-Alive Starting"
   log "Portal Dir: $PORTAL_DIR"
   log "Port: $PORT"
   log "=========================================="

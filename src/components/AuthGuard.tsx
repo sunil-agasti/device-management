@@ -69,7 +69,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
           </div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Apple SSO Required</h2>
           <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm">
-            Sign in with your Apple IDMS account to access the TCS Admin Portal
+            Sign in with your Apple IDMS account to access the Device Management Portal
           </p>
           <a href={idmsUrl}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-violet-600 text-white font-medium rounded-xl hover:from-blue-600 hover:to-violet-700 transition-all shadow-lg shadow-blue-500/25"
@@ -94,7 +94,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
           </div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Access Denied</h2>
           <p className="text-slate-600 dark:text-slate-400 mb-4">
-            Connect to <strong>Apple VPN</strong> to access the TCS Admin Portal
+            Connect to <strong>Apple VPN</strong> to access the Device Management Portal
           </p>
           <div className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-xs font-mono text-slate-500 dark:text-slate-400">
             Your IP: {clientIp}

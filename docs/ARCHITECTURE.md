@@ -1,8 +1,8 @@
-# Architecture Document - TCS Admin Portal
+# Architecture Document - Device Management Portal
 
 ## 1. System Overview
 
-The TCS Admin Portal is a full-stack web application that provides a modern, AI-powered interface for managing temporary access privileges on Apple-managed MacBooks. It replaces manual SSH operations with a centralized web portal featuring natural language commands.
+The Device Management Portal is a full-stack web application that provides a modern, AI-powered interface for managing temporary access privileges on Apple-managed MacBooks. It replaces manual SSH operations with a centralized web portal featuring natural language commands.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

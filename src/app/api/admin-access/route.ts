@@ -196,7 +196,7 @@ osascript -e 'display dialog "** User Privileges Updated **
 
 Hello ${username}, your admin privileges have been revoked and updated to Standard User.
 
-If you require elevated access (Admin Rights) on your MacBook, please request through the TCS Admin Portal." with title "** User Privileges Updated **" buttons {"OK"} default button "OK" giving up after 300'
+If you require elevated access (Admin Rights) on your MacBook, please request through the Device Management Portal." with title "** User Privileges Updated **" buttons {"OK"} default button "OK" giving up after 300'
 rm -f "${revokeScript}"
 sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist`;
@@ -240,7 +240,7 @@ sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display d
 
 Hello '\\$CONSOLE_USER', your admin privileges have been revoked and updated to Standard User.
 
-If you require elevated access (Admin Rights) on your MacBook, please request through the TCS Admin Portal." with title "** User Privileges Updated **" buttons {"OK"} default button "OK" giving up after 300'
+If you require elevated access (Admin Rights) on your MacBook, please request through the Device Management Portal." with title "** User Privileges Updated **" buttons {"OK"} default button "OK" giving up after 300'
 sudo rm -f /usr/local/bin/admin_revoke.sh
 sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist
