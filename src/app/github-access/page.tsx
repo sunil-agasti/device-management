@@ -9,14 +9,16 @@ import GithubAccessForm from '@/components/GithubAccessForm';
 export default function GithubAccessPage() {
   const searchParams = useSearchParams();
   const [systemInfo, setSystemInfo] = useState<{ serverUsername: string; serverHostname: string; clientIp: string } | undefined>();
-  const [requestedBy, setRequestedBy] = useState('');
+  const [requestedBy, setRequestedBy] = useState('Loading...');
 
   useEffect(() => {
     fetch('/api/system-info')
       .then(r => r.json())
       .then(data => {
         setSystemInfo(data);
-        setRequestedBy(`${data.clientUsername || data.serverUsername} (${data.clientHostname || data.serverHostname})`);
+        const user = data.clientUsername || data.serverUsername || 'system';
+        const host = data.clientHostname || data.serverHostname || '';
+        setRequestedBy(host ? `${user} (${host})` : user);
       })
       .catch(() => setRequestedBy('system'));
   }, []);

@@ -1,4 +1,4 @@
-# TCS Admin Portal - AI-Powered MacBook Management
+# Device Management Portal - AI-Powered MacBook Management
 
 A modern, AI-powered web portal for managing temporary admin access, GitHub access, hostname updates, and system cleanup on managed Apple MacBooks. Built with Next.js, TypeScript, and Tailwind CSS.
 

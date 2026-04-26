@@ -272,7 +272,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                       {log.device === 'Mac' && <span title="Mac">&#128187; Mac</span>}
                       {log.device === 'iPhone' && <span title="iPhone">&#128241; iPhone</span>}
                       {log.device === 'iPad' && <span title="iPad">&#128242; iPad</span>}
-                      {(!log.device || log.device === 'Unknown') && <span title="Unknown">&#128421; Unknown</span>}
+                      {(!log.device || log.device === 'Unknown') && <span title="Other">&#128187; Other</span>}
                     </td>
                     <td className="px-4 py-3">{getStatusBadge(log.status)}</td>
                   </motion.tr>

@@ -16,7 +16,7 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
           <Link href="/" className="flex items-center gap-3 group">
             <Image
               src="/logo.png"
-              alt="TCS Device Management Portal"
+              alt="Device Management Portal"
               width={180}
               height={44}
               className="h-10 w-auto dark:invert"
