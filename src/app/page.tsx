@@ -6,6 +6,7 @@ import Dashboard from '@/components/Dashboard';
 import AIPromptBar from '@/components/AIPromptBar';
 import ExpiryWarning from '@/components/ExpiryWarning';
 import AccessLogs from '@/components/AccessLogs';
+import ActivityFeed from '@/components/ActivityFeed';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 
@@ -93,6 +94,10 @@ export default function Home() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Dashboard />
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <ActivityFeed />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
