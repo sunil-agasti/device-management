@@ -153,6 +153,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
         setLogRefreshKey(prev => prev + 1);
         setForm({ employeeId: '', email: '', hostname: '', vpnIp: '', username: '', duration: 30 });
         setSshError('');
+        setTimeout(() => { setMessage(null); setSteps([]); setStepLogs({}); }, 5000);
       }
     } catch (err) {
       setMessage({ type: 'error', text: 'Request failed: ' + String(err) });

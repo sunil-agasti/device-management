@@ -21,7 +21,7 @@ export default function ProgressTracker({ steps }: { steps: Step[] }) {
         {/* Connection line */}
         <div className="absolute top-6 left-0 right-0 h-0.5 bg-slate-200 dark:bg-slate-700" />
         <motion.div
-          className={`absolute top-6 left-0 h-0.5 ${hasError ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 to-violet-500'}`}
+          className={`absolute top-6 left-0 h-0.5 ${hasError ? 'bg-[#FF3B30]' : 'bg-[#007AFF]'}`}
           initial={{ width: '0%' }}
           animate={{
             width: allDone ? '100%' : activeIndex >= 0 ? `${(activeIndex / (steps.length - 1)) * 100}%` : '0%',
@@ -37,11 +37,11 @@ export default function ProgressTracker({ steps }: { steps: Step[] }) {
               transition={{ delay: i * 0.1 }}
               className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-500
                 ${step.status === 'completed'
-                  ? 'bg-gradient-to-br from-green-400 to-emerald-500 border-green-400 shadow-lg shadow-green-500/30'
+                  ? 'bg-[#34C759] border-[#34C759] shadow-lg shadow-[#34C759]/30'
                   : step.status === 'active'
-                  ? 'bg-gradient-to-br from-blue-400 to-violet-500 border-blue-400 shadow-lg shadow-blue-500/30'
+                  ? 'bg-[#007AFF] border-[#007AFF] shadow-lg shadow-[#007AFF]/30'
                   : step.status === 'error'
-                  ? 'bg-gradient-to-br from-red-400 to-rose-500 border-red-400 shadow-lg shadow-red-500/30'
+                  ? 'bg-[#FF3B30] border-[#FF3B30] shadow-lg shadow-[#FF3B30]/30'
                   : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600'
                 }`}
             >
@@ -65,9 +65,9 @@ export default function ProgressTracker({ steps }: { steps: Step[] }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 + 0.2 }}
               className={`mt-3 text-xs font-medium text-center max-w-[100px] leading-tight
-                ${step.status === 'completed' ? 'text-green-600 dark:text-green-400'
-                  : step.status === 'active' ? 'text-blue-600 dark:text-blue-400'
-                  : step.status === 'error' ? 'text-red-600 dark:text-red-400'
+                ${step.status === 'completed' ? 'text-[#34C759]'
+                  : step.status === 'active' ? 'text-[#007AFF]'
+                  : step.status === 'error' ? 'text-[#FF3B30]'
                   : 'text-slate-400 dark:text-slate-500'
                 }`}
             >

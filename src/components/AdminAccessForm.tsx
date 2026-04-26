@@ -206,7 +206,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
               } else if (event.alreadyAdmin) {
                 setMessage({ type: 'success', text: event.message });
                 setAlreadyGranted(true);
-                setTimeout(() => setMessage(null), 5000);
+                setTimeout(() => { setMessage(null); setSteps([]); setStepLogs({}); }, 5000);
               } else {
                 setMessage({ type: 'success', text: event.message });
                 setLogRefreshKey(prev => prev + 1);
@@ -214,7 +214,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
                 setForm({ employeeId: '', email: '', hostname: '', vpnIp: '', username: '', duration: 60 });
                 setSshLogs([]);
                 setSshError('');
-                setTimeout(() => setMessage(null), 5000);
+                setTimeout(() => { setMessage(null); setSteps([]); setStepLogs({}); }, 5000);
               }
               continue;
             }
