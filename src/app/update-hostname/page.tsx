@@ -86,7 +86,7 @@ export default function UpdateHostnamePage() {
     } text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-sm`;
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#1d1d1f]">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-black">
       <Navbar systemInfo={systemInfo} />
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emerald-600 transition-colors">

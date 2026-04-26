@@ -10,16 +10,16 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-[#2d2d2f]/90 border-b border-slate-200 dark:border-[#3d3d3f]">
+    <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-black/90 border-b border-slate-200 dark:border-[#333]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           <Link href="/" className="flex items-center gap-3 group">
             <Image
               src="/logo.png"
               alt="Device Management Portal"
-              width={240}
-              height={56}
-              className="h-12 w-auto dark:invert"
+              width={320}
+              height={72}
+              className="h-14 w-auto mix-blend-multiply dark:invert dark:mix-blend-screen"
               priority
             />
           </Link>

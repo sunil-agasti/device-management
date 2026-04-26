@@ -254,7 +254,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-[#2d2d2f] rounded-2xl border border-slate-200 dark:border-[#3d3d3f] p-6">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">TCS Employee ID * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
@@ -331,7 +331,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
       {steps.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-[#2d2d2f] rounded-2xl border border-slate-200 dark:border-[#3d3d3f] p-6"
+          className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6"
         >
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 text-center">
             {loading ? 'Processing Request...' : 'Request Complete'}

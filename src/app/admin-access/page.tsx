@@ -33,7 +33,7 @@ export default function AdminAccessPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#1d1d1f]">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-black">
       <Navbar systemInfo={systemInfo} />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
