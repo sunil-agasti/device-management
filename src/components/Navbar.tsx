@@ -3,30 +3,30 @@
 import { useTheme } from '@/context/ThemeContext';
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: string; serverHostname: string; clientIp: string; clientUsername?: string; clientHostname?: string } }) {
   const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700/50">
+    <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-[#2d2d2f]/90 border-b border-slate-200 dark:border-[#3d3d3f]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-shadow">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400 bg-clip-text text-transparent">
-                TCS Admin Portal
-              </h1>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 -mt-0.5">Secure MacBook Management</p>
-            </div>
+            <Image
+              src="/logo.png"
+              alt="TCS Device Management Portal"
+              width={180}
+              height={44}
+              className="h-10 w-auto dark:invert"
+              priority
+            />
           </Link>
 
           <div className="hidden md:flex items-center gap-2">
             {systemInfo && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#3d3d3f] text-xs">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-slate-600 dark:text-slate-300">
                   {systemInfo.clientUsername || systemInfo.serverUsername} ({systemInfo.clientHostname || systemInfo.serverHostname})
@@ -37,7 +37,7 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
             )}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              className="p-2 rounded-lg bg-slate-100 dark:bg-[#3d3d3f] hover:bg-slate-200 dark:hover:bg-[#4d4d4f] transition-colors"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? (
@@ -48,7 +48,7 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
             </button>
           </div>
 
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#3d3d3f]">
             <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
             </svg>
@@ -57,13 +57,13 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-200 dark:border-slate-700 p-4 space-y-2">
+        <div className="md:hidden border-t border-slate-200 dark:border-[#3d3d3f] p-4 space-y-2">
           {systemInfo && (
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {systemInfo.clientUsername || systemInfo.serverUsername} ({systemInfo.clientHostname || systemInfo.serverHostname}) | {systemInfo.clientIp}
             </div>
           )}
-          <button onClick={toggleTheme} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-sm text-slate-600 dark:text-slate-300">
+          <button onClick={toggleTheme} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#3d3d3f] text-sm text-slate-600 dark:text-[#f5f5f7]">
             {theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           </button>
         </div>
