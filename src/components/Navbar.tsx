@@ -17,22 +17,27 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
             <Image
               src="/logo.png"
               alt="Device Management Portal"
-              width={180}
-              height={44}
-              className="h-10 w-auto dark:invert"
+              width={240}
+              height={56}
+              className="h-12 w-auto dark:invert"
               priority
             />
           </Link>
 
           <div className="hidden md:flex items-center gap-2">
-            {systemInfo && (
+            {systemInfo ? (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#3d3d3f] text-xs">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-slate-600 dark:text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-[#34C759] animate-pulse" />
+                <span className="text-slate-600 dark:text-[#f5f5f7]">
                   {systemInfo.clientUsername || systemInfo.serverUsername} ({systemInfo.clientHostname || systemInfo.serverHostname})
                 </span>
                 <span className="text-slate-400">|</span>
-                <span className="text-slate-500 dark:text-slate-400">{systemInfo.clientIp}</span>
+                <span className="text-slate-500 dark:text-[#86868b]">{systemInfo.clientIp}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#3d3d3f] text-xs">
+                <div className="w-3 h-3 border-2 border-slate-300 dark:border-[#4d4d4f] border-t-[#007AFF] rounded-full animate-spin" />
+                <span className="text-slate-400 dark:text-[#86868b]">Connecting...</span>
               </div>
             )}
             <button
