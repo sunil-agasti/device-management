@@ -19,7 +19,15 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
               alt="Device Management Portal"
               width={300}
               height={48}
-              className="h-11 w-auto dark:invert dark:brightness-200 dark:contrast-150"
+              className="h-11 w-auto block dark:hidden"
+              priority
+            />
+            <Image
+              src="/logo-dark.png"
+              alt="Device Management Portal"
+              width={300}
+              height={48}
+              className="h-11 w-auto hidden dark:block"
               priority
             />
           </Link>
