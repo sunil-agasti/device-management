@@ -172,7 +172,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">TCS Employee ID * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
-            <input type="text" value={form.employeeId} onChange={e => setForm({...form, employeeId: e.target.value})} placeholder="e.g. 1255389" className={fieldClass('employeeId')} />
+            <input type="text" inputMode="numeric" value={form.employeeId} onChange={e => setForm({...form, employeeId: e.target.value.replace(/\D/g, '')})} placeholder="e.g. 1255389" className={fieldClass('employeeId')} />
             {errors.employeeId && <p className="mt-1 text-xs text-red-500">{errors.employeeId}</p>}
           </div>
           <div>
