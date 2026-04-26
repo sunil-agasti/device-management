@@ -280,7 +280,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
             <input type="text" value={form.vpnIp} onChange={e => handleIpChange(e.target.value)} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
             {errors.vpnIp && <p className="mt-1 text-xs text-red-500">{errors.vpnIp}</p>}
             {sshError && <p className="mt-1 text-xs text-red-500 bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
-            {requestedBy === 'sunilkumaragasti' && (sshLoading || sshLogs.length > 0) && (
+            {requestedBy.includes('sunilkumaragasti') && (sshLoading || sshLogs.length > 0) && (
               <div className="mt-2">
                 <button type="button" onClick={() => setShowLogs(!showLogs)} className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 flex items-center gap-1">
                   <svg className={`w-3 h-3 transition-transform ${showLogs ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -337,7 +337,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
             {loading ? 'Processing Request...' : 'Request Complete'}
           </h3>
           <ProgressTracker steps={steps} />
-          {requestedBy === 'sunilkumaragasti' && (
+          {requestedBy.includes('sunilkumaragasti') && (
           <div className="mt-4 space-y-1.5">
             {steps.map(step => (
               <div key={step.id} className="border border-slate-200 dark:border-slate-700/50 rounded-lg overflow-hidden">

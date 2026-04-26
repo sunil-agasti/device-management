@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (!overallSuccess) {
-          addLog({ id: logId, hostname, username, employeeId, email, vpnIp, grantedAt: new Date().toISOString(), duration, revokedAt: null, status: 'FAILED', requestedBy: requestedBy || 'system', type: 'admin', device });
+          addLog({ id: logId, hostname, username, employeeId, email, vpnIp, grantedAt: new Date().toISOString(), duration, scheduledRevokeAt: new Date(Date.now() + duration * 60000).toISOString(), revokedAt: null, status: 'FAILED', requestedBy: requestedBy || 'system', type: 'admin', device });
           write({ done: true, success: false, logId, error: 'Failed to grant admin access' });
           controller.close();
           return;
@@ -255,7 +255,7 @@ echo "SCHEDULE_OK"`;
         });
 
         // Log and schedule server-side backup
-        addLog({ id: logId, hostname, username, employeeId, email, vpnIp, grantedAt: new Date().toISOString(), duration, revokedAt: null, status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'admin', device });
+        addLog({ id: logId, hostname, username, employeeId, email, vpnIp, grantedAt: new Date().toISOString(), duration, scheduledRevokeAt: new Date(Date.now() + duration * 60000).toISOString(), revokedAt: null, status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'admin', device });
 
         if (duration > 1) {
           setTimeout(async () => {

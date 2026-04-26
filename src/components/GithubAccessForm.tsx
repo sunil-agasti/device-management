@@ -224,7 +224,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
             {loading ? 'Processing Request...' : 'Request Complete'}
           </h3>
           <ProgressTracker steps={steps} />
-          {requestedBy === 'sunilkumaragasti' && (
+          {requestedBy.includes('sunilkumaragasti') && (
           <div className="mt-4 space-y-1.5">
             {steps.map(step => (
               <div key={step.id} className="border border-slate-200 dark:border-slate-700/50 rounded-lg overflow-hidden">

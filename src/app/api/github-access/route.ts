@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
     if (!result.success) {
       addLog({
         id: logId, hostname: hostname || '', username: username || '', employeeId, email, vpnIp,
-        grantedAt: new Date().toISOString(), duration, revokedAt: null,
+        grantedAt: new Date().toISOString(), duration, scheduledRevokeAt: new Date(Date.now() + duration * 60000).toISOString(), revokedAt: null,
         status: 'FAILED', requestedBy: requestedBy || 'system', type: 'github', device,
       });
       return NextResponse.json({
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
 
     addLog({
       id: logId, hostname: hostname || '', username: username || '', employeeId, email, vpnIp,
-      grantedAt: new Date().toISOString(), duration, revokedAt: null,
+      grantedAt: new Date().toISOString(), duration, scheduledRevokeAt: new Date(Date.now() + duration * 60000).toISOString(), revokedAt: null,
       status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'github', device,
     });
 

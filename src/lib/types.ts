@@ -17,6 +17,7 @@ export interface AccessLog {
   vpnIp: string;
   grantedAt: string;
   duration: number;
+  scheduledRevokeAt: string;
   revokedAt: string | null;
   status: 'GRANTED' | 'REVOKED' | 'FAILED' | 'EXPIRED';
   requestedBy: string;
