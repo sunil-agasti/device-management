@@ -96,6 +96,29 @@ export function getGithubLogs(): AccessLog[] {
   return readJson<AccessLog>('github_logs.json');
 }
 
+export interface HostnameLog {
+  id: string;
+  employeeId: string;
+  email: string;
+  username: string;
+  oldHostname: string;
+  newHostname: string;
+  vpnIp: string;
+  updatedAt: string;
+  status: 'SUCCESS' | 'FAILED';
+  requestedBy: string;
+}
+
+export function getHostnameLogs(): HostnameLog[] {
+  return readJson<HostnameLog>('hostname_logs.json');
+}
+
+export function addHostnameLog(log: HostnameLog) {
+  const logs = getHostnameLogs();
+  logs.unshift(log);
+  writeJson('hostname_logs.json', logs);
+}
+
 export function addLog(log: AccessLog) {
   const filename = log.type === 'admin' ? 'admin_logs.json' : 'github_logs.json';
   const logs = readJson<AccessLog>(filename);
