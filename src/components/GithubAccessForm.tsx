@@ -47,52 +47,55 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleIpBlur = async () => {
-    if (!form.vpnIp.startsWith('17.')) return;
+  const lastLookedUpIp = useRef('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const lookupByIp = async (ip: string) => {
+    if (!ip.startsWith('17.') || ip === lastLookedUpIp.current) return;
+    lastLookedUpIp.current = ip;
     setSshLoading(true);
     setSshError('');
+    setForm(prev => ({ ...prev, username: '', hostname: '', employeeId: '', email: '' }));
     try {
-      // SSH probe to get username and hostname from target machine
-      const sysRes = await fetch(`/api/system-info?ip=${form.vpnIp}`);
+      const sysRes = await fetch(`/api/system-info?ip=${ip}`);
       const sysData = await sysRes.json();
       if (sysData.remoteUsername) {
-        setForm(prev => ({
-          ...prev,
-          username: sysData.remoteUsername || prev.username,
-          hostname: sysData.remoteHostname || prev.hostname,
-        }));
-
-        // Then check DB for employee ID and email
+        setForm(prev => ({ ...prev, username: sysData.remoteUsername, hostname: sysData.remoteHostname || '' }));
         const userRes = await fetch(`/api/user?username=${sysData.remoteUsername}`);
         const userData = await userRes.json();
         if (userData.found && userData.user) {
-          setForm(prev => ({
-            ...prev,
-            employeeId: userData.user.employeeId || prev.employeeId,
-            email: userData.user.email || prev.email,
-          }));
+          setForm(prev => ({ ...prev, employeeId: userData.user.employeeId || prev.employeeId, email: userData.user.email || prev.email }));
         }
-        return;
-      }
-
-      // Fallback: check DB by IP
-      const res = await fetch(`/api/user?ip=${form.vpnIp}`);
-      const data = await res.json();
-      if (data.found && data.user) {
-        setForm(prev => ({
-          ...prev,
-          username: data.user.username || prev.username,
-          hostname: data.user.hostname || prev.hostname,
-          employeeId: data.user.employeeId || prev.employeeId,
-          email: data.user.email || prev.email,
-        }));
       } else {
-        setSshError(`Unable to connect to ${form.vpnIp}. Verify the device is online and SSH credentials are correct.`);
+        setSshError(sysData.sshError || `Unable to connect to ${ip}. Verify the device is online and SSH credentials are correct.`);
       }
     } catch {
-      setSshError(`Connection failed to ${form.vpnIp}. Check VPN IP and try again.`);
+      setSshError(`Connection failed to ${ip}. Check VPN IP and try again.`);
     } finally {
       setSshLoading(false);
+    }
+  };
+
+  const handleIpChange = (value: string) => {
+    setForm(prev => ({ ...prev, vpnIp: value }));
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value || !value.startsWith('17.')) {
+      if (lastLookedUpIp.current) {
+        lastLookedUpIp.current = '';
+        setForm(prev => ({ ...prev, vpnIp: value, username: '', hostname: '', employeeId: '', email: '' }));
+        setSshError('');
+      }
+      return;
+    }
+    if (value !== lastLookedUpIp.current && value.match(/^17\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
+      debounceRef.current = setTimeout(() => lookupByIp(value), 500);
+    }
+  };
+
+  const handleIpBlur = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (form.vpnIp.startsWith('17.') && form.vpnIp !== lastLookedUpIp.current) {
+      lookupByIp(form.vpnIp);
     }
   };
 
@@ -179,7 +182,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
             {sshLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#0076DF]/30 border-t-[#0076DF] rounded-full animate-spin" />}
           </div>
           <div>
-            <FloatingField label="VPN IP *" value={form.vpnIp} onChange={v => setForm({...form, vpnIp: v})} onBlur={handleIpBlur} placeholder="17.x.x.x" error={errors.vpnIp} />
+            <FloatingField label="VPN IP *" value={form.vpnIp} onChange={v => handleIpChange(v)} onBlur={handleIpBlur} placeholder="17.x.x.x" error={errors.vpnIp} />
             {sshError && <p className="mt-1 text-xs text-[#FF3B30] bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
           </div>
           <div className="relative">

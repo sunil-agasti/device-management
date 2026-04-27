@@ -40,9 +40,14 @@ export default function UpdateHostnamePage() {
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
+  const lastLookedUpIp = useRef('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const lookupByIp = useCallback(async (ip: string) => {
-    if (!ip.startsWith('17.')) return;
+    if (!ip.startsWith('17.') || ip === lastLookedUpIp.current) return;
+    lastLookedUpIp.current = ip;
     setSshLoading(true);
+    setForm(prev => ({ ...prev, username: '', oldHostname: '', employeeId: '', email: '' }));
     try {
       const res = await fetch(`/api/system-info?ip=${ip}`);
       const info = await res.json();
@@ -51,19 +56,37 @@ export default function UpdateHostnamePage() {
         const userRes = await fetch(`/api/user?username=${info.remoteUsername}`);
         const userData = await userRes.json();
         if (userData.found && userData.user) {
-          setForm(prev => ({
-            ...prev,
-            employeeId: userData.user.employeeId || prev.employeeId,
-            email: userData.user.email || prev.email,
-          }));
+          setForm(prev => ({ ...prev, employeeId: userData.user.employeeId || prev.employeeId, email: userData.user.email || prev.email }));
         }
+      } else {
+        setErrors(prev => ({ ...prev, vpnIp: info.sshError || 'Unable to connect. Verify the device is online.' }));
       }
-    } catch { /* ignore */ }
-    finally { setSshLoading(false); }
+    } catch {
+      setErrors(prev => ({ ...prev, vpnIp: 'Connection failed. Check VPN IP.' }));
+    } finally { setSshLoading(false); }
   }, []);
 
+  const handleIpChange = (value: string) => {
+    setForm(prev => ({ ...prev, vpnIp: value }));
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value || !value.startsWith('17.')) {
+      if (lastLookedUpIp.current) {
+        lastLookedUpIp.current = '';
+        setForm(prev => ({ ...prev, vpnIp: value, username: '', oldHostname: '', employeeId: '', email: '', newHostname: '' }));
+        setErrors({});
+      }
+      return;
+    }
+    if (value !== lastLookedUpIp.current && value.match(/^17\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
+      debounceRef.current = setTimeout(() => lookupByIp(value), 500);
+    }
+  };
+
   const handleIpBlur = () => {
-    if (form.vpnIp.startsWith('17.')) lookupByIp(form.vpnIp);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (form.vpnIp.startsWith('17.') && form.vpnIp !== lastLookedUpIp.current) {
+      lookupByIp(form.vpnIp);
+    }
   };
 
   const validate = () => {
@@ -105,6 +128,7 @@ export default function UpdateHostnamePage() {
         setSteps([...progressSteps]);
         setMessage({ type: 'success', text: data.message });
         fetchLogs();
+        lastLookedUpIp.current = '';
         setForm({ vpnIp: '', newHostname: '', employeeId: '', email: '', username: '', oldHostname: '' });
         setErrors({});
         setTimeout(() => { setMessage(null); setSteps([]); }, 5000);
@@ -143,7 +167,7 @@ export default function UpdateHostnamePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FloatingField label="Employee ID *" tag="(from DB)" value={form.employeeId} onChange={v => setForm({...form, employeeId: v.replace(/\D/g, '')})} placeholder="e.g. 1255389" inputMode="numeric" />
             <FloatingField label="Apple Email *" tag="(from DB)" value={form.email} onChange={v => setForm({...form, email: v})} placeholder="name@apple.com" type="email" />
-            <FloatingField label="VPN IP *" value={form.vpnIp} onChange={v => setForm({...form, vpnIp: v})} onBlur={handleIpBlur} placeholder="17.x.x.x" error={errors.vpnIp} />
+            <FloatingField label="VPN IP *" value={form.vpnIp} onChange={v => handleIpChange(v)} onBlur={handleIpBlur} placeholder="17.x.x.x" error={errors.vpnIp} />
             <div className="relative">
               <FloatingField label="Current Hostname" tag="(via SSH)" value={form.oldHostname} readOnly />
               {sshLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#0076DF]/30 border-t-[#0076DF] rounded-full animate-spin" />}
