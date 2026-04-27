@@ -74,7 +74,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [sorted.length, visibleCount]);
+  }, [allLogs.length, visibleCount]);
 
   const resetVisibleCount = useCallback(() => { startTransition(() => setVisibleCount(PAGE_SIZE)); }, []);
   useEffect(() => { resetVisibleCount(); }, [search, sortKey, sortDir, resetVisibleCount]);
