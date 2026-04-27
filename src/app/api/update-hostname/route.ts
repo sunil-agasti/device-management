@@ -3,7 +3,7 @@ import { execSync } from 'child_process';
 import { validateVpnIp, validateHostname } from '@/lib/validation';
 import { sanitizeIp, sanitizeHostname } from '@/lib/sanitize';
 import { sshRunCommand, getSshCredentials } from '@/lib/ssh';
-import { isLocalIp } from '@/lib/notify';
+import { isLocalIp, sendNotification } from '@/lib/notify';
 import { formatSSHError } from '@/lib/errors';
 import { addHostnameLog, upsertUser } from '@/lib/db';
 
@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (success) {
+      await sendNotification(safeIp, 'Hostname Updated',
+        `Hello ${username || 'User'}, your device hostname has been updated to ${safeHostname}. Please restart your terminal for the changes to take effect.`);
       return NextResponse.json({ success: true, logId, message: `Hostname updated to ${safeHostname}.` });
     }
     return NextResponse.json({ error: 'Failed to update hostname', logId }, { status: 500 });
