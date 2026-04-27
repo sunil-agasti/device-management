@@ -1,7 +1,7 @@
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 const WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS = 30;
+const MAX_REQUESTS = 200;
 
 export function rateLimit(ip: string): { allowed: boolean; remaining: number } {
   const now = Date.now();
