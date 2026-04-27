@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
-import { addLog, updateLogStatus, upsertUser, findUserByUsername } from '@/lib/db';
+import { addLog, updateLogStatus, upsertUser, findUserByUsername, logFailure } from '@/lib/db';
 import { validateVpnIp, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
@@ -10,6 +10,62 @@ import { sshRunCommand, getSshCredentials } from '@/lib/ssh';
 import { formatSSHError } from '@/lib/errors';
 
 const execAsync = promisify(exec);
+
+async function revokeGithubAccess(username: string, logId: string, originalIp: string) {
+  const user = findUserByUsername(username);
+  const currentIp = user?.vpnIp || originalIp;
+  const { passwords } = getSshCredentials();
+  const safePass = (passwords[0] || '').replace(/'/g, "'\\''");
+
+  if (isLocalIp(currentIp) || isLocalIp(originalIp)) {
+    try {
+      await execAsync(`sudo sed -i '' '/^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com/d' /etc/hosts`);
+      await execAsync(`echo "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null`);
+      await execAsync(`echo "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null`);
+      await execAsync(`sudo dscacheutil -flushcache`);
+      await execAsync(`sudo killall -HUP mDNSResponder`);
+      updateLogStatus(logId, 'github', 'REVOKED');
+      await sendNotification(currentIp, 'GitHub Access Revoked', `Hello ${username}, your public GitHub access has been revoked.`);
+      logFailure('github', 'revoke', username, currentIp, 'SUCCESS', 'Local revoke completed');
+      return;
+    } catch (e) {
+      logFailure('github', 'revoke', username, currentIp, 'RETRY', `Local revoke failed: ${e}`);
+    }
+  }
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    for (const ip of [currentIp, originalIp]) {
+      const checkResult = sshRunCommand(ip, `grep -c '^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com' /etc/hosts 2>/dev/null || echo "0"`);
+      if (checkResult.success && parseInt(checkResult.output.trim()) >= 2) {
+        const verifyDns = sshRunCommand(ip, `echo '${safePass}' | sudo -S dscacheutil -flushcache; echo '${safePass}' | sudo -S killall -HUP mDNSResponder; echo FLUSHED`);
+        updateLogStatus(logId, 'github', 'REVOKED');
+        logFailure('github', 'revoke', username, ip, 'SUCCESS', `Already blocked (attempt ${attempt}), DNS flushed: ${verifyDns.output}`);
+        return;
+      }
+
+      const revokeCmd = `echo '${safePass}' | sudo -S cp /etc/hosts /etc/hosts.bak; ` +
+        `echo '${safePass}' | sudo -S sed -i '' '/^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com/d' /etc/hosts; ` +
+        `echo "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null; ` +
+        `echo "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null; ` +
+        `echo '${safePass}' | sudo -S dscacheutil -flushcache; ` +
+        `echo '${safePass}' | sudo -S killall -HUP mDNSResponder; ` +
+        `grep -c '^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com' /etc/hosts 2>/dev/null`;
+      const result = sshRunCommand(ip, revokeCmd);
+      const count = parseInt(result.output.trim().split('\n').pop() || '0');
+      if (result.success && count >= 2) {
+        updateLogStatus(logId, 'github', 'REVOKED');
+        await sendNotification(ip, 'GitHub Access Revoked', `Hello ${username}, your public GitHub access has been revoked.`);
+        logFailure('github', 'revoke', username, ip, 'SUCCESS', `Revoked on attempt ${attempt}, entries: ${count}`);
+        return;
+      }
+      logFailure('github', 'revoke', username, ip, 'RETRY', `Attempt ${attempt} failed. SSH: ${result.success}, output: ${result.output}`);
+    }
+    if (attempt < 3) await new Promise(r => setTimeout(r, 30000));
+  }
+
+  updateLogStatus(logId, 'github', 'FAILED');
+  logFailure('github', 'revoke', username, currentIp, 'FAILED', 'All 3 attempts failed');
+}
 
 interface StepResult {
   id: string;
@@ -214,7 +270,8 @@ export async function POST(req: NextRequest) {
       }, (duration - 1) * 60 * 1000);
     }
 
-    setTimeout(() => { updateLogStatus(logId, 'github', 'REVOKED'); }, duration * 60 * 1000);
+    // Server-side backup revoke with verification (in case LaunchDaemon fails)
+    setTimeout(() => revokeGithubAccess(username || '', logId, vpnIp), (duration + 1) * 60 * 1000);
 
     return NextResponse.json({
       success: true, logId, steps: result.steps,
