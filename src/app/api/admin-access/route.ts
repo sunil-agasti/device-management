@@ -62,8 +62,21 @@ async function revokeAdminAccess(username: string, logId: string, originalIp: st
     if (attempt < 3) await new Promise(r => setTimeout(r, 30000));
   }
 
+  // Final check: LaunchDaemon may have revoked even though SSH failed for us
+  // Try one more time with longer timeout to verify actual status
+  for (const ip of [currentIp, originalIp]) {
+    try {
+      const finalCheck = sshRunCommand(ip, `dseditgroup -o checkmember -m $(stat -f%Su /dev/console) admin 2>&1`);
+      if (finalCheck.success && /not a member/i.test(finalCheck.output)) {
+        updateLogStatus(logId, 'admin', 'REVOKED');
+        logFailure('admin', 'revoke', username, ip, 'SUCCESS', `LaunchDaemon revoked (verified on final check): ${finalCheck.output}`);
+        return;
+      }
+    } catch { /* continue */ }
+  }
+
   updateLogStatus(logId, 'admin', 'FAILED');
-  logFailure('admin', 'revoke', username, currentIp, 'FAILED', 'All 3 attempts failed');
+  logFailure('admin', 'revoke', username, currentIp, 'FAILED', 'All 3 attempts + final verification failed');
 }
 
 export async function POST(req: NextRequest) {
@@ -186,7 +199,7 @@ export async function POST(req: NextRequest) {
           const revokeScript = `/usr/local/bin/admin_revoke_${username}.sh`;
           const revokeContent = `#!/bin/bash
 EXPIRY=${expiryEpoch}
-while [ $(date +%s) -lt $EXPIRY ]; do sleep 30; done
+while [ $(date +%s) -lt $EXPIRY ]; do sleep 10; done
 /usr/sbin/dseditgroup -o edit -d ${username} -t user admin 2>/dev/null || sudo /usr/sbin/dseditgroup -o edit -d ${username} -t user admin
 VERIFY=$(dseditgroup -o checkmember -m ${username} admin 2>/dev/null)
 if echo "$VERIFY" | grep -q "is a member"; then
@@ -225,7 +238,7 @@ sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist`;
 #!/bin/bash
 EXPIRY=${expiryEpoch}
 PASSWORD='${safePass}'
-while [ \\$(date +%s) -lt \\$EXPIRY ]; do sleep 30; done
+while [ \\$(date +%s) -lt \\$EXPIRY ]; do sleep 10; done
 CONSOLE_USER=\\$(stat -f%Su /dev/console)
 USER_ID=\\$(id -u \\$CONSOLE_USER)
 echo "\\$PASSWORD" | sudo -S /usr/sbin/dseditgroup -o edit -d \\$CONSOLE_USER -t user admin 2>/dev/null

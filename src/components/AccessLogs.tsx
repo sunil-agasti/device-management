@@ -135,7 +135,9 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
       EXPIRED: 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400 border-slate-200 dark:border-slate-500/30',
       FAILED: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 border-red-200 dark:border-red-500/30',
     };
-    const tooltip = status === 'FAILED' ? 'Revoke failed — sudo password may be incorrect or device unreachable' : undefined;
+    const tooltip = status === 'FAILED'
+      ? 'Server-side revoke failed after 3 retry attempts.\nPossible causes:\n• Device offline or VPN disconnected\n• IP address changed since grant\n• SSH connection timeout\n\nNote: LaunchDaemon on device may have revoked successfully.\nCheck failure_logs.json for details.'
+      : status === 'REVOKED' ? 'Access successfully revoked' : undefined;
     return (
       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${styles[status] || styles.GRANTED} ${status === 'FAILED' ? 'cursor-help' : ''}`} title={tooltip}>
         {status}

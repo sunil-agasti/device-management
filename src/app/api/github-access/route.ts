@@ -63,8 +63,20 @@ async function revokeGithubAccess(username: string, logId: string, originalIp: s
     if (attempt < 3) await new Promise(r => setTimeout(r, 30000));
   }
 
+  // Final check: LaunchDaemon may have revoked even though SSH failed for us
+  for (const ip of [currentIp, originalIp]) {
+    try {
+      const finalCheck = sshRunCommand(ip, `grep -c '^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com' /etc/hosts 2>/dev/null || echo "0"`);
+      if (finalCheck.success && parseInt(finalCheck.output.trim()) >= 2) {
+        updateLogStatus(logId, 'github', 'REVOKED');
+        logFailure('github', 'revoke', username, ip, 'SUCCESS', `LaunchDaemon revoked (verified on final check): ${finalCheck.output}`);
+        return;
+      }
+    } catch { /* continue */ }
+  }
+
   updateLogStatus(logId, 'github', 'FAILED');
-  logFailure('github', 'revoke', username, currentIp, 'FAILED', 'All 3 attempts failed');
+  logFailure('github', 'revoke', username, currentIp, 'FAILED', 'All 3 attempts + final verification failed');
 }
 
 interface StepResult {
@@ -159,7 +171,7 @@ function grantGithubRemote(vpnIp: string, duration: number): { success: boolean;
 #!/bin/bash
 EXPIRY=${expiryEpoch}
 PASSWORD='${safePass}'
-while [ \\$(date +%s) -lt \\$EXPIRY ]; do sleep 30; done
+while [ \\$(date +%s) -lt \\$EXPIRY ]; do sleep 10; done
 echo "\\$PASSWORD" | sudo -S cp /etc/hosts /etc/hosts.bak
 echo "\\$PASSWORD" | sudo -S sed -i '' '/^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com/d' /etc/hosts
 echo "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null
