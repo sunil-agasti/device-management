@@ -36,7 +36,7 @@ export default function Home() {
     : 'system';
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-black">
       <Navbar systemInfo={systemInfo} />
       <ExpiryWarning />
 

@@ -183,7 +183,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Hostname <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
-            <input type="text" value={form.hostname} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('hostname')} bg-slate-100 dark:bg-slate-700/70 cursor-not-allowed`} />
+            <input type="text" value={form.hostname} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('hostname')} bg-slate-200 dark:bg-[#111] opacity-60 cursor-not-allowed pointer-events-none`} />
           </div>
           <div>
             <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">VPN IP *</label>
@@ -193,7 +193,7 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Username <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
-            <input type="text" value={form.username} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('username')} bg-slate-100 dark:bg-slate-700/70 cursor-not-allowed`} />
+            <input type="text" value={form.username} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('username')} bg-slate-200 dark:bg-[#111] opacity-60 cursor-not-allowed pointer-events-none`} />
           </div>
           <div>
             <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Access Duration (minutes) *</label>

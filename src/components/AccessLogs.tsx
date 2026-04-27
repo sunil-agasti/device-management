@@ -167,7 +167,6 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
   const sortableHeaders: { key: SortKey; label: string }[] = useMemo(() => [
     { key: 'hostname', label: 'Hostname' },
     { key: 'username', label: 'Username' },
-    { key: 'vpnIp', label: 'VPN IP' },
     { key: 'grantedAt', label: 'Granted' },
     { key: 'duration', label: 'Duration' },
     { key: 'requestedBy', label: 'Requested By' },
@@ -225,8 +224,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
         </div>
       ) : (
         <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10">
+          <table className="w-full text-sm">            <thead className="sticky top-0 z-10">
               <tr className="bg-slate-50 dark:bg-slate-800">
                 {sortableHeaders.map(h => (
                   <th key={h.key}
@@ -261,7 +259,6 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                   >
                     <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{log.hostname || '-'}</td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{log.username || '-'}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">{log.vpnIp}</td>
                     <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{formatDate(log.grantedAt)}</td>
                     <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{log.duration}m</td>
                     <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 truncate max-w-[120px]">{log.requestedBy || '-'}</td>

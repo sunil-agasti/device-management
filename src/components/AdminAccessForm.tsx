@@ -255,7 +255,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6">
+      <form onSubmit={handleSubmit} className="bg-[#f5f5f7] dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FloatingField label="Employee ID *" tag="(from DB)" value={form.employeeId} onChange={v => setForm({...form, employeeId: v.replace(/\D/g, '')})} placeholder="e.g. 1255389" inputMode="numeric" error={errors.employeeId} />
           <FloatingField label="Apple Email *" tag="(from DB)" value={form.email} onChange={v => setForm({...form, email: v})} placeholder="name@apple.com" type="email" error={errors.email} />
@@ -309,7 +309,7 @@ export default function AdminAccessForm({ initialData, requestedBy }: Props) {
 
       {steps.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6"
+          className="bg-[#f5f5f7] dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6"
         >
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 text-center">
             {loading ? 'Processing Request...' : 'Request Complete'}
