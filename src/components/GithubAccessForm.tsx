@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ProgressTracker, { Step } from './ProgressTracker';
 import AccessLogs from './AccessLogs';
+import FloatingField from './FloatingField';
 import { motion } from 'framer-motion';
 import { secureFetch } from '@/lib/fetchClient';
 
@@ -169,49 +170,32 @@ export default function GithubAccessForm({ initialData, requestedBy }: Props) {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-[#2d2d2f] rounded-2xl border border-slate-200 dark:border-[#3d3d3f] p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">TCS Employee ID * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
-            <input type="text" inputMode="numeric" value={form.employeeId} onChange={e => setForm({...form, employeeId: e.target.value.replace(/\D/g, '')})} placeholder="e.g. 1255389" className={fieldClass('employeeId')} />
-            {errors.employeeId && <p className="mt-1 text-xs text-red-500">{errors.employeeId}</p>}
+      <form onSubmit={handleSubmit} className="bg-[#f5f5f7] dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FloatingField label="Employee ID *" tag="(from DB)" value={form.employeeId} onChange={v => setForm({...form, employeeId: v.replace(/\D/g, '')})} placeholder="e.g. 1255389" inputMode="numeric" error={errors.employeeId} />
+          <FloatingField label="Apple Email *" tag="(from DB)" value={form.email} onChange={v => setForm({...form, email: v})} placeholder="name@apple.com" type="email" error={errors.email} />
+          <div className="relative">
+            <FloatingField label="Hostname" tag="(via SSH)" value={form.hostname} readOnly />
+            {sshLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#0076DF]/30 border-t-[#0076DF] rounded-full animate-spin" />}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Apple Email * <span className="text-xs text-slate-400 font-normal">(from DB, editable)</span></label>
-            <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="name@apple.com" className={fieldClass('email')} />
-            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+            <FloatingField label="VPN IP *" value={form.vpnIp} onChange={v => setForm({...form, vpnIp: v})} onBlur={handleIpBlur} placeholder="17.x.x.x" error={errors.vpnIp} />
+            {sshError && <p className="mt-1 text-xs text-[#FF3B30] bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Hostname <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
-            <input type="text" value={form.hostname} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('hostname')} bg-slate-200 dark:bg-[#111] opacity-60 cursor-not-allowed pointer-events-none`} />
+          <div className="relative">
+            <FloatingField label="Username" tag="(via SSH)" value={form.username} readOnly />
+            {sshLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#0076DF]/30 border-t-[#0076DF] rounded-full animate-spin" />}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">VPN IP *</label>
-            <input type="text" value={form.vpnIp} onChange={e => setForm({...form, vpnIp: e.target.value})} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
-            {errors.vpnIp && <p className="mt-1 text-xs text-red-500">{errors.vpnIp}</p>}
-            {sshError && <p className="mt-1 text-xs text-red-500 bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30">{sshError}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Username <span className="text-xs text-blue-500 font-normal">(via SSH)</span></label>
-            <input type="text" value={form.username} readOnly placeholder="Auto-populated from VPN IP" className={`${fieldClass('username')} bg-slate-200 dark:bg-[#111] opacity-60 cursor-not-allowed pointer-events-none`} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#1d1d1f] dark:text-slate-300 mb-1.5">Access Duration (minutes) *</label>
-            <input type="text" inputMode="numeric" value={form.duration} onChange={e => setForm({...form, duration: e.target.value === '' ? '' as unknown as number : parseInt(e.target.value) || 0})} className={fieldClass('duration')} />
-            <p className="mt-1 text-xs text-slate-400">Default: 30 min. Max: 180 min (3 hours)</p>
-            {errors.duration && <p className="mt-1 text-xs text-red-500">{errors.duration}</p>}
-          </div>
+          <FloatingField label="Access Duration (minutes) *" value={String(form.duration)} onChange={v => setForm({...form, duration: v === '' ? '' as unknown as number : parseInt(v) || 0})} placeholder="30" inputMode="numeric" error={errors.duration} />
         </div>
 
-        <div className="mt-4 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600/50">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-medium text-slate-600 dark:text-slate-300">Requested By:</span> {requestedBy}
-          </p>
+        <div className="mt-4 px-4 py-3 rounded-xl bg-white dark:bg-[#2d2d2f] border border-slate-200 dark:border-[#333]">
+          <p className="text-xs text-[#86868b]"><span className="font-medium text-[#1d1d1f] dark:text-[#f5f5f7]">Requested By:</span> {requestedBy}</p>
         </div>
 
         <div className="mt-6 flex justify-center">
-          <button type="submit" disabled={loading || sshLoading}
-            className="px-8 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium rounded-xl hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 flex items-center gap-2"
+          <button type="submit" disabled={loading || sshLoading || (!form.username && !form.hostname)}
+            className="px-8 py-3 bg-[#0076DF] text-white font-medium rounded-xl hover:bg-[#005bb5] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm flex items-center gap-2"
           >
             {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>

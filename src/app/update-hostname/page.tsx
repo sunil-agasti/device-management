@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import FloatingField from '@/components/FloatingField';
 import ProgressTracker, { Step } from '@/components/ProgressTracker';
 import { motion } from 'framer-motion';
 import { secureFetch } from '@/lib/fetchClient';
@@ -140,41 +141,25 @@ export default function UpdateHostnamePage() {
 
         <form onSubmit={handleSubmit} className="bg-[#f5f5f7] dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[#1d1d1f] dark:text-[#f5f5f7] mb-1.5">Employee ID * <span className="text-xs text-[#86868b]">(from DB)</span></label>
-              <input type="text" inputMode="numeric" value={form.employeeId} onChange={e => setForm({...form, employeeId: e.target.value.replace(/\D/g, '')})} placeholder="e.g. 1255389" className={fieldClass('employeeId')} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#1d1d1f] dark:text-[#f5f5f7] mb-1.5">Apple Email * <span className="text-xs text-[#86868b]">(from DB)</span></label>
-              <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="name@apple.com" className={fieldClass('email')} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#1d1d1f] dark:text-[#f5f5f7] mb-1.5">VPN IP *</label>
-              <input type="text" value={form.vpnIp} onChange={e => setForm({...form, vpnIp: e.target.value})} onBlur={handleIpBlur} placeholder="17.x.x.x" className={fieldClass('vpnIp')} />
-              {errors.vpnIp && <p className="mt-1 text-xs text-[#FF3B30]">{errors.vpnIp}</p>}
+            <FloatingField label="Employee ID *" tag="(from DB)" value={form.employeeId} onChange={v => setForm({...form, employeeId: v.replace(/\D/g, '')})} placeholder="e.g. 1255389" inputMode="numeric" />
+            <FloatingField label="Apple Email *" tag="(from DB)" value={form.email} onChange={v => setForm({...form, email: v})} placeholder="name@apple.com" type="email" />
+            <FloatingField label="VPN IP *" value={form.vpnIp} onChange={v => setForm({...form, vpnIp: v})} onBlur={handleIpBlur} placeholder="17.x.x.x" error={errors.vpnIp} />
+            <div className="relative">
+              <FloatingField label="Current Hostname" tag="(via SSH)" value={form.oldHostname} readOnly />
+              {sshLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#0076DF]/30 border-t-[#0076DF] rounded-full animate-spin" />}
             </div>
             <div className="relative">
-              <label className="block text-sm font-medium text-[#1d1d1f] dark:text-[#f5f5f7] mb-1.5">Current Hostname <span className="text-xs text-[#0076DF]">(via SSH)</span></label>
-              <input type="text" value={form.oldHostname} readOnly placeholder="Auto-detected" className={disabledClass} />
-              {sshLoading && <div className="absolute right-3 top-9 w-4 h-4 border-2 border-[#0076DF]/30 border-t-[#0076DF] rounded-full animate-spin" />}
+              <FloatingField label="Username" tag="(via SSH)" value={form.username} readOnly />
+              {sshLoading && <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#0076DF]/30 border-t-[#0076DF] rounded-full animate-spin" />}
             </div>
-            <div className="relative">
-              <label className="block text-sm font-medium text-[#1d1d1f] dark:text-[#f5f5f7] mb-1.5">Username <span className="text-xs text-[#0076DF]">(via SSH)</span></label>
-              <input type="text" value={form.username} readOnly placeholder="Auto-detected" className={disabledClass} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#1d1d1f] dark:text-[#f5f5f7] mb-1.5">New Hostname *</label>
-              <input type="text" value={form.newHostname} onChange={e => {
-                setForm({...form, newHostname: e.target.value});
-                const val = e.target.value;
-                if (val && !['02HW0','01HW0','34HW0','3HW0','4HW0'].some(p => val.toUpperCase().startsWith(p))) {
-                  setErrors(prev => ({ ...prev, hostname: 'Must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0' }));
-                } else {
-                  setErrors(prev => { const { hostname, ...rest } = prev; return rest; });
-                }
-              }} placeholder="e.g. 02HW062504" className={fieldClass('hostname')} />
-              {errors.hostname && <p className="mt-1 text-xs text-[#FF3B30]">{errors.hostname}</p>}
-            </div>
+            <FloatingField label="New Hostname *" value={form.newHostname} onChange={v => {
+              setForm({...form, newHostname: v});
+              if (v && !['02HW0','01HW0','34HW0','3HW0','4HW0'].some(p => v.toUpperCase().startsWith(p))) {
+                setErrors(prev => ({ ...prev, hostname: 'Must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0' }));
+              } else {
+                setErrors(prev => { const { hostname, ...rest } = prev; return rest; });
+              }
+            }} placeholder="e.g. 02HW062504" error={errors.hostname} />
           </div>
 
           <div className="mt-4 px-4 py-3 rounded-xl bg-white dark:bg-[#2d2d2f] border border-slate-200 dark:border-[#333]">
