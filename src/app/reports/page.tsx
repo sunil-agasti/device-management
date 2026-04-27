@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, startTransition } from 'react';
+import { useEffect, useState, startTransition, useCallback } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import AccessLogs from '@/components/AccessLogs';
@@ -31,7 +31,14 @@ export default function ReportsPage() {
   const [data, setData] = useState<ReportData | null>(null);
   const [period, setPeriod] = useState('month');
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'analytics' | 'admin' | 'github' | 'all'>('analytics');
+  const [view, setView] = useState<'analytics' | 'admin' | 'github' | 'all' | 'visitors'>('analytics');
+  const [visitorData, setVisitorData] = useState<{ total: number; todayVisits: number; uniqueToday: number; uniqueTotal: number; topVisitors: { username: string; hostname: string; count: number }[]; recentVisitors: { ip: string; username: string; hostname: string; page: string; visitedAt: string }[] } | null>(null);
+
+  const fetchVisitors = useCallback(() => {
+    fetch('/api/visitor').then(r => r.json()).then(setVisitorData).catch(() => {});
+  }, []);
+
+  useEffect(() => { if (view === 'visitors') fetchVisitors(); }, [view, fetchVisitors]);
 
   useEffect(() => {
     fetch('/api/system-info').then(r => r.json()).then(setSystemInfo).catch(() => {});
@@ -145,6 +152,7 @@ export default function ReportsPage() {
             { value: 'admin', label: 'Admin Logs' },
             { value: 'github', label: 'GitHub Logs' },
             { value: 'all', label: 'All Logs' },
+            { value: 'visitors', label: 'Visitors' },
           ].map(v => (
             <button key={v.value} onClick={() => setView(v.value as typeof view)}
               className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
@@ -335,8 +343,59 @@ export default function ReportsPage() {
           <AccessLogs type="admin" />
         ) : view === 'github' ? (
           <AccessLogs type="github" />
-        ) : (
+        ) : view === 'all' ? (
           <AccessLogs />
+        ) : visitorData ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: 'Total Visits', value: visitorData.total, color: '#0076DF' },
+                { label: 'Today', value: visitorData.todayVisits, color: '#34C759' },
+                { label: 'Unique Today', value: visitorData.uniqueToday, color: '#AF52DE' },
+                { label: 'Unique Total', value: visitorData.uniqueTotal, color: '#FF9500' },
+              ].map(card => (
+                <div key={card.label} className="bg-[#f5f5f7] dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-5">
+                  <p className="text-xs text-[#86868b] mb-1">{card.label}</p>
+                  <p className="text-2xl font-bold" style={{ color: card.color }}>{card.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#f5f5f7] dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6">
+                <h3 className="text-sm font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] mb-4">Top Visitors</h3>
+                {visitorData.topVisitors.length === 0 ? (
+                  <p className="text-xs text-[#86868b] text-center py-4">No visitor data yet</p>
+                ) : (
+                  <div className="space-y-2">
+                    {visitorData.topVisitors.map((v, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="w-5 h-5 rounded-full bg-[#0076DF]/10 text-[#0076DF] text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-medium text-[#1d1d1f] dark:text-[#f5f5f7] block truncate">{v.username || 'Anonymous'}</span>
+                          <span className="text-[10px] text-[#86868b]">{v.hostname || '-'}</span>
+                        </div>
+                        <span className="text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7]">{v.count} visits</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="bg-[#f5f5f7] dark:bg-[#1c1c1e] rounded-2xl border border-slate-200 dark:border-[#333] p-6">
+                <h3 className="text-sm font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] mb-4">Recent Visits</h3>
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {visitorData.recentVisitors.map((v, i) => (
+                    <div key={i} className="flex items-center gap-3 text-xs">
+                      <span className="text-[#86868b] whitespace-nowrap">{new Date(v.visitedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="font-medium text-[#1d1d1f] dark:text-[#f5f5f7] truncate">{v.username || v.ip}</span>
+                      <span className="text-[#86868b] truncate">{v.page}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="py-20 text-center"><div className="w-8 h-8 mx-auto border-3 border-[#0076DF]/20 border-t-[#0076DF] rounded-full animate-spin" /></div>
         )}
       </main>
     </div>
