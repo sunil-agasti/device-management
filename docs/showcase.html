@@ -168,6 +168,42 @@
     <h4>Adaptive Theme</h4>
     <p>The interface follows the user's macOS system appearance preference, switching between light and dark modes automatically. Manual override persists across sessions.</p>
   </div>
+  <div class="card">
+    <h4>Visitor Analytics</h4>
+    <p>Every page visit is tracked with username, hostname, and timestamp. Leadership reports show daily visitor counts, unique visitors, and top users — all without third-party analytics.</p>
+  </div>
+  <div class="card">
+    <h4>Activity Feed</h4>
+    <p>Real-time feed on the landing page showing who granted what access to whom, with live countdown timers for active sessions and clear status indicators.</p>
+  </div>
+</div>
+
+<h2>Security</h2>
+<div class="grid-2">
+  <div class="card">
+    <h4>VPN-Gated Access</h4>
+    <p>Every request is verified to originate from Apple's VPN network (17.x.x.x). Non-VPN traffic is blocked at the middleware level before reaching any route handler.</p>
+  </div>
+  <div class="card">
+    <h4>CSRF Protection</h4>
+    <p>All mutation endpoints (POST/PUT/DELETE) require a valid CSRF token sent via header. Tokens are cryptographically generated, cookie-bound, and auto-detect HTTPS for secure transmission.</p>
+  </div>
+  <div class="card">
+    <h4>Credential Isolation</h4>
+    <p>SSH passwords are stored in environment variables only, never in source code. Temporary askpass scripts are created with 700 permissions and deleted immediately after use. Revoke scripts on target machines are root-owned.</p>
+  </div>
+  <div class="card">
+    <h4>Input Sanitization</h4>
+    <p>All user inputs (IPs, hostnames, employee IDs, emails) are sanitized through dedicated functions. Shell command injection is prevented by escaping and validation at every boundary.</p>
+  </div>
+  <div class="card">
+    <h4>Atomic File Writes</h4>
+    <p>Database writes use a write-to-temp-then-rename pattern to prevent data corruption during concurrent operations. Read operations retry up to 3 times on parse failure.</p>
+  </div>
+  <div class="card">
+    <h4>Rate Limiting</h4>
+    <p>API endpoints are rate-limited to 30 requests per minute per IP. Session timeouts automatically log out inactive users. Security headers (CSP, HSTS, X-Frame-Options) are set on all responses.</p>
+  </div>
 </div>
 
 <h2>Architecture Overview</h2>

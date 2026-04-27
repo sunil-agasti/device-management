@@ -759,6 +759,52 @@ RootLayout (layout.tsx)
   </ol>
 </section>
 
+<!-- 13 SECURITY -->
+<section id="security">
+  <h2><span class="icon" style="background:rgba(239,68,68,0.2)">13</span> Security</h2>
+
+  <h3>Authentication &amp; Access Control</h3>
+  <ul>
+    <li><strong>VPN-Gated Access</strong> &mdash; Every request verified to originate from Apple VPN (17.x.x.x). Non-VPN traffic blocked at middleware level.</li>
+    <li><strong>IDMS SSO</strong> &mdash; Optional Apple Connect single sign-on integration for identity verification.</li>
+    <li><strong>Session Timeout</strong> &mdash; 15-minute idle timeout with automatic logout.</li>
+    <li><strong>Rate Limiting</strong> &mdash; 30 requests/minute per IP to prevent abuse.</li>
+  </ul>
+
+  <h3>Data Protection</h3>
+  <ul>
+    <li><strong>CSRF Protection</strong> &mdash; All POST/PUT/DELETE endpoints require cryptographically generated CSRF token. Cookie auto-detects HTTPS for secure flag.</li>
+    <li><strong>Input Sanitization</strong> &mdash; Dedicated sanitization for IPs, hostnames, employee IDs, emails. Shell injection prevented at every boundary.</li>
+    <li><strong>Credential Isolation</strong> &mdash; SSH passwords stored in .env only, never in source. Temporary askpass files created with 700 permissions, deleted immediately after use.</li>
+    <li><strong>Atomic File Writes</strong> &mdash; Write-to-temp-then-rename pattern prevents data corruption. Read operations retry 3x on parse failure.</li>
+    <li><strong>No Credentials in Logs</strong> &mdash; Connection logs, error messages, and browser output never contain passwords or SSH commands.</li>
+  </ul>
+
+  <h3>Security Headers</h3>
+  <ul>
+    <li><code>Content-Security-Policy</code> &mdash; Restricts script and resource loading</li>
+    <li><code>Strict-Transport-Security</code> &mdash; Forces HTTPS with max-age 1 year</li>
+    <li><code>X-Frame-Options: DENY</code> &mdash; Prevents clickjacking</li>
+    <li><code>X-Content-Type-Options: nosniff</code> &mdash; Prevents MIME sniffing</li>
+    <li><code>Referrer-Policy: strict-origin-when-cross-origin</code></li>
+    <li><code>Permissions-Policy</code> &mdash; Blocks camera, microphone, geolocation, payment</li>
+  </ul>
+
+  <h3>Remote Machine Security</h3>
+  <ul>
+    <li><strong>Revoke scripts</strong> &mdash; Installed as root:wheel 700 (only root can read). Contains sudo password but inaccessible to standard users.</li>
+    <li><strong>LaunchDaemon</strong> &mdash; RunAtLoad + KeepAlive ensures revoke survives reboot, shutdown, VPN disconnect.</li>
+    <li><strong>Self-cleanup</strong> &mdash; Revoke scripts and LaunchDaemon plists deleted after successful revocation.</li>
+  </ul>
+
+  <h3>Known Limitations</h3>
+  <ul>
+    <li><strong>File-based DB race conditions</strong> &mdash; Mitigated with atomic writes (write-to-tmp + rename) and read retry with backoff. Acceptable for single-admin concurrent use.</li>
+    <li><strong>SSH passwords in shell commands</strong> &mdash; Required for non-key authentication (keyboard-interactive). Secured via temporary SSH_ASKPASS files with 700 permissions, deleted immediately.</li>
+    <li><strong>Synchronous SSH calls</strong> &mdash; Block Node.js event loop during execution (~5s per call). Acceptable for single-admin use; would need async worker pool for high concurrency.</li>
+  </ul>
+</section>
+
 <!-- FOOTER -->
 <div class="footer">
   <p><strong>Device Management Portal</strong> &middot; Secure MacBook Management &amp; Access Control</p>
