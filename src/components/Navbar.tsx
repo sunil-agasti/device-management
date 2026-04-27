@@ -17,18 +17,20 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
             <Image
               src="/logo.png"
               alt="Device Management Portal"
-              width={160}
-              height={40}
-              className="h-9 w-auto block dark:hidden"
+              width={200}
+              height={56}
+              className="h-full max-h-12 w-auto object-contain block dark:hidden"
               priority
+              unoptimized
             />
             <Image
               src="/logo-dark.png"
               alt="Device Management Portal"
-              width={160}
-              height={40}
-              className="h-9 w-auto hidden dark:block"
+              width={200}
+              height={56}
+              className="h-full max-h-12 w-auto object-contain hidden dark:block"
               priority
+              unoptimized
             />
             <div className="hidden sm:block border-l border-slate-300 dark:border-[#444] pl-2.5">
               <span className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight block">Device Management</span>
