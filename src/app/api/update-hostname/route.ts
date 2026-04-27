@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (success) {
-      await sendNotification(safeIp, 'Hostname Updated',
-        `Hello ${username || 'User'}, your device hostname has been updated to ${safeHostname}. Please restart your terminal for the changes to take effect.`);
+      sendNotification(safeIp, 'Hostname Updated',
+        `Hello ${username || 'User'}, your device hostname has been updated to ${safeHostname}. Please restart your terminal for the changes to take effect.`).catch(() => {});
       return NextResponse.json({ success: true, logId, message: `Hostname updated to ${safeHostname}.` });
     }
     return NextResponse.json({ error: 'Failed to update hostname', logId }, { status: 500 });

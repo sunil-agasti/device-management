@@ -25,10 +25,13 @@ const { chromium } = require('playwright');
     const context = await browser.newContext({
       viewport: { width: 1440, height: 900 },
       colorScheme: p.theme,
+      extraHTTPHeaders: {
+        'X-Forwarded-For': '17.0.0.1',
+      },
     });
     const page = await context.newPage();
     try {
-      await page.goto(`http://localhost:3000${p.url}`, { waitUntil: 'networkidle', timeout: 15000 });
+      await page.goto(`http://localhost:3001${p.url}`, { waitUntil: 'networkidle', timeout: 15000 });
       await page.waitForTimeout(2000);
       await page.screenshot({ path: `${dir}/${p.name}.png`, fullPage: true });
       console.log(`✓ ${p.name}`);

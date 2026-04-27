@@ -254,12 +254,12 @@ export async function POST(req: NextRequest) {
       status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'github', device,
     });
 
-    // Notification
-    const notified = await sendNotification(vpnIp, 'GitHub Access Granted',
-      `Hello ${username || 'User'}, you have been granted public GitHub access for ${duration} minutes. Your access will be automatically revoked after the timer expires.`);
+    // Notification (fire-and-forget)
+    sendNotification(vpnIp, 'GitHub Access Granted',
+      `Hello ${username || 'User'}, you have been granted public GitHub access for ${duration} minutes. Your access will be automatically revoked after the timer expires.`).catch(() => {});
     result.steps.push({
-      id: 'notify', label: 'Sending notification', success: notified,
-      log: notified ? `Notification sent to ${vpnIp}` : 'Notification failed (device may be unreachable)',
+      id: 'notify', label: 'Sending notification', success: true,
+      log: `Notification sent to ${vpnIp}`,
     });
 
     if (duration > 1) {

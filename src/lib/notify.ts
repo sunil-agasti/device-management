@@ -30,7 +30,7 @@ export async function sendNotification(
   const safeMessage = sanitizeForShell(message);
   const local = isLocalIp(ip);
 
-  const script = `display dialog "${safeMessage}" with title "** ${safeTitle} **" buttons {"OK"} default button "OK" giving up after 300`;
+  const script = `display dialog "${safeMessage}" with title "** ${safeTitle} **" buttons {"OK"} default button "OK" giving up after 15`;
 
   if (local) {
     try {

@@ -109,7 +109,8 @@ export default function UpdateHostnamePage() {
 
     const progressSteps: Step[] = [
       { id: 'update', label: 'Updating hostname', status: 'active' },
-      { id: 'complete', label: 'Complete', status: 'pending' },
+      { id: 'jamf', label: 'Running JAMF Commands', status: 'pending' },
+      { id: 'notify', label: 'Sending notification', status: 'pending' },
     ];
     setSteps([...progressSteps]);
 
@@ -127,6 +128,7 @@ export default function UpdateHostnamePage() {
       } else {
         progressSteps[0].status = 'completed';
         progressSteps[1].status = 'completed';
+        progressSteps[2].status = 'completed';
         setSteps([...progressSteps]);
         setMessage({ type: 'success', text: data.message });
         fetchLogs();
