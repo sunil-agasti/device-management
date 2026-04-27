@@ -260,9 +260,9 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                   >
                     <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{log.hostname || '-'}</td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{log.username || '-'}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{formatDate(log.grantedAt)}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(log.grantedAt)}</td>
                     <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{log.duration}m</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 truncate max-w-[120px]">{log.requestedBy || '-'}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{log.requestedBy || '-'}</td>
                     <td className="px-4 py-3 text-xs">
                       {log.status === 'GRANTED' ? (
                         <span className="text-blue-600 dark:text-blue-400 font-medium">{getTimeRemaining(log)}</span>
