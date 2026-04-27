@@ -797,6 +797,29 @@ RootLayout (layout.tsx)
     <li><strong>Self-cleanup</strong> &mdash; Revoke scripts and LaunchDaemon plists deleted after successful revocation.</li>
   </ul>
 
+  <h3>Revoke Intelligence</h3>
+  <ul>
+    <li><strong>Dual revoke system</strong> &mdash; Primary: LaunchDaemon on target machine (epoch-based, 10-second poll). Backup: server-side SSH revoke at duration+1 minute.</li>
+    <li><strong>Smart status detection</strong> &mdash; After 3 SSH retry attempts, performs final verification check. If LaunchDaemon already revoked, marks as REVOKED (not FAILED).</li>
+    <li><strong>Retry with backoff</strong> &mdash; Server-side backup retries 3 times with 30-second delay between attempts. Handles VPN reconnections and IP changes.</li>
+    <li><strong>Failure logging</strong> &mdash; All revoke attempts logged to <code>data/failure_logs.json</code> with timestamp, IP, status, and detailed output for debugging.</li>
+    <li><strong>Notifications</strong> &mdash; Fire-and-forget (non-blocking). Dialog auto-dismisses after 10 seconds. Grant, 1-minute warning, and revoke notifications.</li>
+  </ul>
+
+  <h3>Visitor Analytics</h3>
+  <ul>
+    <li><strong>Session-based tracking</strong> &mdash; 1 visit per session. New visit only after 15-minute idle gap. Deduplication on both client (sessionStorage) and server.</li>
+    <li><strong>User resolution</strong> &mdash; Local: whoami + scutil. VPN: DB lookup then SSH fallback. No anonymous visitors.</li>
+    <li><strong>Reports tab</strong> &mdash; Total visits, unique visitors, daily counts, top visitors, recent visit timeline.</li>
+  </ul>
+
+  <h3>Hostname Management</h3>
+  <ul>
+    <li><strong>Full logging</strong> &mdash; All hostname changes tracked in <code>data/hostname_logs.json</code> with old/new hostname, username, requestedBy.</li>
+    <li><strong>Same-name validation</strong> &mdash; Prevents updating to the same hostname (client + server validation).</li>
+    <li><strong>Remote notification</strong> &mdash; User receives dialog: &ldquo;Your device hostname has been updated to {new}.&rdquo;</li>
+  </ul>
+
   <h3>Known Limitations</h3>
   <ul>
     <li><strong>File-based DB race conditions</strong> &mdash; Mitigated with atomic writes (write-to-tmp + rename) and read retry with backoff. Acceptable for single-admin concurrent use.</li>
