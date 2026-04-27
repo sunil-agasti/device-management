@@ -31,7 +31,7 @@ interface Log {
   device?: string;
 }
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 25;
 
 export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
   const [allLogs, setAllLogs] = useState<Log[]>([]);
@@ -68,15 +68,13 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
     if (!node) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount(prev => prev + PAGE_SIZE);
-        }
+        if (entries[0].isIntersecting) setVisibleCount(prev => prev + PAGE_SIZE);
       },
-      { threshold: 0.1 }
+      { rootMargin: '300px', threshold: 0 }
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [sorted.length, visibleCount]);
 
   const resetVisibleCount = useCallback(() => { startTransition(() => setVisibleCount(PAGE_SIZE)); }, []);
   useEffect(() => { resetVisibleCount(); }, [search, sortKey, sortDir, resetVisibleCount]);
@@ -281,19 +279,14 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
           </table>
 
           {hasMore && (
-            <div ref={loaderRef} className="py-4 text-center">
-              <div className="inline-flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-                <div className="w-4 h-4 border-2 border-slate-300/30 border-t-slate-400 rounded-full animate-spin" />
-                Loading more...
-              </div>
+            <div ref={loaderRef} className="py-3 text-center">
+              <span className="text-xs text-[#86868b]">Loading... ({visible.length} of {sorted.length})</span>
             </div>
           )}
 
-          {!hasMore && sorted.length > PAGE_SIZE && (
-            <div className="py-3 text-center text-xs text-slate-400 dark:text-slate-500">
-              All {sorted.length} logs loaded
-            </div>
-          )}
+          <div className="py-3 text-center text-xs text-[#86868b] border-t border-slate-100 dark:border-[#333]">
+            Showing {visible.length} of {sorted.length} records{search ? ` (filtered from ${allLogs.length})` : ''}
+          </div>
         </div>
       )}
     </div>
