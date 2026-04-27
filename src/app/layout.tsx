@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import AuthGuard from "@/components/AuthGuard";
 import SessionTimeout from "@/components/SessionTimeout";
+import VisitorTracker from "@/components/VisitorTracker";
 
 export const metadata: Metadata = {
   title: "Device Management Portal - AI-Powered MacBook Management",
@@ -20,6 +21,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthGuard>
             <SessionTimeout />
+            <VisitorTracker />
             {children}
           </AuthGuard>
         </ThemeProvider>

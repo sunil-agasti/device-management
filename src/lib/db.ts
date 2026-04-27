@@ -196,3 +196,29 @@ export function logFailure(type: string, action: string, username: string, ip: s
   if (logs.length > 1000) logs = logs.slice(-500);
   fs.writeFileSync(filePath, JSON.stringify(logs, null, 2), 'utf-8');
 }
+
+export interface VisitorLog {
+  ip: string;
+  username: string;
+  hostname: string;
+  page: string;
+  visitedAt: string;
+  userAgent: string;
+}
+
+export function getVisitorLogs(): VisitorLog[] {
+  return readJson<VisitorLog>('visitor_logs.json');
+}
+
+export function addVisitorLog(log: VisitorLog) {
+  const filePath = path.join(DATA_DIR, 'visitor_logs.json');
+  ensureFile(filePath);
+  const raw = fs.readFileSync(filePath, 'utf-8').trim();
+  let logs: VisitorLog[] = [];
+  try { if (raw) logs = JSON.parse(raw); } catch { logs = []; }
+  logs.unshift(log);
+  if (logs.length > 5000) logs = logs.slice(0, 3000);
+  const tmpPath = filePath + '.tmp';
+  fs.writeFileSync(tmpPath, JSON.stringify(logs, null, 2), 'utf-8');
+  fs.renameSync(tmpPath, filePath);
+}
