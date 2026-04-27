@@ -108,7 +108,7 @@ export default function ReportsPage() {
           <div className="flex items-center gap-3">
             <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600 transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Portal
+              Back to Portal
             </Link>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Leadership Reports</h1>
           </div>

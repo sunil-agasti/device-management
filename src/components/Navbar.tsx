@@ -13,13 +13,13 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
     <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-black/90 border-b border-slate-200 dark:border-[#333]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
-          <Link href="/" className="flex items-center group">
+          <Link href="/" className="flex items-center group overflow-hidden h-10">
             <Image
               src="/logo.png"
               alt="Device Management Portal"
               width={220}
               height={56}
-              className="h-27 w-auto object-contain mix-blend-multiply block dark:hidden"
+              className="h-14 w-auto object-cover object-top mix-blend-multiply block dark:hidden"
               priority
               unoptimized
             />
@@ -28,7 +28,7 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
               alt="Device Management Portal"
               width={220}
               height={56}
-              className="h-27 w-auto object-contain mix-blend-screen hidden dark:block"
+              className="h-14 w-auto object-cover object-top mix-blend-screen block hidden dark:block"
               priority
               unoptimized
             />
