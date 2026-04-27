@@ -296,7 +296,7 @@ tail -f data/keepalive.log         # watch keepalive logs
 |-----------|---------------|
 | **Server-Side Auth** | `middleware.ts` enforces VPN IP check on ALL requests (not client-side only) |
 | **CSRF** | Double-submit cookie with timing-safe comparison on all POST requests |
-| **Rate Limiting** | 30 requests/minute per IP with auto-cleanup, 429 responses |
+| **Rate Limiting** | 200 requests/minute per IP with auto-cleanup, 429 responses |
 | **Command Injection** | `sanitize.ts` strips all shell metacharacters from IP, hostname, username, email |
 | **Security Headers** | CSP, HSTS, X-Frame-Options DENY, X-Content-Type-Options, Permissions-Policy |
 | **CORS** | Blocked by default - no cross-origin access |
