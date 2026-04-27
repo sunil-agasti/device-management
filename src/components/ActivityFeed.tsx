@@ -12,6 +12,7 @@ interface LogEntry {
   grantedAt: string;
   duration: number;
   status: string;
+  requestedBy?: string;
   scheduledRevokeAt?: string;
 }
 
@@ -71,21 +72,23 @@ export default function ActivityFeed() {
           {active.length > 0 && active.map(log => {
             const time = getTimeInfo(log);
             const type = getTypeLabel(log.type);
+            const action = log.type === 'admin' ? 'admin access' : 'GitHub access';
             return (
               <motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                 className="px-5 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-[#2c2c2e] transition-colors"
               >
                 <span className="text-lg">{time.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">{log.username || log.hostname}</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-[#1d1d1f] dark:text-[#f5f5f7]">
+                      <strong>{log.requestedBy?.split(' (')[0] || 'System'}</strong> granted {action} to <strong>{log.username}</strong>
+                    </span>
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${type.bg} ${type.text}`}>{type.label}</span>
                   </div>
-                  <span className="text-[11px] text-[#86868b]">{log.hostname} · {log.vpnIp}</span>
+                  <span className="text-[11px] text-[#86868b]">{log.hostname} · {log.vpnIp} · {log.duration}m</span>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex-shrink-0">
                   <div className={`text-xs font-semibold ${time.color}`}>{time.text}</div>
-                  <div className="text-[10px] text-[#86868b]">{log.duration}m grant</div>
                 </div>
               </motion.div>
             );
@@ -93,19 +96,23 @@ export default function ActivityFeed() {
           {recent.map(log => {
             const time = getTimeInfo(log);
             const type = getTypeLabel(log.type);
+            const action = log.type === 'admin' ? 'admin access' : 'GitHub access';
+            const verb = log.status === 'REVOKED' ? 'revoked' : log.status === 'FAILED' ? 'failed to grant' : 'granted';
             return (
               <motion.div key={log.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="px-5 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-[#2c2c2e] transition-colors opacity-70"
               >
                 <span className="text-lg">{time.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#1d1d1f] dark:text-[#f5f5f7] truncate">{log.username || log.hostname}</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-[#1d1d1f] dark:text-[#f5f5f7]">
+                      <strong>{log.requestedBy?.split(' (')[0] || 'System'}</strong> {verb} {action} for <strong>{log.username}</strong>
+                    </span>
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${type.bg} ${type.text}`}>{type.label}</span>
                   </div>
                   <span className="text-[11px] text-[#86868b]">{log.hostname} · {new Date(log.grantedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                <div className={`text-xs font-semibold ${time.color}`}>{time.text}</div>
+                <div className={`text-xs font-semibold ${time.color} flex-shrink-0`}>{time.text}</div>
               </motion.div>
             );
           })}

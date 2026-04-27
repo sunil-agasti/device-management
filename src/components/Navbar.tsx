@@ -13,29 +13,25 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
     <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-black/90 border-b border-slate-200 dark:border-[#333]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center group">
             <Image
               src="/logo.png"
               alt="Device Management Portal"
-              width={200}
+              width={220}
               height={56}
-              className="h-full max-h-12 w-auto object-contain block dark:hidden"
+              className="h-10 w-auto object-contain mix-blend-multiply block dark:hidden"
               priority
               unoptimized
             />
             <Image
               src="/logo-dark.png"
               alt="Device Management Portal"
-              width={200}
+              width={220}
               height={56}
-              className="h-full max-h-12 w-auto object-contain hidden dark:block"
+              className="h-10 w-auto object-contain mix-blend-screen hidden dark:block"
               priority
               unoptimized
             />
-            <div className="hidden sm:block border-l border-slate-300 dark:border-[#444] pl-2.5">
-              <span className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-tight block">Device Management</span>
-              <span className="text-[10px] text-[#86868b] leading-tight block -mt-0.5">Portal</span>
-            </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-2">

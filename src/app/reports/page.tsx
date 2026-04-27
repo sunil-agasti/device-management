@@ -3,6 +3,7 @@
 import { useEffect, useState, startTransition } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import AccessLogs from '@/components/AccessLogs';
 import { motion } from 'framer-motion';
 
 interface ReportData {
@@ -30,6 +31,7 @@ export default function ReportsPage() {
   const [data, setData] = useState<ReportData | null>(null);
   const [period, setPeriod] = useState('month');
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<'analytics' | 'admin' | 'github' | 'all'>('analytics');
 
   useEffect(() => {
     fetch('/api/system-info').then(r => r.json()).then(setSystemInfo).catch(() => {});
@@ -137,6 +139,25 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        <div className="flex gap-1 bg-slate-100 dark:bg-[#1c1c1e] rounded-xl p-1">
+          {[
+            { value: 'analytics', label: 'Analytics' },
+            { value: 'admin', label: 'Admin Logs' },
+            { value: 'github', label: 'GitHub Logs' },
+            { value: 'all', label: 'All Logs' },
+          ].map(v => (
+            <button key={v.value} onClick={() => setView(v.value as typeof view)}
+              className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                view === v.value
+                  ? 'bg-white dark:bg-[#333] text-[#0076DF] shadow-sm'
+                  : 'text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-[#f5f5f7]'
+              }`}
+            >{v.label}</button>
+          ))}
+        </div>
+
+        {view === 'analytics' ? (
+        <>
         {loading ? (
           <div className="py-20 text-center">
             <div className="w-12 h-12 mx-auto mb-4 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
@@ -308,6 +329,14 @@ export default function ReportsPage() {
           </>
         ) : (
           <div className="py-20 text-center text-slate-400">Failed to load report data</div>
+        )}
+        </>
+        ) : view === 'admin' ? (
+          <AccessLogs type="admin" />
+        ) : view === 'github' ? (
+          <AccessLogs type="github" />
+        ) : (
+          <AccessLogs />
         )}
       </main>
     </div>
