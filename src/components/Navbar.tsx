@@ -41,8 +41,6 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
                 <span className="text-slate-600 dark:text-[#f5f5f7]">
                   {systemInfo.clientUsername || systemInfo.serverUsername} ({systemInfo.clientHostname || systemInfo.serverHostname})
                 </span>
-                <span className="text-slate-400">|</span>
-                <span className="text-slate-500 dark:text-[#86868b]">{systemInfo.clientIp}</span>
               </div>
             ) : (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#3d3d3f] text-xs">
