@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addVisitorLog, getVisitorLogs, findUserByIp } from '@/lib/db';
 import { sanitizeIp } from '@/lib/sanitize';
+import { sshFetchUserInfo } from '@/lib/ssh';
 
 export async function POST(req: NextRequest) {
   try {
-    const { page } = await req.json();
     const forwarded = req.headers.get('x-forwarded-for');
     const rawIp = forwarded?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || '127.0.0.1';
     const ip = sanitizeIp(rawIp) || '127.0.0.1';
@@ -12,15 +12,36 @@ export async function POST(req: NextRequest) {
 
     let username = '';
     let hostname = '';
+
+    // Try DB first
     const dbUser = findUserByIp(ip);
-    if (dbUser) {
-      username = dbUser.username || '';
+    if (dbUser && dbUser.username) {
+      username = dbUser.username;
       hostname = dbUser.hostname || '';
     }
 
+    // If no username in DB and IP is on VPN, try SSH
+    if (!username && ip.startsWith('17.')) {
+      const sshResult = sshFetchUserInfo(ip);
+      if (sshResult.success) {
+        username = sshResult.username;
+        hostname = sshResult.hostname;
+      }
+    }
+
+    // Deduplicate: skip if same IP visited within last 15 minutes
+    const logs = getVisitorLogs();
+    const fifteenMinsAgo = Date.now() - 15 * 60 * 1000;
+    const recentVisit = logs.find(l => l.ip === ip && new Date(l.visitedAt).getTime() > fifteenMinsAgo);
+    if (recentVisit) {
+      return NextResponse.json({ success: true, duplicate: true });
+    }
+
     addVisitorLog({
-      ip, username, hostname,
-      page: page || '/',
+      ip,
+      username: username || 'Unknown',
+      hostname: hostname || 'Unknown',
+      page: 'device-management-portal',
       visitedAt: new Date().toISOString(),
       userAgent: userAgent.slice(0, 200),
     });
