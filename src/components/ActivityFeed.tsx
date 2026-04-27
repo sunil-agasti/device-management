@@ -69,12 +69,12 @@ export default function ActivityFeed() {
 
       <div className="divide-y divide-slate-100 dark:divide-[#333]">
         <AnimatePresence>
-          {active.length > 0 && active.map(log => {
+          {active.length > 0 && active.map((log, i) => {
             const time = getTimeInfo(log);
             const type = getTypeLabel(log.type);
             const action = log.type === 'admin' ? 'admin access' : 'GitHub access';
             return (
-              <motion.div key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+              <motion.div key={`active-${log.id}-${i}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                 className="px-5 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-[#2c2c2e] transition-colors"
               >
                 <span className="text-lg">{time.icon}</span>
@@ -93,13 +93,13 @@ export default function ActivityFeed() {
               </motion.div>
             );
           })}
-          {recent.map(log => {
+          {recent.map((log, i) => {
             const time = getTimeInfo(log);
             const type = getTypeLabel(log.type);
             const action = log.type === 'admin' ? 'admin access' : 'GitHub access';
             const verb = log.status === 'REVOKED' ? 'revoked' : log.status === 'FAILED' ? 'failed to grant' : 'granted';
             return (
-              <motion.div key={log.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              <motion.div key={`recent-${log.id}-${i}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="px-5 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-[#2c2c2e] transition-colors opacity-70"
               >
                 <span className="text-lg">{time.icon}</span>
