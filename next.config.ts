@@ -9,6 +9,24 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  async rewrites() {
+    return [
+      {
+        source: '/device-management-portal',
+        destination: '/',
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/device-management-portal',
+        permanent: false,
+        has: [{ type: 'header', key: 'accept', value: '(?!.*application/json).*text/html.*' }],
+      },
+    ];
+  },
   async headers() {
     return [
       {

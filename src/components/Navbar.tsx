@@ -2,7 +2,6 @@
 
 import { useTheme } from '@/context/ThemeContext';
 import { useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: string; serverHostname: string; clientIp: string; clientUsername?: string; clientHostname?: string } }) {
@@ -13,7 +12,7 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
     <nav className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-black/90 border-b border-slate-200 dark:border-[#333] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center group relative z-0">
+          <a href="/device-management-portal" className="flex items-center group relative z-0">
             <Image
               src="/logo.png"
               alt="Device Management Portal"
@@ -32,7 +31,7 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
               priority
               unoptimized
             />
-          </Link>
+          </a>
 
           <div className="hidden md:flex items-center gap-2">
             {systemInfo ? (
