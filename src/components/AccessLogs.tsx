@@ -224,7 +224,8 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
         </div>
       ) : (
         <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-          <table className="w-full text-sm">            <thead className="sticky top-0 z-10">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-10">
               <tr className="bg-slate-50 dark:bg-slate-800">
                 {sortableHeaders.map(h => (
                   <th key={h.key}
