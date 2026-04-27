@@ -20,19 +20,28 @@ function ensureFile(filePath: string) {
 function readJson<T>(filename: string, dir = DATA_DIR): T[] {
   const filePath = path.join(dir, filename);
   ensureFile(filePath);
-  const raw = fs.readFileSync(filePath, 'utf-8').trim();
-  if (!raw || raw === '') return [];
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return [];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const raw = fs.readFileSync(filePath, 'utf-8').trim();
+      if (!raw || raw === '') return [];
+      return JSON.parse(raw);
+    } catch {
+      if (attempt < 2) {
+        const wait = (attempt + 1) * 50;
+        const end = Date.now() + wait;
+        while (Date.now() < end) { /* busy wait */ }
+      }
+    }
   }
+  return [];
 }
 
 function writeJson<T>(filename: string, data: T[], dir = DATA_DIR) {
   const filePath = path.join(dir, filename);
   ensureDir(dir);
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  const tmpPath = filePath + '.tmp';
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(tmpPath, filePath);
 }
 
 function appendToBackup(log: AccessLog) {
