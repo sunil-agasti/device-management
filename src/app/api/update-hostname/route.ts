@@ -16,6 +16,10 @@ export async function POST(req: NextRequest) {
     const hostCheck = validateHostname(newHostname);
     if (!hostCheck.valid) return NextResponse.json({ error: hostCheck.message }, { status: 400 });
 
+    if (oldHostname && newHostname.toLowerCase() === oldHostname.toLowerCase()) {
+      return NextResponse.json({ error: `New hostname is the same as current hostname (${oldHostname}). No changes needed.` }, { status: 400 });
+    }
+
     const safeIp = sanitizeIp(vpnIp);
     const safeHostname = sanitizeHostname(newHostname);
     if (!safeIp || !safeHostname) {

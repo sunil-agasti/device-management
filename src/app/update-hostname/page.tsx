@@ -95,6 +95,8 @@ export default function UpdateHostnamePage() {
     if (!form.newHostname) errs.hostname = 'Required';
     else if (!['02HW0','01HW0','34HW0','3HW0','4HW0'].some(p => form.newHostname.toUpperCase().startsWith(p)))
       errs.hostname = 'Must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0';
+    else if (form.oldHostname && form.newHostname.toLowerCase() === form.oldHostname.toLowerCase())
+      errs.hostname = `New hostname is the same as current hostname (${form.oldHostname})`;
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
