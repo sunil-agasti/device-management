@@ -9,10 +9,11 @@ export function generateCsrfToken(): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function setCsrfCookie(response: NextResponse, token: string): NextResponse {
+export function setCsrfCookie(response: NextResponse, token: string, req?: NextRequest): NextResponse {
+  const isHttps = req?.url?.startsWith('https') || false;
   response.cookies.set(CSRF_COOKIE, token, {
     httpOnly: false,
-    secure: false,
+    secure: isHttps,
     sameSite: 'strict',
     path: '/',
     maxAge: 60 * 60 * 8,

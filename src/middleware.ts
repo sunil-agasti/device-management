@@ -80,7 +80,7 @@ export function middleware(req: NextRequest) {
 
   if (!req.cookies.get('csrf_token')) {
     const token = generateCsrfToken();
-    setCsrfCookie(response, token);
+    setCsrfCookie(response, token, req);
   }
 
   // VPN check for pages
