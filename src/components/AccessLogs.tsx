@@ -170,6 +170,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
     { key: 'vpnIp', label: 'VPN IP' },
     { key: 'grantedAt', label: 'Granted' },
     { key: 'duration', label: 'Duration' },
+    { key: 'requestedBy', label: 'Requested By' },
   ], []);
 
   return (
@@ -263,6 +264,7 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                     <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">{log.vpnIp}</td>
                     <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{formatDate(log.grantedAt)}</td>
                     <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{log.duration}m</td>
+                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 truncate max-w-[120px]">{log.requestedBy || '-'}</td>
                     <td className="px-4 py-3 text-xs">
                       {log.status === 'GRANTED' ? (
                         <span className="text-blue-600 dark:text-blue-400 font-medium">{getTimeRemaining(log)}</span>

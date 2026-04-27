@@ -19,7 +19,7 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
               alt="Device Management Portal"
               width={220}
               height={56}
-              className="h-10 w-auto object-contain mix-blend-multiply block dark:hidden"
+              className="h-27 w-auto object-contain mix-blend-multiply block dark:hidden"
               priority
               unoptimized
             />
@@ -28,7 +28,7 @@ export default function Navbar({ systemInfo }: { systemInfo?: { serverUsername: 
               alt="Device Management Portal"
               width={220}
               height={56}
-              className="h-10 w-auto object-contain mix-blend-screen hidden dark:block"
+              className="h-27 w-auto object-contain mix-blend-screen hidden dark:block"
               priority
               unoptimized
             />
