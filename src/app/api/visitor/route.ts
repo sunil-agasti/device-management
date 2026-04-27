@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { execSync } from 'child_process';
 import { addVisitorLog, getVisitorLogs, findUserByIp } from '@/lib/db';
 import { sanitizeIp } from '@/lib/sanitize';
 import { sshFetchUserInfo } from '@/lib/ssh';
@@ -13,19 +14,25 @@ export async function POST(req: NextRequest) {
     let username = '';
     let hostname = '';
 
-    // Try DB first
-    const dbUser = findUserByIp(ip);
-    if (dbUser && dbUser.username) {
-      username = dbUser.username;
-      hostname = dbUser.hostname || '';
-    }
+    const isLocal = ip === '127.0.0.1' || ip === '::1';
 
-    // If no username in DB and IP is on VPN, try SSH
-    if (!username && ip.startsWith('17.')) {
-      const sshResult = sshFetchUserInfo(ip);
-      if (sshResult.success) {
-        username = sshResult.username;
-        hostname = sshResult.hostname;
+    if (isLocal) {
+      try {
+        username = execSync('whoami', { encoding: 'utf-8', timeout: 3000 }).trim();
+        hostname = execSync('scutil --get ComputerName 2>/dev/null || hostname', { encoding: 'utf-8', timeout: 3000 }).trim();
+      } catch { /* ignore */ }
+    } else {
+      const dbUser = findUserByIp(ip);
+      if (dbUser && dbUser.username) {
+        username = dbUser.username;
+        hostname = dbUser.hostname || '';
+      }
+      if (!username && ip.startsWith('17.')) {
+        const sshResult = sshFetchUserInfo(ip);
+        if (sshResult.success) {
+          username = sshResult.username;
+          hostname = sshResult.hostname;
+        }
       }
     }
 
