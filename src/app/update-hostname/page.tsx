@@ -104,6 +104,8 @@ export default function UpdateHostnamePage() {
         setSteps([...progressSteps]);
         setMessage({ type: 'success', text: data.message });
         fetchLogs();
+        setForm({ vpnIp: '', newHostname: '', employeeId: '', email: '', username: '', oldHostname: '' });
+        setErrors({});
         setTimeout(() => { setMessage(null); setSteps([]); }, 5000);
       }
     } catch (err) {
