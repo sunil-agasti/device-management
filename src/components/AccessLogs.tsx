@@ -31,7 +31,7 @@ interface Log {
   device?: string;
 }
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 50;
 
 export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
   const [allLogs, setAllLogs] = useState<Log[]>([]);
@@ -253,9 +253,8 @@ export default function AccessLogs({ type }: { type?: 'admin' | 'github' }) {
                 {visible.map((log, i) => (
                   <motion.tr
                     key={log.id}
-                    initial={i < PAGE_SIZE ? { opacity: 0, x: -20 } : false}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i < PAGE_SIZE ? i * 0.02 : 0 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
                   >
                     <td className="px-4 py-3 font-mono text-xs text-slate-700 dark:text-slate-300">{log.hostname || '-'}</td>
