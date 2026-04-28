@@ -6,8 +6,8 @@ import SessionTimeout from "@/components/SessionTimeout";
 import VisitorTracker from "@/components/VisitorTracker";
 
 export const metadata: Metadata = {
-  title: "Device Management Portal - AI-Powered MacBook Management",
-  description: "Secure MacBook Management & Access Control Portal with AI-powered commands",
+  title: "Device Management Portal - MacBook Management",
+  description: "Secure MacBook Management & Access Control Portal",
 };
 
 export default function RootLayout({
