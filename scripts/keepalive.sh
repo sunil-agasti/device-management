@@ -92,12 +92,21 @@ handle_ip_change() {
 
   if [ "$new_ip" != "$old_ip" ]; then
     echo "$new_ip" > "$IP_FILE"
+    local url="http://$new_ip:$PORT/device-management-portal"
     log "🔀 IP changed: ${old_ip:-none} → $new_ip"
-    log "📋 Update at.apple.com redirect to: https://$new_ip:$PORT"
-    log "   Direct access: https://$new_ip:$PORT"
+    log "📋 Portal URL: $url"
 
-    # Send desktop notification about IP change
-    osascript -e "display notification \"New VPN IP: $new_ip. Update at.apple.com redirect if needed.\" with title \"Device Management Portal - IP Changed\"" 2>/dev/null
+    # Copy new URL to clipboard
+    echo "$url" | pbcopy 2>/dev/null
+    log "📎 URL copied to clipboard"
+
+    # Send desktop notification
+    osascript -e "display dialog \"Your VPN IP changed to $new_ip
+
+Portal URL (copied to clipboard):
+$url
+
+Update at.apple.com redirect if needed.\" with title \"** Device Management Portal **\" buttons {\"OK\"} default button \"OK\" giving up after 30" 2>/dev/null &
   fi
 }
 
@@ -210,7 +219,9 @@ case "${1:-start}" in
     log "Keep-alive stopped"
     ;;
   status)
-    echo "VPN IP: $(get_vpn_ip || echo 'disconnected')"
+    local vpn=$(get_vpn_ip)
+    echo "VPN IP: ${vpn:-disconnected}"
+    [ -n "$vpn" ] && echo "Portal URL: http://$vpn:$PORT/device-management-portal"
     echo "Server: $(is_server_running && echo 'running' || echo 'stopped')"
     echo "Caffeinate: $(pgrep -x caffeinate > /dev/null && echo 'active' || echo 'inactive')"
     [ -f "$IP_FILE" ] && echo "Last known IP: $(cat $IP_FILE)"
