@@ -166,6 +166,31 @@ export default function CleanupPage() {
             </div>
           )}
         </div>
+
+        {result && result.success && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-slate-200 dark:border-[#333] overflow-hidden"
+          >
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-200 dark:bg-[#333]">
+              <div className="bg-white dark:bg-[#1c1c1e] p-5 text-center">
+                <p className="text-2xl font-bold text-[#0076DF]">{result.expiredFixed || 0}</p>
+                <p className="text-xs text-[#86868b] mt-1">Expired Fixed</p>
+              </div>
+              <div className="bg-white dark:bg-[#1c1c1e] p-5 text-center">
+                <p className="text-2xl font-bold text-[#AF52DE]">{result.orphanedUsers || 0}</p>
+                <p className="text-xs text-[#86868b] mt-1">Incomplete Users</p>
+              </div>
+              <div className="bg-white dark:bg-[#1c1c1e] p-5 text-center">
+                <p className="text-2xl font-bold text-[#34C759]">{result.duplicatesRemoved || 0}</p>
+                <p className="text-xs text-[#86868b] mt-1">Duplicates Removed</p>
+              </div>
+              <div className="bg-white dark:bg-[#1c1c1e] p-5 text-center">
+                <p className="text-2xl font-bold text-[#FF9500]">{result.staleLogsArchived || 0}</p>
+                <p className="text-xs text-[#86868b] mt-1">Logs Archived</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </main>
     </div>
   );
