@@ -21,10 +21,17 @@ sleep 1
 
 # Get current VPN IP
 VPN_IP=$(ifconfig | grep "inet 17\." | awk '{print $2}' | head -1)
+DUCKDNS_URL="http://tcs-device-management-portal.duckdns.org:$PORT/device-management-portal"
 echo "VPN IP: ${VPN_IP:-not connected}"
 echo "Local:  http://localhost:$PORT/device-management-portal"
 [ -n "$VPN_IP" ] && echo "Remote: http://$VPN_IP:$PORT/device-management-portal"
+echo "DuckDNS: $DUCKDNS_URL"
 echo ""
+
+# Update DuckDNS with current IP
+if [ -n "$VPN_IP" ]; then
+  bash "$SCRIPT_DIR/update-duckdns.sh" "$VPN_IP"
+fi
 
 # Build if needed
 if [ ! -f ".next/BUILD_ID" ] || [ "$1" = "--build" ]; then
@@ -56,6 +63,9 @@ while kill -0 $SERVER_PID 2>/dev/null; do
     echo "  New URL: $URL"
     echo "$URL" | pbcopy 2>/dev/null
     echo "  (Copied to clipboard)"
+
+    # Update DuckDNS with new IP
+    bash "$SCRIPT_DIR/update-duckdns.sh" "$NEW_IP"
 
     # Try to update at.apple.com redirect
     bash "$SCRIPT_DIR/update-at-apple.sh" "$NEW_IP" "$PORT"
