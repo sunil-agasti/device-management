@@ -215,13 +215,39 @@
   <p><strong>Security:</strong> VPN-gated access, CSRF protection, input sanitization, credential isolation, and comprehensive audit logging.</p>
 </div>
 
+<h2>Deployment & Availability</h2>
+<div class="highlight">
+  <h3>Always-On Architecture</h3>
+  <p>The portal runs as a persistent service on the admin's MacBook with automatic recovery from every failure scenario — no dedicated server infrastructure required.</p>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h4>Auto-Start on Login</h4>
+    <p>A macOS LaunchAgent starts the portal automatically when the admin logs in. If the server crashes, the system restarts it within 30 seconds.</p>
+  </div>
+  <div class="card">
+    <h4>Sleep Prevention</h4>
+    <p>The caffeinate utility keeps the machine awake while the portal is running. The system never sleeps, ensuring 24/7 availability.</p>
+  </div>
+  <div class="card">
+    <h4>Dynamic DNS</h4>
+    <p>When the VPN assigns a new IP (on reconnect or restart), DuckDNS is auto-updated within 30 seconds. The portal URL never changes — users always access the same link.</p>
+  </div>
+  <div class="card">
+    <h4>Zero Infrastructure</h4>
+    <p>No servers, no cloud, no Docker. The portal runs directly on the admin's MacBook. All data is stored locally. Total cost: $0.</p>
+  </div>
+</div>
+
 <h2>My Role</h2>
 <p>I designed, built, and deployed this system end-to-end as the sole developer. This involved:</p>
 <ul>
   <li><strong>System design</strong> — Architecting a self-contained portal that handles secure remote execution, real-time feedback, and guaranteed revocation</li>
   <li><strong>Full-stack development</strong> — Building the React frontend, Node.js API layer, SSH automation, and macOS system integration</li>
   <li><strong>Security engineering</strong> — Implementing credential isolation, CSRF protection, VPN gating, and tamper-proof revocation</li>
-  <li><strong>UX design</strong> — Creating the conversational AI interface, real-time progress streaming, and responsive dark/light theme</li>
+  <li><strong>UX design</strong> — Apple Design System styling, floating labels, real-time progress streaming, and responsive dark/light theme</li>
+  <li><strong>DevOps</strong> — LaunchAgent auto-start, DuckDNS dynamic DNS, caffeinate sleep prevention, VPN reconnection automation</li>
   <li><strong>Operations</strong> — Managing deployment across 500+ devices, monitoring access patterns, and generating leadership reports</li>
 </ul>
 
