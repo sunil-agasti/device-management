@@ -52,3 +52,4 @@ data/backup/*.json
 .claude/
 .omc/
 AGENTS.md
+docs/screenshots/
