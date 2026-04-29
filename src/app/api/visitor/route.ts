@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     addVisitorLog({
       ip,
-      username: username || 'Unknown',
+      username: username || ip,
       hostname: hostname || 'Unknown',
       page: 'device-management-portal',
       visitedAt: new Date().toISOString(),
