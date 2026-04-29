@@ -1,6 +1,6 @@
-# Device Management Portal - AI-Powered MacBook Management
+# Device Management Portal - MacBook Management
 
-A modern, AI-powered web portal for managing temporary admin access, GitHub access, hostname updates, and system cleanup on managed Apple MacBooks. Built with Next.js, TypeScript, and Tailwind CSS.
+A modern web portal for managing temporary admin access, GitHub access, hostname updates, and system cleanup on managed Apple MacBooks. Built with Next.js, TypeScript, and Tailwind CSS.
 
 > **Full project documentation**: Open [docs/project-document.html](docs/project-document.html) in a browser for the complete interactive architecture guide with diagrams, data flows, API reference, and setup instructions.
 
@@ -9,7 +9,7 @@ A modern, AI-powered web portal for managing temporary admin access, GitHub acce
 | Area | Old System | New AI Portal |
 |------|-----------|---------------|
 | **Data Entry** | Every field manual every time, even for repeat users | Auto-populates from DB after first use via SSH + IP lookup |
-| **Intelligence** | Zero AI. Pure form-based, navigate multiple pages | AI command bar: "grant admin to 17.233.8.2 for 60 min" |
+| **Intelligence** | Zero automation. Pure form-based, navigate multiple pages | Auto-populate via SSH, smart validation, one-click access |
 | **User Lookup** | No database, no memory of previous users | JSON DB stores all users. Search by ID, username, or IP |
 | **Revoke Failures** | No UI retry. Had to SSH manually to fix | "Make Standard" button with editable IP retry |
 | **VPN IP Changes** | No handling. Revoke fails silently | Username is primary key, IP re-resolved at revoke time |
@@ -27,7 +27,6 @@ A modern, AI-powered web portal for managing temporary admin access, GitHub acce
   USER BROWSER (React + Tailwind + Framer Motion)
   ┌────────────┬────────────┬────────────┬──────────────┐
   │ Dashboard  │   Admin    │   GitHub   │   Hostname   │
-  │ + AI Bar   │   Access   │   Access   │   / Cleanup  │
   └─────┬──────┴─────┬──────┴─────┬──────┴──────┬───────┘
         └────────────┴────────────┴─────────────┘
                            │
@@ -176,14 +175,6 @@ Survives: reboot, shutdown, VPN disconnect, network loss
 ```
 
 ## Features
-
-### AI Command Bar
-Natural language interface for quick actions:
-- `grant admin to 17.233.8.2 for 60 minutes`
-- `give github access to 17.233.8.2`
-- `search employee 1255389`
-- `update hostname on 17.233.8.2`
-- `run cleanup utility`
 
 ### Temporary Admin Access
 - Grant/revoke admin privileges via SSH (SSH_ASKPASS) on remote MacBooks
@@ -441,7 +432,7 @@ launchctl list | grep com.tcs.device-management-portal
 system-admin-portal/
 ├── src/
 │   ├── app/                    # Next.js App Router pages
-│   │   ├── page.tsx            # Dashboard with AI prompt bar
+│   │   ├── page.tsx            # Dashboard with feature cards
 │   │   ├── layout.tsx          # Root layout with theme + auth
 │   │   ├── globals.css         # Global styles + dark mode
 │   │   ├── admin-access/       # Admin access page
@@ -455,10 +446,10 @@ system-admin-portal/
 │   │       ├── github-access/  # POST grant GitHub access
 │   │       ├── update-hostname/# POST update hostname
 │   │       ├── cleanup/        # POST run cleanup
-│   │       ├── ai-prompt/      # POST parse AI commands
+│   │       ├── admin-access/   # POST grant admin access
 │   │       └── logs/           # GET logs (JSON or CSV)
 │   ├── components/             # React components
-│   │   ├── AIPromptBar.tsx     # Natural language command input
+│   │   ├── AdminAccessForm.tsx # Admin grant form with streaming
 │   │   ├── AccessLogs.tsx      # Logs table with CSV export
 │   │   ├── AdminAccessForm.tsx # Admin access form + progress
 │   │   ├── AuthGuard.tsx       # VPN authentication gate
@@ -506,7 +497,7 @@ system-admin-portal/
 | POST | `/api/github-access` | Grant temporary GitHub access |
 | POST | `/api/update-hostname` | Update remote machine hostname |
 | POST | `/api/cleanup` | Run database cleanup |
-| POST | `/api/ai-prompt` | Parse natural language command |
+| POST | `/api/admin-access` | Grant temporary admin access |
 | GET | `/api/logs?type=admin&format=csv` | Get access logs (JSON or CSV) |
 | GET | `/api/reports?period=month` | Analytics report with trends, top users, devices |
 

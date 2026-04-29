@@ -122,7 +122,7 @@
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
   </div>
   <h1>Device Management Portal</h1>
-  <p class="subtitle">AI-Powered MacBook Management &amp; Access Control</p>
+  <p class="subtitle">MacBook Management &amp; Access Control</p>
   <span class="badge">v1.0.0</span>
   <span class="badge">Next.js 16</span>
   <span class="badge">TypeScript</span>
@@ -180,12 +180,12 @@
         <tr>
           <td><strong>Intelligence</strong></td>
           <td style="color:var(--red)">Zero AI capability. Pure form-based UI with no smart features. Admin had to navigate through multiple pages and buttons</td>
-          <td style="color:var(--green)">AI command bar understands natural language: &ldquo;grant admin to 17.233.8.2 for 60 minutes&rdquo; &mdash; parses IP, action, duration, looks up user, and routes to the right page</td>
+          <td style="color:var(--green)">Auto-populate via SSH &mdash; enter VPN IP and fields fill automatically. Smart validation prevents errors</td>
         </tr>
         <tr>
           <td><strong>User Lookup</strong></td>
           <td style="color:var(--red)">No database. No memory of previous users. Admin had to ask the user for their details every time or look them up manually</td>
-          <td style="color:var(--green)">JSON database stores all users. Search by employee ID, username, or IP. AI prompt can search: &ldquo;search employee 1255389&rdquo;</td>
+          <td style="color:var(--green)">JSON database stores all users. Search by employee ID, username, or IP</td>
         </tr>
         <tr>
           <td><strong>Revoke Failures</strong></td>
@@ -249,7 +249,7 @@
   <h3>Key Improvement Metrics</h3>
   <div class="stats">
     <div class="stat"><div class="value">~80%</div><div class="label">Less Manual Entry</div></div>
-    <div class="stat"><div class="value">3s</div><div class="label">AI Command to Action</div></div>
+    <div class="stat"><div class="value">3s</div><div class="label">SSH Auto-Populate</div></div>
     <div class="stat"><div class="value">0</div><div class="label">Missed Revokes</div></div>
     <div class="stat"><div class="value">24/7</div><div class="label">Keepalive Uptime</div></div>
   </div>
@@ -258,7 +258,7 @@
 <!-- 01 OVERVIEW -->
 <section id="overview">
   <h2><span class="icon" style="background:rgba(59,130,246,0.2)">01</span> System Overview</h2>
-  <p>The Device Management Portal is a <strong>full-stack web application</strong> that provides a modern, AI-powered interface for managing temporary access privileges on Apple-managed MacBooks. It replaces manual SSH terminal operations with a centralized web portal featuring <strong>natural language commands</strong>, automated workflows, and real-time access tracking.</p>
+  <p>The Device Management Portal is a <strong>full-stack web application</strong> that provides a modern interface for managing temporary access privileges on Apple-managed MacBooks. It replaces manual SSH terminal operations with a centralized web portal featuring <strong>auto-populated forms</strong>, automated workflows, and real-time access tracking.</p>
   <p>The portal runs locally on the admin's machine, authenticated via Apple VPN (17.x.x.x range), and executes bash scripts over SSH to manage remote MacBooks. A keepalive service ensures the system stays awake, VPN stays connected, and the server auto-restarts.</p>
 </section>
 
@@ -268,8 +268,8 @@
   <div class="card-grid">
     <div class="card">
       <div class="card-icon" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)">&#9889;</div>
-      <h4>AI Command Bar</h4>
-      <p>Natural language prompts like "grant admin to 17.233.8.2" with auto-parsing and smart routing</p>
+      <h4>Auto-Populate Forms</h4>
+      <p>Enter VPN IP and all fields auto-fill via SSH lookup and database. Smart validation prevents errors</p>
     </div>
     <div class="card">
       <div class="card-icon" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">&#128274;</div>
@@ -319,7 +319,7 @@
   &#9474;                    USER BROWSER                          &#9474;
   &#9474;  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488; &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488; &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488; &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;  &#9474;
   &#9474;  &#9474;Dashboard &#9474; &#9474;  Admin   &#9474; &#9474;  GitHub  &#9474; &#9474;  Hostname  &#9474;  &#9474;
-  &#9474;  &#9474;+ AI Bar  &#9474; &#9474;  Access  &#9474; &#9474;  Access  &#9474; &#9474;  / Cleanup &#9474;  &#9474;
+  &#9474;  &#9474;Dashboard &#9474; &#9474;  Access  &#9474; &#9474;  Access  &#9474; &#9474;  / Cleanup &#9474;  &#9474;
   &#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496; &#9492;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496; &#9492;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496; &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;  &#9474;
   &#9474;       &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;       &#9474;
   &#9474;                         &#9474;                               &#9474;
@@ -388,7 +388,7 @@ RootLayout (layout.tsx)
             &#9500;&#9472;&#9472; <strong>Home</strong> (page.tsx)
             &#9474;   &#9500;&#9472;&#9472; Navbar (system info + theme toggle)
             &#9474;   &#9500;&#9472;&#9472; ExpiryWarning (floating notifications)
-            &#9474;   &#9500;&#9472;&#9472; AIPromptBar (NL command input + suggestions)
+            &#9474;   &#9500;&#9472;&#9472; Dashboard (feature cards + activity feed)
             &#9474;   &#9500;&#9472;&#9472; Dashboard (4 feature cards)
             &#9474;   &#9492;&#9472;&#9472; AccessLogs (search + sort + lazy-load)
             &#9474;
@@ -502,7 +502,7 @@ RootLayout (layout.tsx)
       <tr><td><code>POST</code></td><td><code>/api/github-access</code></td><td>Grant temporary GitHub access + LaunchDaemon revoke</td><td>VPN</td></tr>
       <tr><td><code>POST</code></td><td><code>/api/update-hostname</code></td><td>Update remote machine hostname via SSH</td><td>VPN</td></tr>
       <tr><td><code>POST</code></td><td><code>/api/cleanup</code></td><td>Run database cleanup for expired entries</td><td>VPN</td></tr>
-      <tr><td><code>POST</code></td><td><code>/api/ai-prompt</code></td><td>Parse natural language command, return action + data</td><td>VPN</td></tr>
+      <tr><td><code>POST</code></td><td><code>/api/update-hostname</code></td><td>Update remote machine hostname via SSH</td><td>VPN</td></tr>
       <tr><td><code>GET</code></td><td><code>/api/logs?type=admin&amp;format=csv</code></td><td>Get access logs as JSON or CSV download</td><td>VPN</td></tr>
       <tr><td><code>GET</code></td><td><code>/api/auth/session</code></td><td>Check IDMS session status</td><td>IDMS</td></tr>
       <tr><td><code>GET</code></td><td><code>/api/auth/callback</code></td><td>IDMS OAuth callback handler</td><td>-</td></tr>
