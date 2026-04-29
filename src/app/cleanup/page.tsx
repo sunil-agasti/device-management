@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { secureFetch } from '@/lib/fetchClient';
 
 interface CleanupResult {
@@ -68,13 +68,11 @@ export default function CleanupPage() {
     try {
       const res = await secureFetch('/api/cleanup', { method: 'POST' });
       const data = await res.json();
-      if (data.success && (data.totalFixed === 0 || (!data.expiredFixed && !data.duplicatesRemoved && !data.staleLogsArchived && !data.orphanedUsers))) {
-        setResult({ ...data, message: 'No issues found. Database is clean.' });
-      } else {
-        setResult(data);
-      }
+      setResult(data);
+      setTimeout(() => setResult(null), 10000);
     } catch (err) {
       setResult({ success: false, message: 'Cleanup failed: ' + String(err) });
+      setTimeout(() => setResult(null), 10000);
     } finally {
       setLoading(false);
     }
@@ -83,6 +81,29 @@ export default function CleanupPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <Navbar systemInfo={systemInfo} />
+
+      <AnimatePresence>
+        {result && (
+          <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
+            className={`fixed top-16 left-0 right-0 z-[100] mx-auto max-w-lg px-4`}
+          >
+            <div className={`rounded-xl shadow-lg px-5 py-3 flex items-center gap-3 ${
+              result.success ? 'bg-[#34C759] text-white' : 'bg-[#FF3B30] text-white'
+            }`}>
+              {result.success ? (
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              ) : (
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              )}
+              <p className="text-sm font-medium flex-1">{result.message}</p>
+              <button onClick={() => setResult(null)} className="opacity-70 hover:opacity-100">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-orange-500 hover:text-orange-600 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -145,52 +166,6 @@ export default function CleanupPage() {
             </div>
           )}
         </div>
-
-        {/* Results */}
-        {result && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className={`rounded-2xl border overflow-hidden ${result.success
-              ? 'bg-green-50 dark:bg-green-500/5 border-green-200 dark:border-green-500/30'
-              : 'bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/30'
-            }`}
-          >
-            <div className="p-5 flex items-center gap-3">
-              {result.success ? (
-                <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </div>
-              )}
-              <p className={`text-sm font-medium ${result.success ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                {result.message}
-              </p>
-            </div>
-
-            {result.success && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-200 dark:bg-slate-700/50 border-t border-slate-200 dark:border-slate-700/50">
-                <div className="bg-white dark:bg-slate-800/80 p-4 text-center">
-                  <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{result.expiredFixed || 0}</p>
-                  <p className="text-xs text-slate-500 mt-1">Expired Fixed</p>
-                </div>
-                <div className="bg-white dark:bg-slate-800/80 p-4 text-center">
-                  <p className="text-xl font-bold text-violet-600 dark:text-violet-400">{result.orphanedUsers || 0}</p>
-                  <p className="text-xs text-slate-500 mt-1">Incomplete Users</p>
-                </div>
-                <div className="bg-white dark:bg-slate-800/80 p-4 text-center">
-                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{result.duplicatesRemoved || 0}</p>
-                  <p className="text-xs text-slate-500 mt-1">Duplicates Removed</p>
-                </div>
-                <div className="bg-white dark:bg-slate-800/80 p-4 text-center">
-                  <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{result.staleLogsArchived || 0}</p>
-                  <p className="text-xs text-slate-500 mt-1">Logs Archived</p>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
       </main>
     </div>
   );
