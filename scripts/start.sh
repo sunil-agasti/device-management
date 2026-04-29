@@ -27,14 +27,15 @@ echo "Local:  http://localhost:$PORT/device-management-portal"
 echo ""
 
 # Build if needed
-if [ ! -d ".next" ] || [ "$1" = "--build" ]; then
-  echo "Building..."
+if [ ! -f ".next/BUILD_ID" ] || [ "$1" = "--build" ]; then
+  echo "Building production bundle..."
   npm run build
+  echo ""
 fi
 
 # Start with caffeinate (prevents sleep)
 echo "Starting server with caffeinate (system won't sleep)..."
-caffeinate -dimsu npm start -- --port $PORT &
+caffeinate -dimsu npm run start -- --port $PORT &
 SERVER_PID=$!
 
 echo "Server PID: $SERVER_PID"

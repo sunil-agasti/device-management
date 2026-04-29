@@ -26,7 +26,7 @@ function runSsh(ip: string, command: string, password: string, timeout = 5): { s
 
   try {
     const output = execSync(
-      `ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${SSH_USER}@${ip} '${command.replace(/'/g, "'\\''")}'`,
+      `ssh -o StrictHostKeyChecking=no -o ConnectTimeout=3 ${SSH_USER}@${ip} '${command.replace(/'/g, "'\\''")}'`,
       {
         encoding: 'utf-8',
         timeout: timeout * 1000,
