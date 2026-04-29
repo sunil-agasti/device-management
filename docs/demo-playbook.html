@@ -8,11 +8,9 @@
   :root { --bg: #0f172a; --surface: #1e293b; --surface2: #334155; --border: #475569; --text: #f1f5f9; --muted: #94a3b8; --accent: #3b82f6; --violet: #8b5cf6; --green: #22c55e; --red: #ef4444; --amber: #f59e0b; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-  .container { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
   h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
-  .sub { color: var(--muted); margin-bottom: 32px; }
-  h2 { font-size: 1.2rem; font-weight: 700; margin: 36px 0 12px; color: var(--accent); }
-  p { color: var(--muted); font-size: 0.9rem; margin-bottom: 10px; }
+  .sub { color: var(--muted); margin-bottom: 32px; font-size: 0.9rem; }
 
   /* Tabs */
   .tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 12px; padding: 4px; margin-bottom: 24px; overflow-x: auto; }
@@ -22,461 +20,222 @@
   .screen { display: none; }
   .screen.active { display: block; }
 
-  /* App mockup frame */
-  .mockup { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
-  .mockup-bar { background: var(--surface2); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  /* Screenshot display */
+  .screenshot-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.4); margin-bottom: 16px; }
+  .frame-bar { background: var(--surface2); padding: 10px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
   .dot { width: 10px; height: 10px; border-radius: 50%; }
   .dot-r { background: #ef4444; }
   .dot-y { background: #f59e0b; }
   .dot-g { background: #22c55e; }
-  .mockup-url { flex: 1; text-align: center; font-size: 0.72rem; color: var(--muted); background: var(--bg); padding: 4px 12px; border-radius: 6px; margin: 0 40px; }
-  .mockup-body { padding: 24px; }
+  .frame-url { flex: 1; text-align: center; font-size: 0.72rem; color: var(--muted); background: var(--bg); padding: 4px 12px; border-radius: 6px; margin: 0 40px; }
+  .frame-body img { width: 100%; display: block; }
 
-  /* Navbar */
-  .nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(30,41,59,0.8); border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
-  .nav-brand { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
-  .nav-brand-icon { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), var(--violet)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; }
-  .nav-user { font-size: 0.75rem; color: var(--muted); }
-
-  /* AI Bar */
-  .ai-bar { position: relative; margin: 16px 0; }
-  .ai-bar input { width: 100%; padding: 14px 80px 14px 44px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.88rem; outline: none; }
-  .ai-bar .icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--violet); font-size: 1rem; }
-  .ai-bar .btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 8px 16px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--violet)); color: white; font-size: 0.78rem; font-weight: 600; border: none; cursor: pointer; }
-
-  /* Chat */
-  .chat { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; margin-top: 12px; overflow: hidden; }
-  .chat-header { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); font-weight: 600; }
-  .chat-body { padding: 16px; max-height: 360px; overflow-y: auto; }
-  .msg { margin-bottom: 10px; display: flex; }
-  .msg-user { justify-content: flex-end; }
-  .msg-ai { justify-content: flex-start; }
-  .bubble { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 0.82rem; line-height: 1.5; }
-  .bubble-user { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
-  .bubble-ai { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; }
-  .bubble strong { color: #93c5fd; }
-  .bubble .check { color: var(--green); }
-  .bubble .fail { color: var(--red); }
-  .btn-confirm { display: inline-block; margin-top: 8px; padding: 6px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; border: none; cursor: pointer; }
-  .btn-c { background: var(--accent); color: white; }
-  .btn-x { background: rgba(239,68,68,0.2); color: var(--red); margin-left: 6px; }
-
-  /* Cards grid */
-  .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 16px 0; }
-  .card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
-  .card-icon { width: 36px; height: 36px; border-radius: 10px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-  .card h4 { font-size: 0.78rem; font-weight: 600; margin-bottom: 4px; }
-  .card p { font-size: 0.68rem; color: var(--muted); margin: 0; }
-
-  /* Form */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .field label { font-size: 0.72rem; font-weight: 600; color: var(--muted); display: block; margin-bottom: 4px; }
-  .field input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 0.82rem; }
-  .field .tag { font-size: 0.65rem; color: var(--accent); margin-left: 4px; }
-
-  /* Progress */
-  .progress-row { display: flex; gap: 16px; justify-content: center; margin: 20px 0; }
-  .progress-step { text-align: center; }
-  .progress-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 0.9rem; }
-  .pc-done { background: rgba(34,197,94,0.15); border: 2px solid var(--green); color: var(--green); }
-  .pc-active { background: rgba(59,130,246,0.15); border: 2px solid var(--accent); color: var(--accent); animation: pulse 1.5s infinite; }
-  .pc-pending { background: var(--surface2); border: 2px solid var(--border); color: var(--muted); }
-  .progress-label { font-size: 0.65rem; color: var(--muted); }
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
-
-  /* Logs table */
-  .logs-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; margin-top: 12px; }
-  .logs-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
-  .logs-table td { padding: 8px 10px; border-bottom: 1px solid var(--surface2); color: var(--text); }
-  .status { padding: 3px 10px; border-radius: 12px; font-size: 0.65rem; font-weight: 600; }
-  .s-granted { background: rgba(34,197,94,0.15); color: var(--green); }
-  .s-revoked { background: rgba(245,158,11,0.15); color: var(--amber); }
-
-  /* macOS dialog */
-  .macos-dialog { background: #f5f5f7; border-radius: 12px; padding: 24px 28px; max-width: 440px; margin: 0 auto; color: #1d1d1f; border: 1px solid #d2d2d7; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
-  .macos-dialog h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: #1d1d1f; }
-  .macos-dialog p { font-size: 0.82rem; color: #424245; line-height: 1.6; margin-bottom: 8px; }
-  .macos-btn { display: block; margin: 16px auto 0; padding: 6px 32px; background: #0071e3; color: white; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: 500; cursor: pointer; }
-
-  /* Metrics */
-  .metrics { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin: 16px 0; }
-  .metric { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
-  .metric .val { font-size: 1.5rem; font-weight: 800; }
-  .metric .lbl { font-size: 0.65rem; color: var(--muted); }
-
-  /* Bar chart */
-  .chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin: 16px 0; padding: 0 10px; }
-  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; justify-content: flex-end; }
-  .bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; }
-  .bar-admin { background: var(--accent); }
-  .bar-github { background: var(--violet); }
-  .bar-label { font-size: 0.55rem; color: var(--muted); margin-top: 4px; }
-
+  /* Description */
   .desc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-top: 12px; font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
   .desc strong { color: var(--text); }
+
+  /* Multi-screenshot gallery */
+  .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .gallery.single { grid-template-columns: 1fr; }
+  .gallery-item { position: relative; }
+  .gallery-item .badge { position: absolute; top: 12px; left: 12px; padding: 4px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 600; z-index: 1; backdrop-filter: blur(8px); }
+  .badge-blue { background: rgba(59,130,246,0.85); color: white; }
+  .badge-violet { background: rgba(139,92,246,0.85); color: white; }
+  .badge-green { background: rgba(34,197,94,0.85); color: white; }
+  .badge-amber { background: rgba(245,158,11,0.85); color: white; }
+  .badge-dark { background: rgba(30,41,59,0.9); color: #94a3b8; border: 1px solid #475569; }
+
+  /* Step indicator */
+  .step-flow { display: flex; align-items: center; gap: 8px; margin: 16px 0; justify-content: center; }
+  .step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; }
+  .step-arrow { color: var(--muted); font-size: 0.8rem; }
+  .step-label { font-size: 0.75rem; color: var(--muted); }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>Device Management Portal — Interactive Demo</h1>
-  <p class="sub">Click each tab to see how the portal works. These are visual mockups of each screen.</p>
+  <p class="sub">Click each tab to see real screenshots of the portal in action.</p>
 
   <div class="tabs">
     <button class="tab active" onclick="showScreen('dashboard')">Dashboard</button>
-    <button class="tab" onclick="showScreen('ai-chat')">AI: Admin</button>
-    <button class="tab" onclick="showScreen('ai-github')">AI: GitHub</button>
-    <button class="tab" onclick="showScreen('ai-hostname')">AI: Hostname</button>
-    <button class="tab" onclick="showScreen('form')">Form: Admin</button>
-    <button class="tab" onclick="showScreen('form-github')">Form: GitHub</button>
-    <button class="tab" onclick="showScreen('form-hostname')">Form: Hostname</button>
-    <button class="tab" onclick="showScreen('form-cleanup')">Cleanup Utility</button>
-    <button class="tab" onclick="showScreen('notify-grant')">Notify: Grant</button>
-    <button class="tab" onclick="showScreen('notify-revoke')">Notify: Revoke</button>
+    <button class="tab" onclick="showScreen('admin')">Admin Access</button>
+    <button class="tab" onclick="showScreen('github')">GitHub Access</button>
+    <button class="tab" onclick="showScreen('hostname')">Hostname Update</button>
+    <button class="tab" onclick="showScreen('cleanup')">Cleanup Utility</button>
     <button class="tab" onclick="showScreen('reports')">Reports</button>
+    <button class="tab" onclick="showScreen('activity')">Activity &amp; Alerts</button>
   </div>
 
   <!-- DASHBOARD -->
   <div id="dashboard" class="screen active">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti · 02HW067534</div></div>
-        <div style="text-align:center; margin: 20px 0;">
-          <div style="font-size:1.5rem; font-weight:800; background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AI-Powered Admin Portal</div>
-          <p style="font-size:0.8rem; margin-top:6px;">Manage MacBook access, grant permissions, and run diagnostics with natural language commands</p>
+    <div class="gallery">
+      <div class="gallery-item">
+        <span class="badge badge-blue">Light Mode</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost</span></div>
+          <div class="frame-body"><img src="screenshots/01-dashboard-light.png" alt="Dashboard - Light Mode"></div>
         </div>
-        <div class="ai-bar"><span class="icon">⚡</span><input type="text" value='grant admin to 17.233.58.100 for 5 minutes' readonly><span class="btn">Run →</span></div>
-        <div class="cards">
-          <div class="card"><div class="card-icon" style="background:rgba(59,130,246,0.15)">🔐</div><h4>Admin Access</h4><p>Grant temporary admin privileges</p></div>
-          <div class="card"><div class="card-icon" style="background:rgba(139,92,246,0.15)">💻</div><h4>GitHub Access</h4><p>Unblock public GitHub</p></div>
-          <div class="card"><div class="card-icon" style="background:rgba(34,197,94,0.15)">🏷️</div><h4>Update Hostname</h4><p>Rename managed Macs</p></div>
-          <div class="card"><div class="card-icon" style="background:rgba(245,158,11,0.15)">🧹</div><h4>Cleanup</h4><p>Fix expired entries</p></div>
-          <div class="card"><div class="card-icon" style="background:rgba(6,182,212,0.15)">📊</div><h4>Reports</h4><p>Leadership dashboard</p></div>
+      </div>
+      <div class="gallery-item">
+        <span class="badge badge-dark">Dark Mode</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost</span></div>
+          <div class="frame-body"><img src="screenshots/02-dashboard-dark.png" alt="Dashboard - Dark Mode"></div>
         </div>
-        <div style="font-size:0.82rem; font-weight:600; margin-top:20px;">Recent Access Logs</div>
-        <table class="logs-table">
-          <thead><tr><th>Hostname</th><th>Username</th><th>VPN IP</th><th>Granted</th><th>Duration</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td style="font-family:monospace">02HW098712</td><td>johndoe</td><td style="font-family:monospace">17.233.58.100</td><td>Apr 25, 10:30</td><td>5m</td><td><span class="status s-granted">GRANTED</span></td></tr>
-            <tr><td style="font-family:monospace">02HW054321</td><td>janesmith</td><td style="font-family:monospace">17.233.40.200</td><td>Apr 25, 09:15</td><td>60m</td><td><span class="status s-revoked">REVOKED</span></td></tr>
-          </tbody>
-        </table>
       </div>
     </div>
-    <div class="desc"><strong>Dashboard:</strong> The home screen shows the AI command bar, quick-access feature cards, and recent access logs with search, sort, and CSV export.</div>
+    <div class="desc"><strong>Dashboard:</strong> The home screen shows the AI command bar for natural language commands, quick-access feature cards (Admin Access, GitHub Access, Hostname Update, Cleanup, Reports), and a recent activity feed. Supports both light and dark modes.</div>
   </div>
 
-  <!-- AI CHAT: ADMIN -->
-  <div id="ai-chat" class="screen">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti</div></div>
-        <div class="ai-bar"><span class="icon">⚡</span><input type="text" value='grant admin to 17.233.58.100 for 5 minutes' readonly><span class="btn">→</span></div>
-        <div class="chat">
-          <div class="chat-header"><span>🤖 AI Assistant</span><span style="color:#ef4444;cursor:pointer">Clear</span></div>
-          <div class="chat-body">
-            <div class="msg msg-user"><div class="bubble bubble-user">grant admin to 17.233.58.100 for 5 minutes</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Checking 17.233.58.100...</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Found: <strong>johndoe</strong> on <strong>02HW098712</strong></div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Ready to grant admin access:<br><br>• User: <strong>johndoe</strong><br>• Device: <strong>02HW098712</strong><br>• IP: 17.233.58.100<br>• Duration: 5 minutes<br>• Employee ID: 1082456<br>• Email: johndoe@apple.com<br><br><button class="btn-confirm btn-c">Confirm</button><button class="btn-confirm btn-x">Cancel</button></div></div>
-            <div class="msg msg-user"><div class="bubble bubble-user">Confirm</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Granting admin access</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Running JAMF Commands</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Scheduling auto-revoke</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Sending notification</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">🎉 Admin access granted to <strong>johndoe</strong> on <strong>02HW098712</strong>. Will auto-revoke in 5 minutes.</div></div>
-          </div>
+  <!-- ADMIN ACCESS -->
+  <div id="admin" class="screen">
+    <div class="step-flow">
+      <span class="step-num">1</span><span class="step-label">Fill Form</span>
+      <span class="step-arrow">&rarr;</span>
+      <span class="step-num">2</span><span class="step-label">Processing</span>
+      <span class="step-arrow">&rarr;</span>
+      <span class="step-num">3</span><span class="step-label">Completed</span>
+      <span class="step-arrow">&rarr;</span>
+      <span class="step-num">4</span><span class="step-label">Access Logs</span>
+    </div>
+    <div class="gallery">
+      <div class="gallery-item">
+        <span class="badge badge-blue">Step 1: Form</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/admin-access</span></div>
+          <div class="frame-body"><img src="screenshots/03-admin-access-form.png" alt="Admin Access - Form"></div>
+        </div>
+      </div>
+      <div class="gallery-item">
+        <span class="badge badge-amber">Step 2: Processing</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/admin-access</span></div>
+          <div class="frame-body"><img src="screenshots/04-admin-access-processing.png" alt="Admin Access - Processing"></div>
+        </div>
+      </div>
+      <div class="gallery-item">
+        <span class="badge badge-green">Step 3: Completed</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/admin-access</span></div>
+          <div class="frame-body"><img src="screenshots/05-admin-access-completed.png" alt="Admin Access - Completed"></div>
+        </div>
+      </div>
+      <div class="gallery-item">
+        <span class="badge badge-violet">Step 4: Access Logs</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/admin-access</span></div>
+          <div class="frame-body"><img src="screenshots/06-admin-access-granted-log.png" alt="Admin Access - Granted Log"></div>
         </div>
       </div>
     </div>
-    <div class="desc"><strong>AI Chat — Admin Grant:</strong> Type a natural language command. The AI checks the device, auto-fills user details, asks for confirmation, then streams each step live. No page navigation needed.</div>
+    <div class="desc"><strong>Temporary Admin Access:</strong> Enter a VPN IP and all fields auto-populate via SSH (hostname, username, employee ID, email). The 3-step progress tracker streams live as each step completes: granting admin &rarr; running JAMF commands &rarr; scheduling auto-revoke. Access logs show status with countdown timers.</div>
   </div>
 
-  <!-- AI CHAT: GITHUB -->
-  <div id="ai-github" class="screen">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti</div></div>
-        <div class="ai-bar"><span class="icon">⚡</span><input type="text" value='give github access to 17.233.58.100 for 30 minutes' readonly><span class="btn">→</span></div>
-        <div class="chat">
-          <div class="chat-header"><span>🤖 AI Assistant</span><span style="color:#ef4444;cursor:pointer">Clear</span></div>
-          <div class="chat-body">
-            <div class="msg msg-user"><div class="bubble bubble-user">give github access to 17.233.58.100 for 30 minutes</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Checking 17.233.58.100...</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Found: <strong>johndoe</strong> on <strong>02HW098712</strong></div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Ready to grant GitHub access:<br><br>• User: <strong>johndoe</strong><br>• Device: <strong>02HW098712</strong><br>• Duration: 30 minutes<br><br><button class="btn-confirm btn-c">Confirm</button><button class="btn-confirm btn-x">Cancel</button></div></div>
-            <div class="msg msg-user"><div class="bubble bubble-user">Confirm</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Unblocking GitHub</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Running JAMF Commands</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Scheduling auto-revoke</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">🎉 GitHub access granted for <strong>johndoe</strong>. Will auto-revoke in 30 minutes.</div></div>
-          </div>
+  <!-- GITHUB ACCESS -->
+  <div id="github" class="screen">
+    <div class="step-flow">
+      <span class="step-num">1</span><span class="step-label">Fill Form</span>
+      <span class="step-arrow">&rarr;</span>
+      <span class="step-num">2</span><span class="step-label">Access Granted</span>
+    </div>
+    <div class="gallery">
+      <div class="gallery-item">
+        <span class="badge badge-violet">Form</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/github-access</span></div>
+          <div class="frame-body"><img src="screenshots/07-github-access-form.png" alt="GitHub Access - Form"></div>
+        </div>
+      </div>
+      <div class="gallery-item">
+        <span class="badge badge-green">Access Granted + Logs</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/github-access</span></div>
+          <div class="frame-body"><img src="screenshots/08-github-access-granted-log.png" alt="GitHub Access - Granted Log"></div>
         </div>
       </div>
     </div>
-    <div class="desc"><strong>AI Chat — GitHub Access:</strong> Same conversational flow. Removes github.com from /etc/hosts, flushes DNS, and installs a persistent auto-revoke timer.</div>
+    <div class="desc"><strong>Temporary GitHub Access:</strong> Same auto-populate flow as admin. Removes github.com from /etc/hosts, flushes DNS, and installs a persistent LaunchDaemon for auto-revoke. Access logs show granted entries with countdown timers and device type.</div>
   </div>
 
-  <!-- AI CHAT: HOSTNAME -->
-  <div id="ai-hostname" class="screen">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti</div></div>
-        <div class="ai-bar"><span class="icon">⚡</span><input type="text" value='update hostname on 17.233.58.100' readonly><span class="btn">→</span></div>
-        <div class="chat">
-          <div class="chat-header"><span>🤖 AI Assistant</span><span style="color:#ef4444;cursor:pointer">Clear</span></div>
-          <div class="chat-body">
-            <div class="msg msg-user"><div class="bubble bubble-user">update hostname on 17.233.58.100</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Checking 17.233.58.100...</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Found: <strong>johndoe</strong> on <strong>02HW098712</strong></div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Current hostname is <strong>02HW098712</strong>. What should the new hostname be?</div></div>
-            <div class="msg msg-user"><div class="bubble bubble-user">02HW067534</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai">Update hostname:<br><br>• Device: <strong>02HW098712</strong> → <strong>02HW067534</strong><br>• User: johndoe<br>• IP: 17.233.58.100<br><br><button class="btn-confirm btn-c">Confirm</button><button class="btn-confirm btn-x">Cancel</button></div></div>
-            <div class="msg msg-user"><div class="bubble bubble-user">Confirm</div></div>
-            <div class="msg msg-ai"><div class="bubble bubble-ai"><span class="check">✅</span> Hostname updated to 02HW067534.</div></div>
-          </div>
+  <!-- HOSTNAME UPDATE -->
+  <div id="hostname" class="screen">
+    <div class="step-flow">
+      <span class="step-num">1</span><span class="step-label">In Progress</span>
+      <span class="step-arrow">&rarr;</span>
+      <span class="step-num">2</span><span class="step-label">Completed</span>
+      <span class="step-arrow">&rarr;</span>
+      <span class="step-num">3</span><span class="step-label">Logs Updated</span>
+    </div>
+    <div class="gallery">
+      <div class="gallery-item">
+        <span class="badge badge-amber">Updating...</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/update-hostname</span></div>
+          <div class="frame-body"><img src="screenshots/09-hostname-update-progress.png" alt="Hostname Update - In Progress"></div>
+        </div>
+      </div>
+      <div class="gallery-item">
+        <span class="badge badge-green">Completed</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/update-hostname</span></div>
+          <div class="frame-body"><img src="screenshots/10-hostname-update-completed.png" alt="Hostname Update - Completed"></div>
         </div>
       </div>
     </div>
-    <div class="desc"><strong>AI Chat — Hostname Update:</strong> The AI detects the current hostname and asks for the new one. Validates the naming convention before applying.</div>
-  </div>
-
-  <!-- FORM -->
-  <div id="form" class="screen">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/admin-access</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti</div></div>
-        <div style="text-align:center; margin-bottom:20px;"><span style="display:inline-block; padding:6px 20px; border-radius:20px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); font-size:0.85rem; font-weight:600; color:var(--accent);">🛡️ Temporary Admin Access Request</span></div>
-        <div class="form-grid">
-          <div class="field"><label>TCS Employee ID * <span class="tag">(from DB)</span></label><input value="1082456" readonly></div>
-          <div class="field"><label>Apple Email * <span class="tag">(from DB)</span></label><input value="johndoe@apple.com" readonly></div>
-          <div class="field"><label>Hostname * <span class="tag">(via SSH)</span></label><input value="02HW098712" readonly style="opacity:0.7"></div>
-          <div class="field"><label>VPN IP *</label><input value="17.233.58.100" readonly></div>
-          <div class="field"><label>Username * <span class="tag">(via SSH)</span></label><input value="johndoe" readonly style="opacity:0.7"></div>
-          <div class="field"><label>Access Duration *</label><input value="5" readonly></div>
+    <div class="gallery single" style="margin-top: 16px;">
+      <div class="gallery-item">
+        <span class="badge badge-blue">Recent Hostname Updates</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/update-hostname</span></div>
+          <div class="frame-body"><img src="screenshots/11-hostname-update-logs.png" alt="Hostname Update - Logs"></div>
         </div>
-        <div style="text-align:center; margin:20px 0;"><button style="padding:12px 28px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--violet)); color:white; font-weight:600; font-size:0.88rem; border:none; cursor:pointer;">🛡️ Request Admin Access</button></div>
-        <div style="text-align:center; font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Request Complete</div>
-        <div class="progress-row">
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Granting<br>admin</div></div>
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Running<br>JAMF</div></div>
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Scheduling<br>revoke</div></div>
-        </div>
-        <div style="text-align:center; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ Admin access granted to johndoe on 02HW098712. Will auto-revoke in 5 minutes.</div>
-        <div style="font-size:0.82rem; font-weight:600; margin-top:20px;">Recent Access Logs</div>
-        <table class="logs-table">
-          <thead><tr><th>Hostname</th><th>Username</th><th>VPN IP</th><th>Granted</th><th>Duration</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td style="font-family:monospace">02HW098712</td><td>johndoe</td><td style="font-family:monospace">17.233.58.100</td><td>Apr 25, 10:30</td><td>5m</td><td><span class="status s-granted">GRANTED</span></td></tr>
-            <tr><td style="font-family:monospace">02HW054321</td><td>janesmith</td><td style="font-family:monospace">17.233.40.200</td><td>Apr 25, 09:15</td><td>60m</td><td><span class="status s-revoked">REVOKED</span></td></tr>
-          </tbody>
-        </table>
       </div>
     </div>
-    <div class="desc"><strong>Form-Based Access:</strong> Enter a VPN IP and all fields auto-populate via SSH. Real-time progress streams as each step completes. Expandable logs under each step (admin only).</div>
-  </div>
-
-  <!-- FORM: GITHUB ACCESS -->
-  <div id="form-github" class="screen">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/github-access</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti</div></div>
-        <div style="text-align:center; margin-bottom:20px;"><span style="display:inline-block; padding:6px 20px; border-radius:20px; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.3); font-size:0.85rem; font-weight:600; color:var(--violet);">💻 Temporary GitHub Access Request</span></div>
-        <div class="form-grid">
-          <div class="field"><label>TCS Employee ID * <span class="tag">(from DB)</span></label><input value="1082456" readonly></div>
-          <div class="field"><label>Apple Email * <span class="tag">(from DB)</span></label><input value="johndoe@apple.com" readonly></div>
-          <div class="field"><label>Hostname <span class="tag">(via SSH)</span></label><input value="02HW098712" readonly style="opacity:0.7"></div>
-          <div class="field"><label>VPN IP *</label><input value="17.233.58.100" readonly></div>
-          <div class="field"><label>Username <span class="tag">(via SSH)</span></label><input value="johndoe" readonly style="opacity:0.7"></div>
-          <div class="field"><label>Access Duration *</label><input value="30" readonly></div>
-        </div>
-        <div style="text-align:center; margin:20px 0;"><button style="padding:12px 28px; border-radius:12px; background:linear-gradient(135deg,var(--violet),#a855f7); color:white; font-weight:600; font-size:0.88rem; border:none; cursor:pointer;">💻 Request GitHub Access</button></div>
-        <div style="text-align:center; font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Request Complete</div>
-        <div class="progress-row">
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Unblocking<br>GitHub</div></div>
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Running<br>JAMF</div></div>
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Scheduling<br>revoke</div></div>
-        </div>
-        <div style="text-align:center; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ GitHub access granted for johndoe. Will auto-revoke in 30 minutes.</div>
-        <div style="font-size:0.82rem; font-weight:600; margin-top:20px;">Recent Access Logs</div>
-        <table class="logs-table">
-          <thead><tr><th>Hostname</th><th>Username</th><th>VPN IP</th><th>Granted</th><th>Duration</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td style="font-family:monospace">02HW098712</td><td>johndoe</td><td style="font-family:monospace">17.233.58.100</td><td>Apr 25, 10:45</td><td>30m</td><td><span class="status s-granted">GRANTED</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="desc"><strong>Form — GitHub Access:</strong> Same auto-populate flow as admin. Removes github.com from /etc/hosts, flushes DNS, and schedules auto-revoke via LaunchDaemon.</div>
-  </div>
-
-  <!-- FORM: HOSTNAME UPDATE -->
-  <div id="form-hostname" class="screen">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/update-hostname</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti</div></div>
-        <div style="text-align:center; margin-bottom:20px;"><span style="display:inline-block; padding:6px 20px; border-radius:20px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.85rem; font-weight:600; color:var(--green);">🏷️ Update Hostname</span></div>
-        <div class="form-grid">
-          <div class="field"><label>VPN IP *</label><input value="17.233.58.100" readonly></div>
-          <div class="field"><label>Current Hostname <span class="tag">(via SSH)</span></label><input value="02HW098712" readonly style="opacity:0.7"></div>
-          <div class="field" style="grid-column:span 2"><label>New Hostname *</label><input value="02HW067534" readonly style="border-color:var(--green)"></div>
-        </div>
-        <div style="text-align:center; margin:20px 0;"><button style="padding:12px 28px; border-radius:12px; background:linear-gradient(135deg,var(--green),#10b981); color:white; font-weight:600; font-size:0.88rem; border:none; cursor:pointer;">🏷️ Update Hostname</button></div>
-        <div class="progress-row">
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Getting<br>hostname</div></div>
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Updating<br>hostname</div></div>
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Running<br>JAMF</div></div>
-          <div class="progress-step"><div class="progress-circle pc-done">✓</div><div class="progress-label">Complete</div></div>
-        </div>
-        <div style="text-align:center; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ Hostname updated to 02HW067534.</div>
-      </div>
-    </div>
-    <div class="desc"><strong>Form — Hostname Update:</strong> Enter VPN IP to detect current hostname. Type the new hostname (validated prefix: 02HW0, 01HW0, etc). Updates HostName, ComputerName, and LocalHostName remotely.</div>
+    <div class="desc"><strong>Update Hostname:</strong> Enter VPN IP to auto-detect current hostname. Type the new hostname (validated prefix: 02HW0, 01HW0, etc). Updates HostName, ComputerName, and LocalHostName remotely via SSH. Logs show old &rarr; new hostname mapping with success status.</div>
   </div>
 
   <!-- CLEANUP UTILITY -->
-  <div id="form-cleanup" class="screen">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/cleanup</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti</div></div>
-        <div style="text-align:center; margin-bottom:20px;"><span style="display:inline-block; padding:6px 20px; border-radius:20px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); font-size:0.85rem; font-weight:600; color:var(--amber);">🧹 Cleanup Utility</span></div>
-        <p style="text-align:center; font-size:0.82rem; margin-bottom:20px;">Fix orphaned entries, deduplicate records, and maintain database integrity</p>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:28px; height:28px; border-radius:8px; background:rgba(239,68,68,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem;">🔴</div><span style="font-size:0.82rem; font-weight:600;">Fix Expired Grants</span></div>
-            <p style="font-size:0.72rem;">Find GRANTED entries past their duration and mark as EXPIRED</p>
-            <div style="margin-top:8px; padding:6px 10px; border-radius:6px; background:rgba(34,197,94,0.1); font-size:0.7rem; color:var(--green);">✅ 3 entries fixed</div>
-          </div>
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:28px; height:28px; border-radius:8px; background:rgba(59,130,246,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem;">🔵</div><span style="font-size:0.82rem; font-weight:600;">Deduplicate Records</span></div>
-            <p style="font-size:0.72rem;">Remove duplicate log entries keeping the most recent</p>
-            <div style="margin-top:8px; padding:6px 10px; border-radius:6px; background:rgba(34,197,94,0.1); font-size:0.7rem; color:var(--green);">✅ 1 duplicate removed</div>
-          </div>
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:28px; height:28px; border-radius:8px; background:rgba(245,158,11,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem;">🟡</div><span style="font-size:0.82rem; font-weight:600;">Archive Old Logs</span></div>
-            <p style="font-size:0.72rem;">Move logs older than 90 days to backup</p>
-            <div style="margin-top:8px; padding:6px 10px; border-radius:6px; background:rgba(34,197,94,0.1); font-size:0.7rem; color:var(--green);">✅ 12 entries archived</div>
-          </div>
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:16px;">
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><div style="width:28px; height:28px; border-radius:8px; background:rgba(139,92,246,0.15); display:flex; align-items:center; justify-content:center; font-size:0.8rem;">🟣</div><span style="font-size:0.82rem; font-weight:600;">Detect Orphans</span></div>
-            <p style="font-size:0.72rem;">Find users with no recent activity</p>
-            <div style="margin-top:8px; padding:6px 10px; border-radius:6px; background:rgba(34,197,94,0.1); font-size:0.7rem; color:var(--green);">✅ 0 orphans found</div>
-          </div>
-        </div>
-        <div style="text-align:center; margin-top:16px; padding:10px 16px; border-radius:10px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); font-size:0.8rem; color:var(--green);">✅ Cleanup complete: 3 expired fixed, 1 dedup, 12 archived, 0 orphans</div>
-      </div>
-    </div>
-    <div class="desc"><strong>Cleanup Utility:</strong> Four maintenance tasks — fix expired grants, remove duplicates, archive old logs, and detect orphaned user records. Run periodically to keep the database clean.</div>
-  </div>
-
-  <!-- NOTIFICATION: GRANT -->
-  <div id="notify-grant" class="screen">
-    <div style="padding: 60px 0; text-align:center;">
-      <p style="font-size:0.75rem; margin-bottom:20px;">This dialog appears on the <strong style="color:var(--text)">target user's MacBook</strong> when access is granted:</p>
-      <div class="macos-dialog">
-        <h4>** Admin Access Granted **</h4>
-        <p>Hello johndoe, you have been granted temporary admin access for 5 minutes. Your privileges will be automatically revoked after the timer expires.</p>
-        <button class="macos-btn">OK</button>
-      </div>
-      <div style="margin-top:40px;">
-        <p style="font-size:0.75rem; margin-bottom:20px;">1 minute before expiry, the user sees:</p>
-        <div class="macos-dialog">
-          <h4>** Access Expiring Soon **</h4>
-          <p>Hello johndoe, your admin access will expire in 1 minute. Save your work.</p>
-          <button class="macos-btn">OK</button>
+  <div id="cleanup" class="screen">
+    <div class="gallery single">
+      <div class="gallery-item">
+        <span class="badge badge-amber">Cleanup Utility</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/cleanup</span></div>
+          <div class="frame-body"><img src="screenshots/12-cleanup-utility.png" alt="Cleanup Utility"></div>
         </div>
       </div>
     </div>
-    <div class="desc"><strong>Grant Notification:</strong> A native macOS dialog box appears on the user's screen confirming access and duration. A warning shows 1 minute before expiry.</div>
-  </div>
-
-  <!-- NOTIFICATION: REVOKE -->
-  <div id="notify-revoke" class="screen">
-    <div style="padding: 60px 0; text-align:center;">
-      <p style="font-size:0.75rem; margin-bottom:20px;">When the timer expires, this dialog appears on the <strong style="color:var(--text)">user's MacBook</strong>:</p>
-      <div class="macos-dialog">
-        <h4>** User Privileges Updated **</h4>
-        <p>Hello johndoe, your admin privileges have been revoked and updated to Standard User.</p>
-        <p>If you require elevated access (Admin Rights) on your MacBook, please request through the Device Management Portal.</p>
-        <button class="macos-btn">OK</button>
-      </div>
-    </div>
-    <div class="desc"><strong>Revoke Notification:</strong> After the timer expires, a persistent background process removes admin rights and shows this dialog. Works even after reboot — no way to bypass.</div>
+    <div class="desc"><strong>Cleanup Utility:</strong> Four automated maintenance tasks — fix stuck "Granted" entries whose timers expired, detect incomplete user profiles, remove duplicate log entries, and archive logs older than 90 days. Safe to run anytime; does not affect active sessions.</div>
   </div>
 
   <!-- REPORTS -->
   <div id="reports" class="screen">
-    <div class="mockup">
-      <div class="mockup-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="mockup-url">http://0.0.0.0:3000/reports</span></div>
-      <div class="mockup-body">
-        <div class="nav"><div class="nav-brand"><div class="nav-brand-icon">⚡</div> Device Management Portal</div><div class="nav-user">sunilkumaragasti</div></div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-          <div style="font-size:1.1rem; font-weight:700;">Leadership Reports</div>
-          <div style="display:flex; gap:4px;">
-            <span style="padding:5px 12px; border-radius:8px; background:var(--accent); color:white; font-size:0.7rem; font-weight:600;">This Month</span>
-            <span style="padding:5px 12px; border-radius:8px; background:rgba(34,197,94,0.15); color:var(--green); font-size:0.7rem; font-weight:600; border:1px solid rgba(34,197,94,0.3);">CSV</span>
-            <span style="padding:5px 12px; border-radius:8px; background:rgba(59,130,246,0.15); color:var(--accent); font-size:0.7rem; font-weight:600; border:1px solid rgba(59,130,246,0.3);">Excel</span>
-          </div>
+    <div class="gallery single">
+      <div class="gallery-item">
+        <span class="badge badge-blue">Analytics Dashboard</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/reports</span></div>
+          <div class="frame-body"><img src="screenshots/13-reports-analytics.png" alt="Reports - Analytics"></div>
         </div>
-        <div class="metrics">
-          <div class="metric"><div class="val" style="color:#3b82f6">24</div><div class="lbl">Requests</div></div>
-          <div class="metric"><div class="val" style="color:#8b5cf6">12</div><div class="lbl">Users</div></div>
-          <div class="metric"><div class="val" style="color:#22c55e">3</div><div class="lbl">Active Now</div></div>
-          <div class="metric"><div class="val" style="color:#f59e0b">45m</div><div class="lbl">Avg Duration</div></div>
-          <div class="metric"><div class="val" style="color:#06b6d4">96%</div><div class="lbl">Success Rate</div></div>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;">
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px;">
-            <div style="font-size:0.8rem; font-weight:600; margin-bottom:10px;">🔐 Admin Access <span style="float:right; font-size:1.1rem; font-weight:800;">18</span></div>
-            <div style="display:flex; gap:12px; text-align:center; font-size:0.7rem;">
-              <div><div style="color:var(--green); font-size:1rem; font-weight:700;">12</div>Granted</div>
-              <div><div style="color:var(--amber); font-size:1rem; font-weight:700;">4</div>Revoked</div>
-              <div><div style="color:var(--muted); font-size:1rem; font-weight:700;">1</div>Expired</div>
-              <div><div style="color:var(--red); font-size:1rem; font-weight:700;">1</div>Failed</div>
-            </div>
-            <div style="height:6px; border-radius:3px; background:var(--surface2); margin-top:10px; overflow:hidden; display:flex;">
-              <div style="width:67%; background:var(--green)"></div><div style="width:22%; background:var(--amber)"></div><div style="width:5%; background:var(--muted)"></div><div style="width:6%; background:var(--red)"></div>
-            </div>
-          </div>
-          <div style="background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px;">
-            <div style="font-size:0.8rem; font-weight:600; margin-bottom:10px;">💻 GitHub Access <span style="float:right; font-size:1.1rem; font-weight:800;">6</span></div>
-            <div style="display:flex; gap:12px; text-align:center; font-size:0.7rem;">
-              <div><div style="color:var(--green); font-size:1rem; font-weight:700;">4</div>Granted</div>
-              <div><div style="color:var(--amber); font-size:1rem; font-weight:700;">1</div>Revoked</div>
-              <div><div style="color:var(--muted); font-size:1rem; font-weight:700;">0</div>Expired</div>
-              <div><div style="color:var(--red); font-size:1rem; font-weight:700;">1</div>Failed</div>
-            </div>
-            <div style="height:6px; border-radius:3px; background:var(--surface2); margin-top:10px; overflow:hidden; display:flex;">
-              <div style="width:67%; background:var(--green)"></div><div style="width:16%; background:var(--amber)"></div><div style="width:17%; background:var(--red)"></div>
-            </div>
-          </div>
-        </div>
-        <div style="margin-top:16px; font-size:0.8rem; font-weight:600;">Monthly Trend</div>
-        <div class="chart">
-          <div class="bar-group"><div class="bar bar-admin" style="height:30%"></div><div class="bar bar-github" style="height:10%"></div><div class="bar-label">Jan</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:45%"></div><div class="bar bar-github" style="height:15%"></div><div class="bar-label">Feb</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:35%"></div><div class="bar bar-github" style="height:20%"></div><div class="bar-label">Mar</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:60%"></div><div class="bar bar-github" style="height:25%"></div><div class="bar-label">Apr</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:80%"></div><div class="bar bar-github" style="height:30%"></div><div class="bar-label">May</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:50%"></div><div class="bar bar-github" style="height:20%"></div><div class="bar-label">Jun</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:70%"></div><div class="bar bar-github" style="height:35%"></div><div class="bar-label">Jul</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:90%"></div><div class="bar bar-github" style="height:40%"></div><div class="bar-label">Aug</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:65%"></div><div class="bar bar-github" style="height:20%"></div><div class="bar-label">Sep</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:55%"></div><div class="bar bar-github" style="height:25%"></div><div class="bar-label">Oct</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:75%"></div><div class="bar bar-github" style="height:30%"></div><div class="bar-label">Nov</div></div>
-          <div class="bar-group"><div class="bar bar-admin" style="height:100%"></div><div class="bar bar-github" style="height:45%"></div><div class="bar-label">Dec</div></div>
-        </div>
-        <div style="display:flex; gap:16px; justify-content:center; font-size:0.7rem; color:var(--muted);"><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--accent);margin-right:4px;vertical-align:middle;"></span>Admin</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--violet);margin-right:4px;vertical-align:middle;"></span>GitHub</span></div>
       </div>
     </div>
-    <div class="desc"><strong>Leadership Reports:</strong> Summary metrics, admin vs GitHub breakdown with progress bars, monthly trend chart, top requesters, and CSV/Excel export for stakeholder reviews.</div>
+    <p style="color: var(--muted); font-size: 0.8rem; margin-top: 12px; text-align: center;">Additional tabs available: <strong style="color: var(--text);">Admin Logs</strong>, <strong style="color: var(--text);">GitHub Logs</strong>, <strong style="color: var(--text);">All Logs</strong>, <strong style="color: var(--text);">Visitors</strong> — run <code style="background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">node scripts/take-screenshots.js</code> to capture these automatically.</p>
+    <div class="desc"><strong>Leadership Reports:</strong> Summary metrics (requests, users, active now, avg duration, success rate), admin vs GitHub breakdown with progress bars, monthly trend chart, top requesters, most accessed users, device breakdown, and CSV/Excel export. Sub-tabs for Admin Logs, GitHub Logs, All Logs, and Visitors tracking.</div>
+  </div>
+
+  <!-- ACTIVITY & ALERTS -->
+  <div id="activity" class="screen">
+    <div class="gallery single">
+      <div class="gallery-item">
+        <span class="badge badge-amber">Access Expiring Alert</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost</span></div>
+          <div class="frame-body"><img src="screenshots/14-portal-activity-notification.png" alt="Portal Activity & Expiry Notification"></div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>Activity Feed &amp; Alerts:</strong> The dashboard shows a live activity feed with recent access grants. When access is about to expire, an "Access Expiring Soon" banner appears in the top-right corner with countdown details, ensuring admins stay informed.</div>
   </div>
 </div>
 

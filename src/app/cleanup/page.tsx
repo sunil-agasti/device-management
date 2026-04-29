@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { motion } from 'framer-motion';
+import { secureFetch } from '@/lib/fetchClient';
 
 interface CleanupResult {
   success: boolean;
@@ -63,7 +64,7 @@ export default function CleanupPage() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch('/api/cleanup', { method: 'POST' });
+      const res = await secureFetch('/api/cleanup', { method: 'POST' });
       const data = await res.json();
       setResult(data);
     } catch (err) {
