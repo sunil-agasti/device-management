@@ -205,11 +205,7 @@ VERIFY=$(dseditgroup -o checkmember -m ${username} admin 2>/dev/null)
 if echo "$VERIFY" | grep -q "is a member"; then
   for i in 1 2 3 4 5; do sudo /usr/sbin/dseditgroup -o edit -d ${username} -t user admin 2>/dev/null; sleep 2; done
 fi
-osascript -e 'display dialog "** User Privileges Updated **
-
-Hello ${username}, your admin privileges have been revoked and updated to Standard User.
-
-If you require elevated access (Admin Rights) on your MacBook, please request through the Device Management Portal." with title "** User Privileges Updated **" buttons {"OK"} default button "OK" giving up after 300'
+osascript -e 'display notification "Hello ${username}, your admin privileges have been revoked and updated to Standard User." with title "User Privileges Updated" sound name "Glass"'
 rm -f "${revokeScript}"
 sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist`;
@@ -249,11 +245,7 @@ if echo "\\$VERIFY" | grep -q "is a member"; then
     sleep 2
   done
 fi
-sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display dialog "** User Privileges Updated **
-
-Hello '\\$CONSOLE_USER', your admin privileges have been revoked and updated to Standard User.
-
-If you require elevated access (Admin Rights) on your MacBook, please request through the Device Management Portal." with title "** User Privileges Updated **" buttons {"OK"} default button "OK" giving up after 300'
+sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display notification "Your admin privileges have been revoked and updated to Standard User." with title "User Privileges Updated" sound name "Glass"'
 sudo rm -f /usr/local/bin/admin_revoke.sh
 sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist

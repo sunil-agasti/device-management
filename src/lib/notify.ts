@@ -30,11 +30,11 @@ export async function sendNotification(
   const safeMessage = sanitizeForShell(message);
   const local = isLocalIp(ip);
 
-  const script = `display dialog "${safeMessage}" with title "** ${safeTitle} **" buttons {"OK"} default button "OK" giving up after 10`;
+  const script = `display notification "${safeMessage}" with title "${safeTitle}" sound name "Glass"`;
 
   if (local) {
     try {
-      await execAsync(`osascript -e '${script}'`, { timeout: 10000 });
+      await execAsync(`osascript -e '${script}'`, { timeout: 5000 });
       return true;
     } catch {
       return false;
