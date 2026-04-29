@@ -52,7 +52,7 @@ const tasks = [
 ];
 
 export default function CleanupPage() {
-  const [systemInfo, setSystemInfo] = useState<{ serverUsername: string; serverHostname: string; clientIp: string } | undefined>();
+  const [systemInfo, setSystemInfo] = useState<{ serverUsername: string; serverHostname: string; clientIp: string; clientUsername?: string } | undefined>();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CleanupResult | null>(null);
 
@@ -60,13 +60,19 @@ export default function CleanupPage() {
     fetch('/api/system-info').then(r => r.json()).then(setSystemInfo).catch(() => {});
   }, []);
 
+  const isAdmin = systemInfo?.clientUsername === 'sunilkumaragasti' || systemInfo?.serverUsername === 'sunilkumaragasti';
+
   const runCleanup = async () => {
     setLoading(true);
     setResult(null);
     try {
       const res = await secureFetch('/api/cleanup', { method: 'POST' });
       const data = await res.json();
-      setResult(data);
+      if (data.success && (data.totalFixed === 0 || (!data.expiredFixed && !data.duplicatesRemoved && !data.staleLogsArchived && !data.orphanedUsers))) {
+        setResult({ ...data, message: 'No issues found. Database is clean.' });
+      } else {
+        setResult(data);
+      }
     } catch (err) {
       setResult({ success: false, message: 'Cleanup failed: ' + String(err) });
     } finally {
@@ -114,8 +120,10 @@ export default function CleanupPage() {
 
         {/* Run button */}
         <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-6 text-center">
+          {isAdmin ? (
+          <>
           <button onClick={runCleanup} disabled={loading}
-            className="px-8 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-medium rounded-xl hover:from-orange-600 hover:to-amber-700 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/25 inline-flex items-center gap-2"
+            className="px-8 py-3 bg-[#0076DF] text-white font-medium rounded-xl hover:bg-[#005bb5] disabled:opacity-50 transition-all shadow-sm inline-flex items-center gap-2"
           >
             {loading ? (
               <>
@@ -130,6 +138,12 @@ export default function CleanupPage() {
             )}
           </button>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">Safe to run anytime. Does not delete active sessions or valid records.</p>
+          </>
+          ) : (
+            <div className="py-4">
+              <p className="text-sm text-[#86868b]">Cleanup is restricted to the portal administrator.</p>
+            </div>
+          )}
         </div>
 
         {/* Results */}

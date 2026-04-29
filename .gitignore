@@ -53,3 +53,4 @@ data/backup/*.json
 .omc/
 AGENTS.md
 docs/screenshots/
+data/ip.log
