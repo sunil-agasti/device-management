@@ -63,8 +63,13 @@
     <button class="tab" onclick="showScreen('github')">GitHub Access</button>
     <button class="tab" onclick="showScreen('hostname')">Hostname Update</button>
     <button class="tab" onclick="showScreen('cleanup')">Cleanup Utility</button>
+    <button class="tab" onclick="showScreen('cleanup-result')">Cleanup Result</button>
     <button class="tab" onclick="showScreen('reports')">Reports</button>
+    <button class="tab" onclick="showScreen('reports-admin')">Admin Logs</button>
+    <button class="tab" onclick="showScreen('reports-github')">GitHub Logs</button>
+    <button class="tab" onclick="showScreen('reports-visitors')">Visitors</button>
     <button class="tab" onclick="showScreen('activity')">Activity &amp; Alerts</button>
+    <button class="tab" onclick="showScreen('session')">Session Timeout</button>
   </div>
 
   <!-- DASHBOARD -->
@@ -236,6 +241,83 @@
       </div>
     </div>
     <div class="desc"><strong>Activity Feed &amp; Alerts:</strong> The dashboard shows a live activity feed with recent access grants. When access is about to expire, an "Access Expiring Soon" banner appears in the top-right corner with countdown details, ensuring admins stay informed.</div>
+  </div>
+
+  <!-- CLEANUP RESULT -->
+  <div id="cleanup-result" class="screen">
+    <div class="gallery">
+      <div class="gallery-item">
+        <span class="badge badge-green">Cleanup Success</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/cleanup</span></div>
+          <div class="frame-body"><img src="screenshots/cleanup-result.png" alt="Cleanup Result"></div>
+        </div>
+      </div>
+      <div class="gallery-item">
+        <span class="badge badge-green">No Issues Found</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/cleanup</span></div>
+          <div class="frame-body"><img src="screenshots/cleanup-success.png" alt="Cleanup - No Issues"></div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>Cleanup Results:</strong> After running cleanup, a green toast banner shows the result at the top. The bottom card shows detailed counts: Expired Fixed, Incomplete Users, Duplicates Removed, and Logs Archived. If no issues found, it shows "Database is clean."</div>
+  </div>
+
+  <!-- REPORTS - ADMIN LOGS -->
+  <div id="reports-admin" class="screen">
+    <div class="gallery single">
+      <div class="gallery-item">
+        <span class="badge badge-blue">Admin Access Logs</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/reports → Admin Logs</span></div>
+          <div class="frame-body"><img src="screenshots/reports-admin-logs.png" alt="Reports - Admin Logs"></div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>Admin Logs Tab:</strong> Shows all admin access grants with hostname, username, granted time, duration, requested by, time remaining, and status. Sortable columns, search, and CSV export.</div>
+  </div>
+
+  <!-- REPORTS - GITHUB LOGS -->
+  <div id="reports-github" class="screen">
+    <div class="gallery single">
+      <div class="gallery-item">
+        <span class="badge badge-violet">GitHub Access Logs</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/reports → GitHub Logs</span></div>
+          <div class="frame-body"><img src="screenshots/reports-github-logs.png" alt="Reports - GitHub Logs"></div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>GitHub Logs Tab:</strong> Shows all GitHub access grants with the same detail level as admin logs. Filter by status to quickly find failed or active grants.</div>
+  </div>
+
+  <!-- REPORTS - VISITORS -->
+  <div id="reports-visitors" class="screen">
+    <div class="gallery single">
+      <div class="gallery-item">
+        <span class="badge badge-amber">Visitor Analytics</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost/reports → Visitors</span></div>
+          <div class="frame-body"><img src="screenshots/reports-visitors.png" alt="Reports - Visitors"></div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>Visitor Analytics:</strong> Shows total visits, today's count, unique visitors, top visitors ranked list, and recent visit timeline. Tracks which users access the portal and when, session-based with 15-minute idle gap detection.</div>
+  </div>
+
+  <!-- SESSION TIMEOUT -->
+  <div id="session" class="screen">
+    <div class="gallery single">
+      <div class="gallery-item">
+        <span class="badge badge-red">Session Timeout</span>
+        <div class="screenshot-frame">
+          <div class="frame-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="frame-url">localhost</span></div>
+          <div class="frame-body"><img src="screenshots/session-timeout.png" alt="Session Timeout"></div>
+        </div>
+      </div>
+    </div>
+    <div class="desc"><strong>Session Timeout:</strong> After 15 minutes of inactivity, the session automatically expires. This ensures no unattended browser sessions remain active with access to the management portal.</div>
   </div>
 </div>
 
