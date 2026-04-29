@@ -753,36 +753,30 @@ RootLayout (layout.tsx)
   <ol>
     <li>Go to <strong>at.apple.com</strong> &#8594; Create redirect</li>
     <li>Slug: <code>tcs-device-management-portal</code></li>
-    <li>URL: <code>http://tcs-device-management-portal.duckdns.org:3000/device-management-portal</code></li>
+    <li>URL: <code>http://&lt;your-vpn-ip&gt;:3000/device-management-portal</code></li>
     <li>Share <code>https://at.apple.com/tcs-device-management-portal</code> with your team</li>
-    <li><strong>This never needs updating</strong> &mdash; DuckDNS auto-updates when VPN IP changes</li>
+    <li>When VPN IP changes: <code>start.sh</code> copies new URL to clipboard &rarr; paste into at.apple.com</li>
   </ol>
 
-  <h3>DuckDNS (Dynamic DNS)</h3>
-  <p>Apple VPN assigns dynamic IPs that change on reconnect/restart. <strong>DuckDNS</strong> provides a free permanent domain that auto-updates when IP changes.</p>
+  <h3>VPN IP Change Handling</h3>
+  <p>Apple VPN assigns dynamic IPs that change on reconnect/restart. The portal handles this automatically:</p>
   <div class="flow">
-    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>VPN IP Changes</strong><span>start.sh detects new IP within 30 seconds</span></div></div>
-    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>DuckDNS Auto-Update</strong><span>Calls DuckDNS API: tcs-device-management-portal.duckdns.org &rarr; new IP</span></div></div>
-    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>URL Works Again</strong><span>Users access at.apple.com &rarr; DuckDNS &rarr; new IP &rarr; portal loads</span></div></div>
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>IP Change Detected</strong><span>start.sh monitors VPN IP every 30 seconds</span></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>New URL Copied</strong><span>New portal URL auto-copied to clipboard + logged to data/ip.log</span></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Notification Shown</strong><span>Dialog with new IP and option to open at.apple.com</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Update at.apple.com</strong><span>Paste new URL into at.apple.com redirect (10 seconds)</span></div></div>
   </div>
-  <table>
-    <thead><tr><th>Aspect</th><th>Details</th></tr></thead>
-    <tbody>
-      <tr><td><strong>Security</strong></td><td>Public DNS name only &mdash; port 3000 is only accessible within Apple VPN (middleware blocks non-17.x IPs)</td></tr>
-      <tr><td><strong>Pros</strong></td><td>Free, auto-updates, stable URL, no manual at.apple.com changes</td></tr>
-      <tr><td><strong>Cons</strong></td><td>Public DNS name (minor info disclosure), 30s gap on IP change</td></tr>
-    </tbody>
-  </table>
 
   <h3>Auto-Start on Login (LaunchAgent)</h3>
   <p>Install once with <code>bash scripts/install-autostart.sh</code>. The portal auto-starts on login and auto-restarts on crash.</p>
   <table>
     <thead><tr><th>Event</th><th>Action</th></tr></thead>
     <tbody>
-      <tr><td><strong>Login</strong></td><td>LaunchAgent starts server + caffeinate + DuckDNS update</td></tr>
-      <tr><td><strong>VPN IP changes</strong></td><td>Detected within 30s &rarr; DuckDNS auto-updated &rarr; URL works</td></tr>
+      <tr><td><strong>Login</strong></td><td>LaunchAgent starts server + caffeinate + VPN monitor</td></tr>
+      <tr><td><strong>VPN IP changes</strong></td><td>Detected within 30s &rarr; new URL copied to clipboard &rarr; notification</td></tr>
       <tr><td><strong>Server crash</strong></td><td>KeepAlive &rarr; launchd restarts within 30s</td></tr>
       <tr><td><strong>System sleep</strong></td><td>caffeinate prevents sleep while server runs</td></tr>
+      <tr><td><strong>VPN disconnect</strong></td><td>keepalive.sh auto-reconnects VPN</td></tr>
       <tr><td><strong>System restart</strong></td><td>Down until next login &rarr; LaunchAgent restarts automatically</td></tr>
     </tbody>
   </table>
@@ -792,11 +786,11 @@ RootLayout (layout.tsx)
     <thead><tr><th>Who</th><th>URL</th></tr></thead>
     <tbody>
       <tr><td><strong>Admin (you)</strong></td><td><code>http://localhost:3000/device-management-portal</code></td></tr>
-      <tr><td><strong>Others on VPN</strong></td><td><code>http://tcs-device-management-portal.duckdns.org:3000/device-management-portal</code></td></tr>
+      <tr><td><strong>Others on VPN</strong></td><td><code>http://&lt;your-vpn-ip&gt;:3000/device-management-portal</code></td></tr>
       <tr><td><strong>Short link</strong></td><td><code>https://at.apple.com/tcs-device-management-portal</code></td></tr>
     </tbody>
   </table>
-  <p><strong>Note:</strong> You cannot access your own VPN IP from the same machine (VPN self-loop). Always use <code>localhost</code> for self-access.</p>
+  <p><strong>Note:</strong> You cannot access your own VPN IP from the same machine (VPN self-loop). Always use <code>localhost</code> for self-access. Check <code>data/ip.log</code> for current IP if you missed the notification.</p>
 </section>
 
 <!-- 13 SECURITY -->

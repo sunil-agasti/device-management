@@ -231,8 +231,8 @@
     <p>The caffeinate utility keeps the machine awake while the portal is running. The system never sleeps, ensuring 24/7 availability.</p>
   </div>
   <div class="card">
-    <h4>Dynamic DNS</h4>
-    <p>When the VPN assigns a new IP (on reconnect or restart), DuckDNS is auto-updated within 30 seconds. The portal URL never changes — users always access the same link.</p>
+    <h4>IP Change Detection</h4>
+    <p>When the VPN assigns a new IP, the system detects it within 30 seconds, copies the new URL to clipboard, logs it, and shows a notification — minimizing downtime to seconds.</p>
   </div>
   <div class="card">
     <h4>Zero Infrastructure</h4>
@@ -247,7 +247,7 @@
   <li><strong>Full-stack development</strong> — Building the React frontend, Node.js API layer, SSH automation, and macOS system integration</li>
   <li><strong>Security engineering</strong> — Implementing credential isolation, CSRF protection, VPN gating, and tamper-proof revocation</li>
   <li><strong>UX design</strong> — Apple Design System styling, floating labels, real-time progress streaming, and responsive dark/light theme</li>
-  <li><strong>DevOps</strong> — LaunchAgent auto-start, DuckDNS dynamic DNS, caffeinate sleep prevention, VPN reconnection automation</li>
+  <li><strong>DevOps</strong> — LaunchAgent auto-start, caffeinate sleep prevention, VPN IP monitoring, at.apple.com integration</li>
   <li><strong>Operations</strong> — Managing deployment across 500+ devices, monitoring access patterns, and generating leadership reports</li>
 </ul>
 

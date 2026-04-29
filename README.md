@@ -381,41 +381,24 @@ bash scripts/start.sh
 | Who | URL |
 |-----|-----|
 | **You (admin)** | `http://localhost:3000/device-management-portal` |
-| **Others on VPN** | `http://tcs-device-management-portal.duckdns.org:3000/device-management-portal` |
+| **Others on VPN** | `http://<your-vpn-ip>:3000/device-management-portal` |
 | **Short link** | `https://at.apple.com/tcs-device-management-portal` |
 
 > **Note:** You cannot access your own VPN IP from the same machine (VPN self-loop). Always use `localhost` for self-access.
 
-### DuckDNS (Dynamic DNS)
+### VPN IP Changes
 
-The portal uses [DuckDNS](https://www.duckdns.org) for a stable URL that survives VPN IP changes.
+Apple VPN assigns dynamic IPs that change on reconnect/restart. When your IP changes:
 
-**Why DuckDNS:**
-- Apple VPN assigns dynamic IPs — changes on reconnect, restart, or sleep
-- `.local` hostname (Bonjour/mDNS) is disabled on managed Macs
-- DuckDNS provides a free, permanent domain that auto-updates when IP changes
+1. `start.sh` detects the change within 30 seconds
+2. Copies the new portal URL to your clipboard
+3. Shows a dialog notification with the new URL
+4. You paste the new URL into `at.apple.com` to update the redirect (10 seconds)
 
-**How it works:**
-- `start.sh` detects VPN IP every 30 seconds
-- On IP change: calls DuckDNS API to update `tcs-device-management-portal.duckdns.org` → new IP
-- `at.apple.com` redirect → DuckDNS → your machine (always works)
-
-**Security:**
-- DuckDNS is a public DNS — the domain name is publicly resolvable
-- BUT: port 3000 is only accessible within the Apple VPN (middleware blocks non-17.x IPs)
-- DNS resolution alone cannot access the portal — Apple VPN + CSRF required
-
-**Pros:** Free, auto-updates, stable URL, no manual at.apple.com changes
-**Cons:** Public DNS name (minor info disclosure), requires DuckDNS account, 30s gap on IP change
-
-**Setup (one-time):**
-```bash
-# Save your DuckDNS token
-echo 'YOUR_TOKEN' > ~/.duckdns_token
-chmod 600 ~/.duckdns_token
-
-# Update at.apple.com redirect to:
-# http://tcs-device-management-portal.duckdns.org:3000/device-management-portal
+**at.apple.com setup:**
+```
+Slug: tcs-device-management-portal
+URL:  http://<your-vpn-ip>:3000/device-management-portal
 ```
 
 ### Auto-Start on Login (LaunchAgent)
@@ -437,8 +420,8 @@ launchctl list | grep com.tcs.device-management-portal
 **What happens automatically:**
 | Event | Action |
 |-------|--------|
-| **Login** | LaunchAgent starts `start.sh` → server + caffeinate + DuckDNS update |
-| **VPN IP changes** | Detected within 30s → DuckDNS auto-updated → URL works |
+| **Login** | LaunchAgent starts `start.sh` → server + caffeinate |
+| **VPN IP changes** | Detected within 30s → new URL copied to clipboard → notification shown |
 | **Server crashes** | `KeepAlive` → launchd restarts within 30s |
 | **System sleep** | `caffeinate` prevents sleep while server runs |
 | **System restart** | Server down until next login → LaunchAgent restarts it |
@@ -447,10 +430,9 @@ launchctl list | grep com.tcs.device-management-portal
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/start.sh` | Start portal with caffeinate + DuckDNS + IP monitor |
+| `scripts/start.sh` | Start portal with caffeinate + IP monitor + clipboard copy |
 | `scripts/install-autostart.sh` | Install LaunchAgent for auto-start on login |
-| `scripts/update-duckdns.sh` | Manually update DuckDNS with current/specified IP |
-| `scripts/update-at-apple.sh` | Update at.apple.com redirect (opens browser if API fails) |
+| `scripts/update-at-apple.sh` | Update at.apple.com redirect (opens browser) |
 | `scripts/keepalive.sh` | Full keepalive daemon (VPN reconnect + server + caffeinate) |
 
 ## Project Structure

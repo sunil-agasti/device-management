@@ -21,16 +21,15 @@ sleep 1
 
 # Get current VPN IP
 VPN_IP=$(ifconfig | grep "inet 17\." | awk '{print $2}' | head -1)
-DUCKDNS_URL="http://tcs-device-management-portal.duckdns.org:$PORT/device-management-portal"
 echo "VPN IP: ${VPN_IP:-not connected}"
 echo "Local:  http://localhost:$PORT/device-management-portal"
 [ -n "$VPN_IP" ] && echo "Remote: http://$VPN_IP:$PORT/device-management-portal"
-echo "DuckDNS: $DUCKDNS_URL"
+[ -n "$VPN_IP" ] && echo "at.apple.com: Update redirect to http://$VPN_IP:$PORT/device-management-portal"
 echo ""
 
-# Update DuckDNS with current IP
+# Log current IP
 if [ -n "$VPN_IP" ]; then
-  bash "$SCRIPT_DIR/update-duckdns.sh" "$VPN_IP"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') | IP: $VPN_IP | URL: http://$VPN_IP:$PORT/device-management-portal" > "$PORTAL_DIR/data/ip.log"
 fi
 
 # Build if needed
@@ -62,18 +61,25 @@ while kill -0 $SERVER_PID 2>/dev/null; do
     echo "[ $(date '+%H:%M:%S') ] IP changed → $NEW_IP"
     echo "  New URL: $URL"
     echo "$URL" | pbcopy 2>/dev/null
-    echo "  (Copied to clipboard)"
+    echo "  (Copied to clipboard — paste into at.apple.com)"
 
-    # Update DuckDNS with new IP
-    bash "$SCRIPT_DIR/update-duckdns.sh" "$NEW_IP"
-
-    # Try to update at.apple.com redirect
-    bash "$SCRIPT_DIR/update-at-apple.sh" "$NEW_IP" "$PORT"
+    # Log IP to file (overwrite - always shows current IP)
+    echo "$(date '+%Y-%m-%d %H:%M:%S') | IP: $NEW_IP | URL: $URL" > "$PORTAL_DIR/data/ip.log"
 
     osascript -e "display dialog \"VPN IP changed to $NEW_IP
 
 New portal URL (copied to clipboard):
-$URL\" with title \"** Device Management Portal **\" buttons {\"OK\"} default button \"OK\" giving up after 15" 2>/dev/null &
+$URL
+
+Update at.apple.com/tcs-device-management-portal with this URL.\" with title \"** Device Management Portal **\" buttons {\"Open at.apple.com\", \"OK\"} default button \"OK\" giving up after 30" 2>/dev/null
+
+    # If user clicked "Open at.apple.com", open the browser
+    if [ $? -eq 0 ]; then
+      BUTTON=$(osascript -e 'button returned of result' 2>/dev/null)
+      if [ "$BUTTON" = "Open at.apple.com" ]; then
+        open "https://at.apple.com" 2>/dev/null
+      fi
+    fi
   fi
 done
 
