@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import GithubAccessForm from '@/components/GithubAccessForm';
 
-export default function GithubAccessPage() {
+function GithubAccessContent() {
   const searchParams = useSearchParams();
   const [systemInfo, setSystemInfo] = useState<{ serverUsername: string; serverHostname: string; clientIp: string } | undefined>();
   const [requestedBy, setRequestedBy] = useState('Loading...');
@@ -36,7 +36,7 @@ export default function GithubAccessPage() {
     <div className="min-h-screen bg-white dark:bg-black">
       <Navbar systemInfo={systemInfo} />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">
+        <Link href="/device-management-portal" className="inline-flex items-center gap-1.5 text-sm text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300 transition-colors">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Back to Portal
         </Link>
@@ -51,5 +51,13 @@ export default function GithubAccessPage() {
         <GithubAccessForm initialData={initialData} requestedBy={requestedBy} />
       </main>
     </div>
+  );
+}
+
+export default function GithubAccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-3 border-[#0076DF]/20 border-t-[#0076DF] rounded-full animate-spin" /></div>}>
+      <GithubAccessContent />
+    </Suspense>
   );
 }
