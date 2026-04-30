@@ -47,7 +47,8 @@
 
 <div class="hero">
   <h1>Device Management Portal</h1>
-  <p>An intelligent, self-service IT administration platform that manages temporary access privileges on 500+ enterprise MacBooks — with zero manual intervention.</p>
+  <p>A full-stack web application for managing temporary access privileges on 500+ enterprise MacBooks. It replaces manual SSH terminal operations with a centralized web portal featuring auto-populated forms, automated workflows, and real-time access tracking.</p>
+  <p style="margin-top:12px; font-size:0.9rem; color:var(--muted);">The portal runs locally on the admin's machine, authenticated via Apple VPN (17.x.x.x range), and executes bash scripts over SSH to manage remote MacBooks. A keepalive service ensures the system stays awake, VPN stays connected, and the server auto-restarts.</p>
   <div class="tags">
     <span class="tag">Next.js</span>
     <span class="tag">TypeScript</span>
@@ -200,6 +201,43 @@
   </div>
 </div>
 
+<h2>System Architecture</h2>
+<div class="highlight" style="overflow-x:auto;">
+<pre style="font-family:'SF Mono',monospace; font-size:0.75rem; line-height:1.5; color:var(--text); white-space:pre;">
+  USER BROWSER (React + Tailwind + Framer Motion)
+  ┌────────────┬────────────┬────────────┬──────────────┐
+  │ Dashboard  │   Admin    │   GitHub   │   Hostname   │
+  │            │   Access   │   Access   │   / Cleanup  │
+  └─────┬──────┴─────┬──────┴─────┬──────┴──────┬───────┘
+        └────────────┴────────────┴─────────────┘
+                           │
+                    HTTP (port 3000)
+                           │
+  NEXT.JS SERVER (Node.js + TypeScript)
+  ┌──────────────────────────────────────────────────────┐
+  │  API Routes          │  Auth (VPN IP Check)          │
+  │  /system-info        │  /visitor                     │
+  │  /user               │  /reports                     │
+  │  /admin-access       │  /logs (JSON + CSV)           │
+  │  /github-access      │  /cleanup                     │
+  │  /update-hostname    │  /hostname-logs               │
+  ├──────────────────────┼───────────────────────────────┤
+  │  SSH (SSH_ASKPASS)   │  JSON Database                │
+  │  (child_process)     │  (atomic read/write)          │
+  └──────────┬───────────┴──────────┬────────────────────┘
+             │                      │
+     SSH to target Mac        data/*.json
+             │
+  TARGET MACBOOK
+  ├── dseditgroup (admin grant/revoke)
+  ├── /etc/hosts (GitHub block/unblock)
+  ├── scutil (hostname update)
+  ├── jamf (MDM manage + recon)
+  ├── osascript (Notification Center alerts)
+  └── LaunchDaemon (bulletproof auto-revoke)
+</pre>
+</div>
+
 <h2>How It Works</h2>
 
 <h3>Access Grant Flow</h3>
@@ -316,6 +354,41 @@
     <p>No servers, no cloud, no Docker. The portal runs directly on the admin's MacBook. All data is stored locally. Total cost: $0.</p>
   </div>
 </div>
+
+<h2>Tech Stack</h2>
+<div class="grid-2">
+  <div class="card"><h4>React 19</h4><p>UI Framework</p></div>
+  <div class="card"><h4>Next.js 16</h4><p>Full-Stack Framework</p></div>
+  <div class="card"><h4>TypeScript</h4><p>Type Safety</p></div>
+  <div class="card"><h4>Tailwind CSS v4</h4><p>Styling</p></div>
+  <div class="card"><h4>Framer Motion</h4><p>Animations</p></div>
+  <div class="card"><h4>JSON Files</h4><p>NoSQL Database</p></div>
+  <div class="card"><h4>Node.js</h4><p>Server Runtime</p></div>
+  <div class="card"><h4>Bash / SSH</h4><p>System Management</p></div>
+</div>
+
+<h2>Validation Rules</h2>
+<table>
+  <tr><th>Field</th><th>Rule</th><th>Example</th></tr>
+  <tr><td>VPN IP</td><td>Must start with 17. (Apple VPN range)</td><td>17.233.8.2</td></tr>
+  <tr><td>Hostname</td><td>Must start with 02HW0, 01HW0, 34HW0, 3HW0, or 4HW0</td><td>02HW062504</td></tr>
+  <tr><td>Employee ID</td><td>Numeric only, mandatory for first-time users</td><td>1255389</td></tr>
+  <tr><td>Email</td><td>Must end with @apple.com</td><td>name@apple.com</td></tr>
+  <tr><td>Duration</td><td>5–180 minutes (default: 60 admin, 30 github)</td><td>60</td></tr>
+</table>
+
+<h2>Security Risks &amp; Mitigations</h2>
+<table>
+  <tr><th>Risk</th><th>Mitigation</th></tr>
+  <tr><td>Unauthorized access</td><td>VPN IP check (17.x range) at middleware level</td></tr>
+  <tr><td>SSH credentials</td><td>Stored in .env only, temporary askpass files with 700 permissions, deleted immediately</td></tr>
+  <tr><td>Command injection</td><td>IP and hostname validated with strict regex patterns before shell execution</td></tr>
+  <tr><td>Data integrity</td><td>Atomic file writes (write-to-tmp + rename), read retry 3x on failure</td></tr>
+  <tr><td>CSRF attacks</td><td>Cryptographic CSRF token on all POST/PUT/DELETE, cookie auto-detects HTTPS</td></tr>
+  <tr><td>Session hijacking</td><td>15-minute idle timeout, secure cookies, VPN-only access</td></tr>
+  <tr><td>Revoke failure</td><td>Dual system: LaunchDaemon (10s poll) + server backup (3 retries). Final verify before marking FAILED</td></tr>
+  <tr><td>Credential exposure</td><td>No passwords in logs, browser, or error messages. Root-owned revoke scripts (700)</td></tr>
+</table>
 
 <h2>My Role</h2>
 <p>I designed, built, and deployed this system end-to-end as the sole developer. This involved:</p>
