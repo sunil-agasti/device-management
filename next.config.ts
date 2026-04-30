@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: import.meta.dirname,
+  },
   serverExternalPackages: ['child_process'],
   devIndicators: false,
   poweredByHeader: false,
