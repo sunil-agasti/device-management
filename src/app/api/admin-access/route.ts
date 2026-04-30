@@ -6,7 +6,7 @@ import { addLog, updateLogStatus, upsertUser, findUserByUsername, logFailure } f
 import { validateVpnIp, validateHostname, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
-import { sshRunCommand, getSshCredentials } from '@/lib/ssh';
+import { sshRunCommand, sshRunCommandAsync, getSshCredentials } from '@/lib/ssh';
 import { formatSSHError } from '@/lib/errors';
 
 const execAsync = promisify(exec);
@@ -167,37 +167,37 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        // === STEP 2: JAMF ===
-        streamStep(write, 'jamf', 'Running JAMF Commands', 'active');
-
-        if (local) {
-          try {
-            await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
-            await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
-            await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
-            streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'jamf manage ✓\njamf policy ✓\njamf recon ✓' });
-          } catch {
-            streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'JAMF not available (skipped)' });
-          }
-        } else {
-          const jamfCmd = `echo '${safePass}' | sudo -S /usr/local/bin/jamf manage 2>&1 && echo "MANAGE_OK"; echo '${safePass}' | sudo -S /usr/local/bin/jamf policy 2>&1 && echo "POLICY_OK"; echo '${safePass}' | sudo -S /usr/local/bin/jamf recon 2>&1 && echo "RECON_OK"`;
-          const jamfResult = sshRunCommand(vpnIp, jamfCmd);
-          const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
-          execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
-          streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', {
-            success: jamfResult.success,
-            log: `ssh tcsadmin@${vpnIp}\n> jamf manage + policy + recon\n${jamfResult.output}`,
-          });
-        }
-
-        // === STEP 3: SCHEDULE REVOKE ===
-        streamStep(write, 'schedule', 'Scheduling auto-revoke', 'active');
-
+        // === STEPS 2-4: JAMF + SCHEDULE + NOTIFY (parallel) ===
+        const jamfCmd = `echo '${safePass}' | sudo -S /usr/local/bin/jamf manage 2>&1 && echo "MANAGE_OK"; echo '${safePass}' | sudo -S /usr/local/bin/jamf policy 2>&1 && echo "POLICY_OK"; echo '${safePass}' | sudo -S /usr/local/bin/jamf recon 2>&1 && echo "RECON_OK"`;
         const expiryEpoch = Math.floor(Date.now() / 1000) + duration * 60;
 
-        if (local) {
-          const revokeScript = `/usr/local/bin/admin_revoke_${username}.sh`;
-          const revokeContent = `#!/bin/bash
+        const jamfPromise = (async () => {
+          streamStep(write, 'jamf', 'Running JAMF Commands', 'active');
+          if (local) {
+            try {
+              await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
+              await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
+              await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
+              streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'jamf manage ✓\njamf policy ✓\njamf recon ✓' });
+            } catch {
+              streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'JAMF not available (skipped)' });
+            }
+          } else {
+            const jamfResult = await sshRunCommandAsync(vpnIp, jamfCmd);
+            const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
+            execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
+            streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', {
+              success: jamfResult.success,
+              log: `ssh tcsadmin@${vpnIp}\n> jamf manage + policy + recon\n${jamfResult.output}`,
+            });
+          }
+        })();
+
+        const schedulePromise = (async () => {
+          streamStep(write, 'schedule', 'Scheduling auto-revoke', 'active');
+          if (local) {
+            const revokeScript = `/usr/local/bin/admin_revoke_${username}.sh`;
+            const revokeContent = `#!/bin/bash
 EXPIRY=${expiryEpoch}
 while [ $(date +%s) -lt $EXPIRY ]; do sleep 10; done
 /usr/sbin/dseditgroup -o edit -d ${username} -t user admin 2>/dev/null || sudo /usr/sbin/dseditgroup -o edit -d ${username} -t user admin
@@ -209,28 +209,28 @@ osascript -e 'display notification "Hello ${username}, your admin privileges hav
 rm -f "${revokeScript}"
 sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist`;
-          try {
-            await execAsync(`sudo tee "${revokeScript}" > /dev/null << 'SCRIPT'\n${revokeContent}\nSCRIPT`);
-            await execAsync(`sudo chmod +x "${revokeScript}"`);
-            const plist = `<?xml version="1.0" encoding="UTF-8"?>
+            try {
+              await execAsync(`sudo tee "${revokeScript}" > /dev/null << 'SCRIPT'\n${revokeContent}\nSCRIPT`);
+              await execAsync(`sudo chmod +x "${revokeScript}"`);
+              const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0"><dict>
 <key>Label</key><string>com.tcs.admin.revoke</string>
 <key>ProgramArguments</key><array><string>/bin/bash</string><string>${revokeScript}</string></array>
 <key>RunAtLoad</key><true/>
 <key>KeepAlive</key><true/>
 </dict></plist>`;
-            await execAsync(`sudo tee /Library/LaunchDaemons/com.tcs.admin.revoke.plist > /dev/null << 'PLIST'\n${plist}\nPLIST`);
-            await execAsync(`sudo chown root:wheel /Library/LaunchDaemons/com.tcs.admin.revoke.plist && sudo chmod 644 /Library/LaunchDaemons/com.tcs.admin.revoke.plist`);
-            await execAsync(`sudo launchctl bootstrap system /Library/LaunchDaemons/com.tcs.admin.revoke.plist 2>/dev/null || sudo launchctl load -w /Library/LaunchDaemons/com.tcs.admin.revoke.plist`);
-            streamStep(write, 'schedule', 'Scheduling auto-revoke', 'completed', {
-              success: true,
-              log: `Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\nLaunchDaemon: com.tcs.admin.revoke (KeepAlive + RunAtLoad)\nSurvives: reboot, shutdown, network loss\nForce retry: 5 attempts if first fails\nNotification on revoke`,
-            });
-          } catch (e) {
-            streamStep(write, 'schedule', 'Scheduling auto-revoke', 'error', { success: false, log: String(e) });
-          }
-        } else {
-          const revokeCmd = `echo '${safePass}' | sudo -S tee /usr/local/bin/admin_revoke.sh > /dev/null <<'REVOKESCRIPT'
+              await execAsync(`sudo tee /Library/LaunchDaemons/com.tcs.admin.revoke.plist > /dev/null << 'PLIST'\n${plist}\nPLIST`);
+              await execAsync(`sudo chown root:wheel /Library/LaunchDaemons/com.tcs.admin.revoke.plist && sudo chmod 644 /Library/LaunchDaemons/com.tcs.admin.revoke.plist`);
+              await execAsync(`sudo launchctl bootstrap system /Library/LaunchDaemons/com.tcs.admin.revoke.plist 2>/dev/null || sudo launchctl load -w /Library/LaunchDaemons/com.tcs.admin.revoke.plist`);
+              streamStep(write, 'schedule', 'Scheduling auto-revoke', 'completed', {
+                success: true,
+                log: `Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\nLaunchDaemon: com.tcs.admin.revoke (KeepAlive + RunAtLoad)\nSurvives: reboot, shutdown, network loss\nForce retry: 5 attempts if first fails\nNotification on revoke`,
+              });
+            } catch (e) {
+              streamStep(write, 'schedule', 'Scheduling auto-revoke', 'error', { success: false, log: String(e) });
+            }
+          } else {
+            const revokeCmd = `echo '${safePass}' | sudo -S tee /usr/local/bin/admin_revoke.sh > /dev/null <<'REVOKESCRIPT'
 #!/bin/bash
 EXPIRY=${expiryEpoch}
 PASSWORD='${safePass}'
@@ -265,21 +265,25 @@ echo '${safePass}' | sudo -S chown root:wheel /Library/LaunchDaemons/com.tcs.adm
 echo '${safePass}' | sudo -S chmod 644 /Library/LaunchDaemons/com.tcs.admin.revoke.plist
 echo '${safePass}' | sudo -S launchctl bootstrap system /Library/LaunchDaemons/com.tcs.admin.revoke.plist 2>/dev/null || echo '${safePass}' | sudo -S launchctl load -w /Library/LaunchDaemons/com.tcs.admin.revoke.plist
 echo "SCHEDULE_OK"`;
-          const schedResult = sshRunCommand(vpnIp, revokeCmd);
-          const schedOk = schedResult.success && schedResult.output.includes('SCHEDULE_OK');
-          streamStep(write, 'schedule', 'Scheduling auto-revoke', schedOk ? 'completed' : 'error', {
-            success: schedOk,
-            log: `LaunchDaemon on remote machine (KeepAlive + RunAtLoad)\n> Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\n> Survives: reboot, shutdown, VPN disconnect, network loss\n> Script: /usr/local/bin/admin_revoke.sh (root:wheel 700)\n> Password secured, force retry 5x, notification on revoke\n> Cleanup: removes script + plist after revoke\n${schedResult.output}`,
-          });
-        }
+            const schedResult = await sshRunCommandAsync(vpnIp, revokeCmd);
+            const schedOk = schedResult.success && schedResult.output.includes('SCHEDULE_OK');
+            streamStep(write, 'schedule', 'Scheduling auto-revoke', schedOk ? 'completed' : 'error', {
+              success: schedOk,
+              log: `LaunchDaemon on remote machine (KeepAlive + RunAtLoad)\n> Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\n> Survives: reboot, shutdown, VPN disconnect, network loss\n> Script: /usr/local/bin/admin_revoke.sh (root:wheel 700)\n> Password secured, force retry 5x, notification on revoke\n> Cleanup: removes script + plist after revoke\n${schedResult.output}`,
+            });
+          }
+        })();
 
-        // === STEP 4: NOTIFY ===
-        streamStep(write, 'notify', 'Sending notification', 'active');
-        sendNotification(vpnIp, 'Admin Access Granted',
-          `Hello ${username}, you have been granted temporary admin access for ${duration} minutes. Your privileges will be automatically revoked after the timer expires.`).catch(() => {});
-        streamStep(write, 'notify', 'Sending notification', 'completed', {
-          success: true, log: `Notification sent to ${vpnIp}`,
-        });
+        const notifyPromise = (async () => {
+          streamStep(write, 'notify', 'Sending notification', 'active');
+          await sendNotification(vpnIp, 'Admin Access Granted',
+            `Hello ${username}, you have been granted temporary admin access for ${duration} minutes. Your privileges will be automatically revoked after the timer expires.`).catch(() => {});
+          streamStep(write, 'notify', 'Sending notification', 'completed', {
+            success: true, log: `Notification sent to ${vpnIp}`,
+          });
+        })();
+
+        await Promise.all([jamfPromise, schedulePromise, notifyPromise]);
 
         // Log and schedule server-side backup
         addLog({ id: logId, hostname, username, employeeId, email, vpnIp, grantedAt: new Date().toISOString(), duration, scheduledRevokeAt: new Date(Date.now() + duration * 60000).toISOString(), revokedAt: null, status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'admin', device });

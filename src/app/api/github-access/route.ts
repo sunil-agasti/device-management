@@ -6,7 +6,7 @@ import { addLog, updateLogStatus, upsertUser, findUserByUsername, logFailure } f
 import { validateVpnIp, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
-import { sshRunCommand, getSshCredentials } from '@/lib/ssh';
+import { sshRunCommand, sshRunCommandAsync, getSshCredentials } from '@/lib/ssh';
 import { formatSSHError } from '@/lib/errors';
 
 const execAsync = promisify(exec);
@@ -130,7 +130,7 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
   return { success: true, steps };
 }
 
-function grantGithubRemote(vpnIp: string, duration: number): { success: boolean; steps: StepResult[]; alreadyAccessible?: boolean } {
+async function grantGithubRemote(vpnIp: string, duration: number): Promise<{ success: boolean; steps: StepResult[]; alreadyAccessible?: boolean }> {
   const steps: StepResult[] = [];
   const durationSec = duration * 60;
   const { passwords } = getSshCredentials();
@@ -157,17 +157,20 @@ function grantGithubRemote(vpnIp: string, duration: number): { success: boolean;
   });
   if (!unblockOk) return { success: false, steps };
 
-  // JAMF runs in background via script
-  const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
-  execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
-  steps.push({
-    id: 'jamf', label: 'Running JAMF Commands', success: true,
-    log: `JAMF policies running in background\n> jamf manage\n> jamf policy\n> jamf recon`,
-  });
-
-  // Schedule revoke on remote machine (epoch-based, survives reboot)
+  // JAMF + Schedule revoke in parallel
   const expiryEpoch = Math.floor(Date.now() / 1000) + durationSec;
-  const revokeCmd = `echo '${safePass}' | sudo -S tee /usr/local/bin/github_revoke.sh > /dev/null <<'REVOKE'
+
+  const jamfPromise = (async () => {
+    const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
+    execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
+    steps.push({
+      id: 'jamf', label: 'Running JAMF Commands', success: true,
+      log: `JAMF policies running in background\n> jamf manage\n> jamf policy\n> jamf recon`,
+    });
+  })();
+
+  const schedulePromise = (async () => {
+    const revokeCmd = `echo '${safePass}' | sudo -S tee /usr/local/bin/github_revoke.sh > /dev/null <<'REVOKE'
 #!/bin/bash
 EXPIRY=${expiryEpoch}
 PASSWORD='${safePass}'
@@ -201,12 +204,15 @@ echo '${safePass}' | sudo -S chmod 644 /Library/LaunchDaemons/com.tcs.github.rev
 echo '${safePass}' | sudo -S launchctl bootstrap system /Library/LaunchDaemons/com.tcs.github.revoke.plist 2>/dev/null || echo '${safePass}' | sudo -S launchctl load -w /Library/LaunchDaemons/com.tcs.github.revoke.plist
 echo "SCHEDULE_OK"`;
 
-  const schedResult = sshRunCommand(vpnIp, revokeCmd);
-  const schedOk = schedResult.success && schedResult.output.includes('SCHEDULE_OK');
-  steps.push({
-    id: 'schedule', label: 'Scheduling auto-revoke', success: schedOk,
-    log: `LaunchDaemon on remote machine (KeepAlive + RunAtLoad)\n> Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\n> Survives: reboot, shutdown, VPN disconnect, network loss\n> Re-blocks github.com in /etc/hosts, flushes DNS\n> Notification on revoke, cleanup after\n${schedResult.output}`,
-  });
+    const schedResult = await sshRunCommandAsync(vpnIp, revokeCmd);
+    const schedOk = schedResult.success && schedResult.output.includes('SCHEDULE_OK');
+    steps.push({
+      id: 'schedule', label: 'Scheduling auto-revoke', success: schedOk,
+      log: `LaunchDaemon on remote machine (KeepAlive + RunAtLoad)\n> Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\n> Survives: reboot, shutdown, VPN disconnect, network loss\n> Re-blocks github.com in /etc/hosts, flushes DNS\n> Notification on revoke, cleanup after\n${schedResult.output}`,
+    });
+  })();
+
+  await Promise.all([jamfPromise, schedulePromise]);
 
   return { success: true, steps };
 }
@@ -233,7 +239,7 @@ export async function POST(req: NextRequest) {
     if (local) {
       result = await grantGithubLocal(duration);
     } else {
-      result = grantGithubRemote(vpnIp, duration);
+      result = await grantGithubRemote(vpnIp, duration);
     }
 
     // Already accessible — skip everything
