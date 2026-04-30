@@ -4,7 +4,7 @@ import { promisify } from 'util';
 import path from 'path';
 import { addLog, updateLogStatus, upsertUser, findUserByUsername, logFailure } from '@/lib/db';
 import { validateVpnIp, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
-import { sendNotification, isLocalIp } from '@/lib/notify';
+import { sendNotification, isLocalIp, getServerVpnIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
 import { sshRunCommand, sshRunCommandAsync, getSshCredentials } from '@/lib/ssh';
 import { formatSSHError } from '@/lib/errors';
@@ -86,7 +86,7 @@ interface StepResult {
   log: string;
 }
 
-async function grantGithubLocal(duration: number): Promise<{ success: boolean; steps: StepResult[] }> {
+async function grantGithubLocal(duration: number, logId: string, username: string): Promise<{ success: boolean; steps: StepResult[] }> {
   const steps: StepResult[] = [];
 
   try {
@@ -118,8 +118,9 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
   }
 
   const revokeScript = `/tmp/github_revoke_${Date.now()}.sh`;
+  const serverIp = getServerVpnIp();
   try {
-    const content = `#!/bin/bash\nsleep ${duration * 60}\nsudo cp /etc/hosts /etc/hosts.bak\nsudo sed -i '' '/^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com/d' /etc/hosts\necho "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null\necho "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null\nsudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder\nosascript -e 'display notification "Your public GitHub access has been revoked." with title "GitHub Access Revoked" sound name "Glass"'\nrm -f "${revokeScript}"`;
+    const content = `#!/bin/bash\nsleep ${duration * 60}\nsudo cp /etc/hosts /etc/hosts.bak\nsudo sed -i '' '/^[[:space:]]*127\\.0\\.0\\.1[[:space:]].*github\\.com/d' /etc/hosts\necho "127.0.0.1 github.com" | sudo tee -a /etc/hosts > /dev/null\necho "127.0.0.1 www.github.com" | sudo tee -a /etc/hosts > /dev/null\nsudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder\nosascript -e 'display notification "Your public GitHub access has been revoked." with title "GitHub Access Revoked" sound name "Glass"'\ncurl -sf -X POST http://${serverIp}:3000/api/revoke-callback -H 'Content-Type: application/json' -d '{"logId":"${logId}","type":"github","username":"${username}","status":"REVOKED"}' 2>/dev/null || true\nrm -f "${revokeScript}"`;
     await execAsync(`echo '${content.replace(/'/g, "'\\''")}' > "${revokeScript}" && chmod +x "${revokeScript}" && nohup bash "${revokeScript}" &>/dev/null &`);
     steps.push({ id: 'schedule', label: 'Scheduling auto-revoke', success: true, log: `Revoke scheduled in ${duration} minutes\n> echo "127.0.0.1 github.com" >> /etc/hosts\n> dscacheutil -flushcache` });
   } catch (e) {
@@ -129,7 +130,7 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
   return { success: true, steps };
 }
 
-async function grantGithubRemote(vpnIp: string, duration: number): Promise<{ success: boolean; steps: StepResult[]; alreadyAccessible?: boolean }> {
+async function grantGithubRemote(vpnIp: string, duration: number, logId: string, username: string): Promise<{ success: boolean; steps: StepResult[]; alreadyAccessible?: boolean }> {
   const steps: StepResult[] = [];
   const durationSec = duration * 60;
   const { passwords } = getSshCredentials();
@@ -158,6 +159,7 @@ async function grantGithubRemote(vpnIp: string, duration: number): Promise<{ suc
 
   // JAMF (background, non-blocking)
   const expiryEpoch = Math.floor(Date.now() / 1000) + durationSec;
+  const serverIp = getServerVpnIp();
 
   const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
   execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
@@ -181,6 +183,7 @@ echo "\\$PASSWORD" | sudo -S killall -HUP mDNSResponder
 CONSOLE_USER=\\$(stat -f%Su /dev/console)
 USER_ID=\\$(id -u \\$CONSOLE_USER)
 sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display notification "Your public GitHub access has been revoked." with title "GitHub Access Revoked" sound name "Glass"'
+curl -sf -X POST http://${serverIp}:3000/api/revoke-callback -H 'Content-Type: application/json' -d '{"logId":"${logId}","type":"github","username":"${username}","status":"REVOKED"}' 2>/dev/null || true
 sudo rm -f /usr/local/bin/github_revoke.sh
 sudo launchctl bootout system/com.tcs.github.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.github.revoke.plist
@@ -231,9 +234,9 @@ export async function POST(req: NextRequest) {
     let result: { success: boolean; steps: StepResult[]; alreadyAccessible?: boolean };
 
     if (local) {
-      result = await grantGithubLocal(duration);
+      result = await grantGithubLocal(duration, logId, username || '');
     } else {
-      result = await grantGithubRemote(vpnIp, duration);
+      result = await grantGithubRemote(vpnIp, duration, logId, username || '');
     }
 
     // Already accessible — skip everything

@@ -1,5 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import fs from 'fs';
+import path from 'path';
 import os from 'os';
 import { sshRunCommandAsync, getSshCredentials } from './ssh';
 import { sanitizeForShell } from './sanitize';
@@ -19,6 +21,21 @@ function getLocalIps(): string[] {
 
 export function isLocalIp(ip: string): boolean {
   return getLocalIps().includes(ip);
+}
+
+export function getServerVpnIp(): string {
+  try {
+    const ipLog = fs.readFileSync(path.join(process.cwd(), 'data', 'ip.log'), 'utf-8');
+    const match = ipLog.match(/IP:\s*(17\.\d+\.\d+\.\d+)/);
+    if (match) return match[1];
+  } catch { /* fall through */ }
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] || []) {
+      if (iface.address.startsWith('17.')) return iface.address;
+    }
+  }
+  return '';
 }
 
 export async function sendNotification(

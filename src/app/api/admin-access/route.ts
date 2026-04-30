@@ -4,7 +4,7 @@ import { promisify } from 'util';
 import path from 'path';
 import { addLog, updateLogStatus, upsertUser, findUserByUsername, logFailure } from '@/lib/db';
 import { validateVpnIp, validateHostname, validateEmployeeId, validateEmail, validateDuration } from '@/lib/validation';
-import { sendNotification, isLocalIp } from '@/lib/notify';
+import { sendNotification, isLocalIp, getServerVpnIp } from '@/lib/notify';
 import { detectDevice } from '@/lib/device';
 import { sshRunCommand, sshRunCommandAsync, getSshCredentials } from '@/lib/ssh';
 import { formatSSHError } from '@/lib/errors';
@@ -169,6 +169,7 @@ export async function POST(req: NextRequest) {
 
         // === STEP 2: JAMF (async, non-blocking) ===
         const expiryEpoch = Math.floor(Date.now() / 1000) + duration * 60;
+        const serverIp = getServerVpnIp();
 
         streamStep(write, 'jamf', 'Running JAMF Commands', 'active');
         if (local) {
@@ -201,6 +202,7 @@ if echo "$VERIFY" | grep -q "is a member"; then
   for i in 1 2 3 4 5; do sudo /usr/sbin/dseditgroup -o edit -d ${username} -t user admin 2>/dev/null; sleep 2; done
 fi
 osascript -e 'display notification "Hello ${username}, your admin privileges have been revoked and updated to Standard User." with title "User Privileges Updated" sound name "Glass"'
+curl -sf -X POST http://${serverIp}:3000/api/revoke-callback -H 'Content-Type: application/json' -d '{"logId":"${logId}","type":"admin","username":"${username}","status":"REVOKED"}' 2>/dev/null || true
 rm -f "${revokeScript}"
 sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist`;
@@ -241,6 +243,7 @@ if echo "\\$VERIFY" | grep -q "is a member"; then
   done
 fi
 sudo launchctl asuser \\$USER_ID sudo -u \\$CONSOLE_USER osascript -e 'display notification "Your admin privileges have been revoked and updated to Standard User." with title "User Privileges Updated" sound name "Glass"'
+curl -sf -X POST http://${serverIp}:3000/api/revoke-callback -H 'Content-Type: application/json' -d '{"logId":"${logId}","type":"admin","username":"${username}","status":"REVOKED"}' 2>/dev/null || true
 sudo rm -f /usr/local/bin/admin_revoke.sh
 sudo launchctl bootout system/com.tcs.admin.revoke 2>/dev/null
 sudo rm -f /Library/LaunchDaemons/com.tcs.admin.revoke.plist
