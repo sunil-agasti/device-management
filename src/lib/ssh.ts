@@ -121,12 +121,12 @@ async function runSshAsync(ip: string, command: string, password: string, timeou
   }
 }
 
-export async function sshRunCommandAsync(ip: string, command: string): Promise<{ success: boolean; output: string }> {
+export async function sshRunCommandAsync(ip: string, command: string, timeout = 120): Promise<{ success: boolean; output: string }> {
   const passwords = [SSH_PRIMARY_PASS, SSH_BACKUP_PASS].filter(Boolean);
   if (passwords.length === 0) return { success: false, output: 'No SSH passwords configured' };
 
   for (const pass of passwords) {
-    const result = await runSshAsync(ip, command, pass, 120);
+    const result = await runSshAsync(ip, command, pass, timeout);
     if (result.success) return result;
     if (result.output === 'Authentication failed') continue;
     return result;

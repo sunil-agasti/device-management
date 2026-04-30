@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
-import { sshRunCommand, getSshCredentials } from './ssh';
+import { sshRunCommandAsync, getSshCredentials } from './ssh';
 import { sanitizeForShell } from './sanitize';
 
 const execAsync = promisify(exec);
@@ -44,8 +44,13 @@ export async function sendNotification(
   const { passwords } = getSshCredentials();
   const safePass = (passwords[0] || '').replace(/'/g, "'\\''");
 
-  const result = sshRunCommand(ip,
-    `CONSOLE_USER=$(stat -f%Su /dev/console); USER_ID=$(id -u $CONSOLE_USER); echo '${safePass}' | sudo -S launchctl asuser $USER_ID sudo -u $CONSOLE_USER osascript -e '${script}'`
-  );
-  return result.success;
+  try {
+    const result = await sshRunCommandAsync(ip,
+      `CONSOLE_USER=$(stat -f%Su /dev/console); USER_ID=$(id -u $CONSOLE_USER); echo '${safePass}' | sudo -S launchctl asuser $USER_ID sudo -u $CONSOLE_USER osascript -e '${script}'`,
+      10
+    );
+    return result.success;
+  } catch {
+    return false;
+  }
 }

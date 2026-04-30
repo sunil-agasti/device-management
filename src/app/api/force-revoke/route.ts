@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { updateLogStatus } from '@/lib/db';
+import { updateLogStatus, logFailure } from '@/lib/db';
 import { validateVpnIp } from '@/lib/validation';
 import { sendNotification, isLocalIp } from '@/lib/notify';
 import { sanitizeIp, sanitizeUsername } from '@/lib/sanitize';
@@ -99,12 +99,15 @@ export async function POST(req: NextRequest) {
 
     if (result.success) {
       updateLogStatus(logId, type, 'REVOKED');
-      await sendNotification(vpnIp,
+      const notifySent = await sendNotification(vpnIp,
         type === 'admin' ? 'Admin Access Removed' : 'GitHub Access Removed',
         type === 'admin'
           ? 'Your admin access has been permanently revoked. You are now a standard user.'
           : 'Your GitHub access has been revoked.'
       );
+      if (!notifySent) {
+        logFailure(type, 'notify', username || '', vpnIp, 'FAILED', 'Force-revoke notification failed to send');
+      }
       return NextResponse.json({ success: true, message: result.output });
     }
 

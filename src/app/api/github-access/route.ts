@@ -157,20 +157,18 @@ async function grantGithubRemote(vpnIp: string, duration: number): Promise<{ suc
   });
   if (!unblockOk) return { success: false, steps };
 
-  // JAMF + Schedule revoke in parallel
+  // JAMF (background, non-blocking)
   const expiryEpoch = Math.floor(Date.now() / 1000) + durationSec;
 
-  const jamfPromise = (async () => {
-    const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
-    execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
-    steps.push({
-      id: 'jamf', label: 'Running JAMF Commands', success: true,
-      log: `JAMF policies running in background\n> jamf manage\n> jamf policy\n> jamf recon`,
-    });
-  })();
+  const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
+  execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
+  steps.push({
+    id: 'jamf', label: 'Running JAMF Commands', success: true,
+    log: `JAMF policies triggered in background on ${vpnIp}\n> jamf manage + policy + recon`,
+  });
 
-  const schedulePromise = (async () => {
-    const revokeCmd = `echo '${safePass}' | sudo -S tee /usr/local/bin/github_revoke.sh > /dev/null <<'REVOKE'
+  // Schedule revoke
+  const revokeCmd = `echo '${safePass}' | sudo -S tee /usr/local/bin/github_revoke.sh > /dev/null <<'REVOKE'
 #!/bin/bash
 EXPIRY=${expiryEpoch}
 PASSWORD='${safePass}'
@@ -204,15 +202,12 @@ echo '${safePass}' | sudo -S chmod 644 /Library/LaunchDaemons/com.tcs.github.rev
 echo '${safePass}' | sudo -S launchctl bootstrap system /Library/LaunchDaemons/com.tcs.github.revoke.plist 2>/dev/null || echo '${safePass}' | sudo -S launchctl load -w /Library/LaunchDaemons/com.tcs.github.revoke.plist
 echo "SCHEDULE_OK"`;
 
-    const schedResult = await sshRunCommandAsync(vpnIp, revokeCmd);
-    const schedOk = schedResult.success && schedResult.output.includes('SCHEDULE_OK');
-    steps.push({
-      id: 'schedule', label: 'Scheduling auto-revoke', success: schedOk,
-      log: `LaunchDaemon on remote machine (KeepAlive + RunAtLoad)\n> Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\n> Survives: reboot, shutdown, VPN disconnect, network loss\n> Re-blocks github.com in /etc/hosts, flushes DNS\n> Notification on revoke, cleanup after\n${schedResult.output}`,
-    });
-  })();
-
-  await Promise.all([jamfPromise, schedulePromise]);
+  const schedResult = await sshRunCommandAsync(vpnIp, revokeCmd);
+  const schedOk = schedResult.success && schedResult.output.includes('SCHEDULE_OK');
+  steps.push({
+    id: 'schedule', label: 'Scheduling auto-revoke', success: schedOk,
+    log: `LaunchDaemon on remote machine (KeepAlive + RunAtLoad)\n> Revoke at epoch ${expiryEpoch} (${new Date(expiryEpoch * 1000).toLocaleTimeString()})\n> Survives: reboot, shutdown, VPN disconnect, network loss\n> Re-blocks github.com in /etc/hosts, flushes DNS\n> Notification on revoke, cleanup after\n${schedResult.output}`,
+  });
 
   return { success: true, steps };
 }
@@ -268,13 +263,16 @@ export async function POST(req: NextRequest) {
       status: 'GRANTED', requestedBy: requestedBy || 'system', type: 'github', device,
     });
 
-    // Notification (fire-and-forget)
-    sendNotification(vpnIp, 'GitHub Access Granted',
-      `Hello ${username || 'User'}, you have been granted public GitHub access for ${duration} minutes. Your access will be automatically revoked after the timer expires.`).catch(() => {});
+    // Notification (await and verify)
+    const notifySent = await sendNotification(vpnIp, 'GitHub Access Granted',
+      `Hello ${username || 'User'}, you have been granted public GitHub access for ${duration} minutes. Your access will be automatically revoked after the timer expires.`);
     result.steps.push({
-      id: 'notify', label: 'Sending notification', success: true,
-      log: `Notification sent to ${vpnIp}`,
+      id: 'notify', label: 'Sending notification', success: notifySent,
+      log: notifySent ? `Notification sent to ${vpnIp}` : `Notification delivery failed to ${vpnIp} — user may not see the alert`,
     });
+    if (!notifySent) {
+      logFailure('github', 'notify', username || '', vpnIp, 'FAILED', 'Grant notification failed to send');
+    }
 
     if (duration > 1) {
       setTimeout(async () => {
