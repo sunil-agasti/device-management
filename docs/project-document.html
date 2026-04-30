@@ -6,18 +6,18 @@
 <title>Device Management Portal - Project Documentation</title>
 <style>
   :root {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --surface2: #334155;
-    --border: #475569;
-    --text: #f1f5f9;
-    --text-muted: #94a3b8;
-    --accent: #3b82f6;
-    --accent2: #8b5cf6;
-    --green: #22c55e;
-    --amber: #f59e0b;
-    --red: #ef4444;
-    --cyan: #06b6d4;
+    --bg: #ffffff;
+    --surface: #f5f5f7;
+    --surface2: #e5e5ea;
+    --border: #d2d2d7;
+    --text: #1d1d1f;
+    --text-muted: #86868b;
+    --accent: #0076DF;
+    --accent2: #AF52DE;
+    --green: #34C759;
+    --amber: #FF9500;
+    --red: #FF3B30;
+    --cyan: #5AC8FA;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
@@ -84,7 +84,7 @@
   tbody td code { font-size: 0.8rem; }
 
   /* Code Block */
-  .code-block { background: #0d1117; border: 1px solid var(--surface2); border-radius: 12px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+  .code-block { background: #1d1d1f; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 16px 0; overflow-x: auto; }
   .code-block pre { font-family: 'SF Mono', monospace; font-size: 0.82rem; line-height: 1.6; color: #c9d1d9; }
   .code-block .comment { color: #8b949e; }
   .code-block .keyword { color: #ff7b72; }
@@ -168,7 +168,7 @@
         <tr>
           <th style="width:30%">Problem Area</th>
           <th style="width:35%">Old System</th>
-          <th style="width:35%">New AI Portal</th>
+          <th style="width:35%">New Portal</th>
         </tr>
       </thead>
       <tbody>
@@ -179,7 +179,7 @@
         </tr>
         <tr>
           <td><strong>Intelligence</strong></td>
-          <td style="color:var(--red)">Zero AI capability. Pure form-based UI with no smart features. Admin had to navigate through multiple pages and buttons</td>
+          <td style="color:var(--red)">Zero automation. Pure form-based UI with no smart features. Admin had to navigate through multiple pages and buttons</td>
           <td style="color:var(--green)">Auto-populate via SSH &mdash; enter VPN IP and fields fill automatically. Smart validation prevents errors</td>
         </tr>
         <tr>
@@ -190,7 +190,7 @@
         <tr>
           <td><strong>Revoke Failures</strong></td>
           <td style="color:var(--red)">If auto-revoke failed (IP changed, SSH timeout), admin had no way to retry from the UI. Had to SSH manually to fix it</td>
-          <td style="color:var(--green)">&ldquo;Make Standard&rdquo; button appears in logs for failed revokes. Lets admin enter a new IP and retry directly from the table</td>
+          <td style="color:var(--green)">Bulletproof auto-revoke via LaunchDaemon (10s poll, survives reboot). Server backup with 3 retries. Final verification before marking FAILED. All attempts logged to failure_logs.json</td>
         </tr>
         <tr>
           <td><strong>VPN IP Changes</strong></td>
@@ -225,7 +225,7 @@
         <tr>
           <td><strong>Security</strong></td>
           <td style="color:var(--red)">No session timeout. No VPN gate. HTTP only. Anyone with the URL could access</td>
-          <td style="color:var(--green)">VPN IP check + optional IDMS SSO. HTTPS with self-signed cert. 15-minute idle session timeout with warning. Device tracking for audit</td>
+          <td style="color:var(--green)">VPN IP check (17.x range). Session timeout after 15 minutes idle. Device tracking for audit</td>
         </tr>
         <tr>
           <td><strong>Database Maintenance</strong></td>
@@ -333,7 +333,7 @@
   &#9474;  &#9474;  API ROUTES        &#9474; AUTH (IDMS/VPN)          &#9474;   &#9474;
   &#9474;  &#9474;  /system-info      &#9474; /auth/callback           &#9474;   &#9474;
   &#9474;  &#9474;  /user             &#9474; /auth/session            &#9474;   &#9474;
-  &#9474;  &#9474;  /admin-access     &#9474; /ai-prompt               &#9474;   &#9474;
+  &#9474;  &#9474;  /admin-access     &#9474; /visitor                 &#9474;   &#9474;
   &#9474;  &#9474;  /github-access    &#9474; /logs (JSON + CSV)       &#9474;   &#9474;
   &#9474;  &#9474;  /update-hostname  &#9474; /cleanup                 &#9474;   &#9474;
   &#9474;  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;   &#9474;
@@ -663,8 +663,8 @@ RootLayout (layout.tsx)
     </tbody>
   </table>
 
-  <h3>Make Standard / Force Revoke</h3>
-  <p>When an auto-revoke fails (IP changed, SSH timeout), a <strong>&ldquo;Make Standard&rdquo;</strong> button appears in the logs table. Admins can enter a new VPN IP and retry the revoke directly from the UI &mdash; no terminal needed.</p>
+  <h3>Revoke Failure Handling</h3>
+  <p>When an auto-revoke fails (IP changed, SSH timeout), the system retries 3 times with 30-second intervals, then performs a final verification. All attempts are logged to <code>data/failure_logs.json</code> with timestamp, IP, status, and detailed output. Hover over FAILED status in logs to see the reason.</p>
 
   <h3>Session Timeout (15 min)</h3>
   <p>Apple-standard session timeout with 2-minute warning banner, &ldquo;Why did this happen?&rdquo; explanation panel, and &ldquo;Return to Portal Home&rdquo; button. Session data is cleared for security.</p>
@@ -679,7 +679,7 @@ RootLayout (layout.tsx)
   <table>
     <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
     <tbody>
-      <tr><td>Unauthorized access</td><td>VPN IP check (17.x range) + optional Apple IDMS SSO</td></tr>
+      <tr><td>Unauthorized access</td><td>VPN IP check (17.x range) at middleware level</td></tr>
       <tr><td>SSH credentials</td><td>Stored in shell scripts (internal tool, not public repo)</td></tr>
       <tr><td>Command injection</td><td>IP and hostname validated with strict patterns before shell execution</td></tr>
       <tr><td>Data integrity</td><td>Synchronous JSON file writes (single-user tool)</td></tr>
@@ -800,7 +800,7 @@ RootLayout (layout.tsx)
   <h3>Authentication &amp; Access Control</h3>
   <ul>
     <li><strong>VPN-Gated Access</strong> &mdash; Every request verified to originate from Apple VPN (17.x.x.x). Non-VPN traffic blocked at middleware level.</li>
-    <li><strong>IDMS SSO</strong> &mdash; Optional Apple Connect single sign-on integration for identity verification.</li>
+    <li><strong>VPN-Gated Access</strong> &mdash; Every request verified to originate from Apple VPN (17.x.x.x). Non-VPN traffic blocked at middleware level.</li>
     <li><strong>Session Timeout</strong> &mdash; 15-minute idle timeout with automatic logout.</li>
     <li><strong>Rate Limiting</strong> &mdash; 200 requests/minute per IP to prevent abuse while supporting normal portal usage.</li>
   </ul>
@@ -865,7 +865,7 @@ RootLayout (layout.tsx)
 <!-- FOOTER -->
 <div class="footer">
   <p><strong>Device Management Portal</strong> &middot; Secure MacBook Management &amp; Access Control</p>
-  <p>Built with Next.js, TypeScript, Tailwind CSS &middot; TCS Apple Operations Team</p>
+  <p>Created by <strong>Sunil Kumar A</strong> &middot; Built with Next.js, TypeScript, Tailwind CSS</p>
   <p style="margin-top:8px; font-size:0.75rem">Last updated: April 2026</p>
 </div>
 

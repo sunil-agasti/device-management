@@ -2,14 +2,14 @@
 
 ## 1. System Overview
 
-The Device Management Portal is a full-stack web application that provides a modern, AI-powered interface for managing temporary access privileges on Apple-managed MacBooks. It replaces manual SSH operations with a centralized web portal featuring natural language commands.
+The Device Management Portal is a full-stack web application that provides a modern, modern interface for managing temporary access privileges on Apple-managed MacBooks. It replaces manual SSH operations with a centralized web portal featuring auto-populated forms and automated workflows.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        USER BROWSER                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
 │  │ Dashboard │  │  Admin   │  │  GitHub  │  │   Hostname   │   │
-│  │ + AI Bar  │  │  Access  │  │  Access  │  │   / Cleanup  │   │
+│  │ Dashboard │  │  Access  │  │  Access  │  │   / Cleanup  │   │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └──────┬───────┘   │
 │       │              │              │               │           │
 │       └──────────────┴──────────────┴───────────────┘           │
@@ -22,7 +22,7 @@ The Device Management Portal is a full-stack web application that provides a mod
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │                    API ROUTES                            │    │
-│  │  /api/system-info  /api/user      /api/ai-prompt        │    │
+│  │  /api/system-info  /api/user      /api/visitor        │    │
 │  │  /api/admin-access /api/github-access  /api/logs        │    │
 │  │  /api/update-hostname  /api/cleanup                     │    │
 │  └────────┬────────────────────┬───────────────────────────┘    │
@@ -79,8 +79,8 @@ The Device Management Portal is a full-stack web application that provides a mod
 User types "grant admin to 17.233.8.2"
     │
     ▼
-AIPromptBar → POST /api/ai-prompt
-    │  Parses natural language, extracts IP, action
+Dashboard → Feature Cards → Pages
+    │  Routes to admin, github, hostname, cleanup pages
     │  Checks DB for existing user data
     ▼
 Redirects to /admin-access?vpnIp=17.233.8.2&...
@@ -138,7 +138,7 @@ RootLayout (layout.tsx)
             ├── Home (page.tsx)
             │   ├── Navbar (system info + theme toggle)
             │   ├── ExpiryWarning (floating notifications)
-            │   ├── AIPromptBar (natural language input)
+            │   ├── Dashboard (feature cards + activity feed)
             │   ├── Dashboard (4 feature cards)
             │   └── AccessLogs (all logs table)
             │

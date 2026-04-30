@@ -11,13 +11,13 @@ A modern web portal for managing temporary admin access, GitHub access, hostname
 | **Data Entry** | Every field manual every time, even for repeat users | Auto-populates from DB after first use via SSH + IP lookup |
 | **Intelligence** | Zero automation. Pure form-based, navigate multiple pages | Auto-populate via SSH, smart validation, one-click access |
 | **User Lookup** | No database, no memory of previous users | JSON DB stores all users. Search by ID, username, or IP |
-| **Revoke Failures** | No UI retry. Had to SSH manually to fix | "Make Standard" button with editable IP retry |
+| **Revoke Failures** | No UI retry. Had to SSH manually to fix | Bulletproof auto-revoke: LaunchDaemon + 3 retries + final verify. Failure logs for debugging |
 | **VPN IP Changes** | No handling. Revoke fails silently | Username is primary key, IP re-resolved at revoke time |
 | **Notifications** | None. Users unaware of access status | macOS notifications: granted, 5-min warning, revoked |
 | **Logs** | Basic static table, no search/sort/export | Search, sort, lazy-load, CSV export, device tracking |
 | **UI** | Dated 2015 look, no dark mode | Modern dark/light theme, animations, glassmorphism |
 | **Validation** | Minimal. Could submit invalid data | Strict: IP 17.x, hostname prefix, @apple.com, 5-180 min |
-| **Security** | No session timeout, no VPN gate, HTTP only | VPN + IDMS SSO, HTTPS, 15-min idle timeout, device audit |
+| **Security** | No session timeout, no VPN gate, HTTP only | VPN-gated access, CSRF protection, 15-min idle timeout, device audit |
 | **Maintenance** | No cleanup. Orphaned entries accumulate | 4-task cleanup: fix expired, dedup, archive, detect orphans |
 | **Uptime** | Portal dies on sleep/VPN drop | Keepalive: caffeinate + VPN watchdog + server auto-restart |
 
@@ -37,7 +37,7 @@ A modern web portal for managing temporary admin access, GitHub access, hostname
   │  API Routes          │  Auth (IDMS / VPN)            │
   │  /system-info        │  /auth/callback               │
   │  /user               │  /auth/session                │
-  │  /admin-access       │  /ai-prompt                   │
+  │  /admin-access       │  /visitor                     │
   │  /github-access      │  /logs (JSON + CSV)           │
   │  /update-hostname    │  /cleanup                     │
   ├──────────────────────┼───────────────────────────────┤
@@ -294,7 +294,6 @@ tail -f data/keepalive.log         # watch keepalive logs
 | **Credentials** | SSH passwords in `.env.local` not source code |
 | **Session Timeout** | 15-min idle timeout with 2-min warning |
 | **Input Validation** | Strict patterns: IP 17.x, hostname prefixes, @apple.com email |
-| **IDMS SSO** | Optional Apple IDMS OAuth2 with signed session cookies |
 
 ## Tech Stack
 
