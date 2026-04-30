@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { execSync } from 'child_process';
-import { findUserByIp } from '@/lib/db';
+import { findUserByIp, upsertUser } from '@/lib/db';
+import { sshFetchUserInfo } from '@/lib/ssh';
 import { sanitizeIp } from '@/lib/sanitize';
 import HomeClient from '@/components/HomeClient';
 
@@ -27,6 +28,13 @@ async function getSystemInfo() {
       if (dbUser && dbUser.username) {
         clientUsername = dbUser.username;
         clientHostname = dbUser.hostname || clientHostname;
+      } else {
+        const sshResult = sshFetchUserInfo(clientIp);
+        if (sshResult.success && sshResult.username) {
+          clientUsername = sshResult.username;
+          clientHostname = sshResult.hostname || clientHostname;
+          upsertUser({ username: sshResult.username, hostname: sshResult.hostname, vpnIp: clientIp });
+        }
       }
     }
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 import { sanitizeIp } from '@/lib/sanitize';
 import { sshFetchUserInfo } from '@/lib/ssh';
-import { findUserByIp } from '@/lib/db';
+import { findUserByIp, upsertUser } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -49,6 +49,13 @@ export async function GET(req: NextRequest) {
       if (dbUser && dbUser.username) {
         clientUsername = dbUser.username;
         clientHostname = dbUser.hostname || clientHostname;
+      } else {
+        const clientSsh = sshFetchUserInfo(clientIp);
+        if (clientSsh.success && clientSsh.username) {
+          clientUsername = clientSsh.username;
+          clientHostname = clientSsh.hostname || clientHostname;
+          upsertUser({ username: clientSsh.username, hostname: clientSsh.hostname, vpnIp: clientIp });
+        }
       }
     }
 

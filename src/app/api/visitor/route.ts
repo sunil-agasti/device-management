@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
-import { addVisitorLog, getVisitorLogs, findUserByIp } from '@/lib/db';
+import { addVisitorLog, getVisitorLogs, findUserByIp, upsertUser } from '@/lib/db';
+import { sshFetchUserInfo } from '@/lib/ssh';
 import { sanitizeIp } from '@/lib/sanitize';
 
 export async function POST(req: NextRequest) {
@@ -25,6 +26,13 @@ export async function POST(req: NextRequest) {
       if (dbUser && dbUser.username) {
         username = dbUser.username;
         hostname = dbUser.hostname || '';
+      } else if (ip.startsWith('17.')) {
+        const sshResult = sshFetchUserInfo(ip);
+        if (sshResult.success && sshResult.username) {
+          username = sshResult.username;
+          hostname = sshResult.hostname || '';
+          upsertUser({ username: sshResult.username, hostname: sshResult.hostname, vpnIp: ip });
+        }
       }
     }
 
