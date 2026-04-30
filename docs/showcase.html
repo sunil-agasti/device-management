@@ -66,25 +66,28 @@
   <div class="ba-col">
     <h4 style="color:#991b1b">Before: Manual Process</h4>
     <ul style="color:#991b1b">
-      <li>SSH manually into each machine</li>
-      <li>Type commands from memory</li>
-      <li>Track access in spreadsheets</li>
-      <li>Revoke manually (often forgotten)</li>
-      <li>No audit trail</li>
-      <li>5–10 minutes per request</li>
-      <li>Errors on every other request</li>
+      <li>SSH manually into each machine, type commands from memory</li>
+      <li>Every field typed manually — employee ID, email, hostname, VPN IP, username for every request</li>
+      <li>Track access in spreadsheets, no database</li>
+      <li>Revoke manually (often forgotten), no retry if it fails</li>
+      <li>No notifications — users unaware of access status</li>
+      <li>No session timeout, no VPN gate, HTTP only</li>
+      <li>5–10 minutes per request, errors on every other request</li>
+      <li>Portal dies on sleep/VPN drop, manual restart needed</li>
     </ul>
   </div>
   <div class="ba-col">
     <h4 style="color:#166534">After: Automated Portal</h4>
     <ul style="color:#166534">
-      <li>Type one sentence — system handles everything</li>
-      <li>System handles everything</li>
-      <li>Complete audit log with search</li>
-      <li>Guaranteed auto-revoke on timer</li>
-      <li>Full audit trail + reports</li>
-      <li>Under 30 seconds per request</li>
-      <li>Validation prevents all errors</li>
+      <li>Form-based access: enter VPN IP, system auto-populates username, hostname, email via SSH + DB</li>
+      <li>One-click grant/revoke for admin access, GitHub access, and hostname updates</li>
+      <li>Complete audit log with search, sort, CSV/Excel export, device tracking</li>
+      <li>Guaranteed auto-revoke via LaunchDaemon (survives reboot, 10s poll, 5 retry attempts)</li>
+      <li>macOS notifications: granted, 1-min warning, revoked — stacks in Notification Center</li>
+      <li>VPN-gated access, CSRF protection, session timeout, rate limiting (200 req/min)</li>
+      <li>Under 30 seconds per request, strict validation prevents all errors</li>
+      <li>Auto-start via LaunchAgent, IP change detection with clipboard copy</li>
+      <li>Leadership reports with visitor analytics, access stats, CSV/Excel download</li>
     </ul>
   </div>
 </div>
@@ -101,25 +104,99 @@
 
 <div class="highlight">
   <h3>Form-Based Access Management</h3>
-  <p>Administrators use streamlined forms to grant access. Enter a VPN IP — the system auto-detects the user, fills in details from the database, and executes the request with real-time progress streaming. No page navigation required.</p>
+  <p>Administrators use streamlined forms to grant access. Enter a VPN IP — the system auto-detects the user, fills in details from the database, and executes the request with real-time progress streaming.</p>
 </div>
 
 <div class="grid-2">
   <div class="card">
+    <h4>Auto-Populate Forms</h4>
+    <p>Enter VPN IP and all fields auto-fill via SSH lookup and database. Smart validation with real-time prefix checking prevents errors.</p>
+  </div>
+  <div class="card">
     <h4>Temporary Admin Access</h4>
-    <p>Grants administrator privileges on remote MacBooks with automatic time-based revocation. Users are notified when access is granted, warned before expiry, and informed when revoked.</p>
+    <p>Grant/revoke admin privileges on remote MacBooks with JAMF integration and auto-revoke timers. Real-time streaming progress.</p>
   </div>
   <div class="card">
     <h4>GitHub Access Control</h4>
-    <p>Manages public GitHub access on restricted machines by controlling network-level blocks. Access is granted for a set duration and automatically revoked — even if the machine restarts.</p>
+    <p>Unblock GitHub via /etc/hosts modification with DNS flush. LaunchDaemon auto-revoke survives reboot.</p>
   </div>
   <div class="card">
-    <h4>Remote Hostname Management</h4>
-    <p>Updates machine hostnames remotely through a guided conversation, with validation to ensure naming standards are followed across the fleet.</p>
+    <h4>Remote Hostname Update</h4>
+    <p>Remotely update HostName, ComputerName, and LocalHostName with prefix validation. Logs old → new hostname changes.</p>
   </div>
   <div class="card">
-    <h4>Leadership Reports</h4>
-    <p>Dashboards showing access patterns, usage trends, success rates, and device breakdowns. Exportable to CSV and Excel for stakeholder reviews.</p>
+    <h4>Smart Auto-Populate</h4>
+    <p>SSH fetches console username/hostname from target. DB resolves employee ID and email. Overridable if outdated.</p>
+  </div>
+  <div class="card">
+    <h4>Expiry Warnings</h4>
+    <p>Slack-style stacked notifications. macOS Notification Center banners before access revoke. 1-minute warning.</p>
+  </div>
+  <div class="card">
+    <h4>Dark &amp; Light Theme</h4>
+    <p>Follows macOS system preference. Apple Design System styling with floating labels and flat colors.</p>
+  </div>
+  <div class="card">
+    <h4>Cleanup Utility</h4>
+    <p>Fix orphaned logs, update expired records, remove duplicates, maintain database integrity. Admin-only access.</p>
+  </div>
+</div>
+
+<h2>New Features (Not in Old System)</h2>
+
+<div class="grid-2">
+  <div class="card">
+    <h4>Leadership Reports Dashboard</h4>
+    <p>Summary metrics, monthly trend charts, leaderboards (top requesters &amp; users), device breakdown. CSV and Excel export.</p>
+  </div>
+  <div class="card">
+    <h4>Visitor Analytics</h4>
+    <p>Session-based tracking with 15-min idle gap. Total visits, unique visitors, top visitors, recent timeline. DB + local resolution.</p>
+  </div>
+  <div class="card">
+    <h4>Hostname Change Logs</h4>
+    <p>Full logging of all hostname changes with old/new hostname, username, requestedBy, and status in hostname_logs.json.</p>
+  </div>
+  <div class="card">
+    <h4>Permanent Backup Database</h4>
+    <p>Every log auto-saved to backup that is never cleaned. Cleanup archives 90+ day records. "All Time" reports pull from backup.</p>
+  </div>
+  <div class="card">
+    <h4>Failure Logging</h4>
+    <p>All revoke attempts logged to failure_logs.json with timestamp, IP, status, and detailed SSH output for debugging.</p>
+  </div>
+  <div class="card">
+    <h4>Activity Feed</h4>
+    <p>Live feed on landing page: "X granted admin access to Y" with status, countdown timers, and color-coded badges.</p>
+  </div>
+</div>
+
+<h2>Security</h2>
+
+<div class="grid-2">
+  <div class="card">
+    <h4>VPN-Gated Access</h4>
+    <p>Every request verified from Apple VPN (17.x.x.x). Non-VPN traffic blocked at middleware. Session timeout after 15 minutes idle.</p>
+  </div>
+  <div class="card">
+    <h4>CSRF Protection</h4>
+    <p>All POST/PUT/DELETE require cryptographic CSRF token. Cookie auto-detects HTTPS. Rate limited at 200 req/min per IP.</p>
+  </div>
+  <div class="card">
+    <h4>Credential Isolation</h4>
+    <p>SSH passwords in .env only, never in source. Temporary askpass files (700 permissions) deleted immediately. No credentials in logs.</p>
+  </div>
+  <div class="card">
+    <h4>Input Sanitization</h4>
+    <p>Dedicated sanitization for IPs, hostnames, employee IDs, emails. Shell injection prevented. Atomic file writes prevent corruption.</p>
+  </div>
+  <div class="card">
+    <h4>Security Headers</h4>
+    <p>CSP, HSTS, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy (blocks camera/mic/geo).</p>
+  </div>
+  <div class="card">
+    <h4>Bulletproof Revoke</h4>
+    <p>Dual system: LaunchDaemon (10s poll, epoch-based, survives reboot) + server backup (3 retries, 30s delay, final verify). Self-cleanup after revoke.</p>
   </div>
 </div>
 
@@ -228,7 +305,7 @@
   </div>
   <div class="card">
     <h4>Sleep Prevention</h4>
-    <p>The caffeinate utility keeps the machine awake while the portal is running. The system never sleeps, ensuring 24/7 availability.</p>
+    <p>The system keeps the machine awake while the portal is running, ensuring availability during work hours.</p>
   </div>
   <div class="card">
     <h4>IP Change Detection</h4>
@@ -247,12 +324,12 @@
   <li><strong>Full-stack development</strong> — Building the React frontend, Node.js API layer, SSH automation, and macOS system integration</li>
   <li><strong>Security engineering</strong> — Implementing credential isolation, CSRF protection, VPN gating, and tamper-proof revocation</li>
   <li><strong>UX design</strong> — Apple Design System styling, floating labels, real-time progress streaming, and responsive dark/light theme</li>
-  <li><strong>DevOps</strong> — LaunchAgent auto-start, caffeinate sleep prevention, VPN IP monitoring, at.apple.com integration</li>
+  <li><strong>DevOps</strong> — LaunchAgent auto-start, VPN IP monitoring, at.apple.com integration</li>
   <li><strong>Operations</strong> — Managing deployment across 500+ devices, monitoring access patterns, and generating leadership reports</li>
 </ul>
 
 <div class="footer">
-  Built with Next.js, TypeScript, React, Tailwind CSS, and SSH automation for macOS fleet management.
+  Created by <strong>Sunil Kumar Agasti</strong> &middot; Built with Next.js, TypeScript, React, Tailwind CSS, and SSH automation for macOS fleet management.
 </div>
 
 </div>
