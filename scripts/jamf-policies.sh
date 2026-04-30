@@ -2,7 +2,11 @@
 ############################################
 # JAMF Policy Runner (background execution)
 # Usage: Called by Node.js after admin/github grant
-# Runs: jamf manage, policy, recon via SSH
+# Runs: jamf manage + recon via SSH
+# NOTE: jamf policy is intentionally skipped —
+#   it triggers device management policies that
+#   demote admin users back to standard, undoing
+#   the access grant.
 ############################################
 
 IP="$1"
@@ -28,10 +32,7 @@ run_ssh() {
 echo "Running jamf manage..."
 run_ssh "sudo /usr/local/bin/jamf manage" && echo "OK" || echo "SKIP"
 
-echo "Running jamf policy..."
-run_ssh "sudo /usr/local/bin/jamf policy" && echo "OK" || echo "SKIP"
-
 echo "Running jamf recon..."
 run_ssh "sudo /usr/local/bin/jamf recon" && echo "OK" || echo "SKIP"
 
-echo "JAMF policies complete."
+echo "JAMF complete."

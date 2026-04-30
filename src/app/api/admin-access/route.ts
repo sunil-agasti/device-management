@@ -174,9 +174,8 @@ export async function POST(req: NextRequest) {
         if (local) {
           try {
             await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
-            await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
             await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
-            streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'jamf manage ✓\njamf policy ✓\njamf recon ✓' });
+            streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'jamf manage ✓\njamf recon ✓\n(jamf policy skipped — would undo admin grant)' });
           } catch {
             streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', { success: true, log: 'JAMF not available (skipped)' });
           }
@@ -185,7 +184,7 @@ export async function POST(req: NextRequest) {
           execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
           streamStep(write, 'jamf', 'Running JAMF Commands', 'completed', {
             success: true,
-            log: `JAMF policies triggered in background on ${vpnIp}\n> jamf manage + policy + recon`,
+            log: `JAMF manage + recon triggered in background on ${vpnIp}\n(jamf policy skipped — would undo admin grant)`,
           });
         }
 

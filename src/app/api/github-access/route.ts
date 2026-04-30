@@ -111,9 +111,8 @@ async function grantGithubLocal(duration: number): Promise<{ success: boolean; s
 
   try {
     await execAsync('sudo /usr/local/bin/jamf manage', { timeout: 60000 });
-    await execAsync('sudo /usr/local/bin/jamf policy', { timeout: 60000 });
     await execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 });
-    steps.push({ id: 'jamf', label: 'Running JAMF Commands', success: true, log: 'jamf manage ✓\njamf policy ✓\njamf recon ✓' });
+    steps.push({ id: 'jamf', label: 'Running JAMF Commands', success: true, log: 'jamf manage ✓\njamf recon ✓\n(jamf policy skipped — would undo access grant)' });
   } catch {
     steps.push({ id: 'jamf', label: 'Running JAMF Commands', success: true, log: 'JAMF not available (skipped)' });
   }
@@ -164,7 +163,7 @@ async function grantGithubRemote(vpnIp: string, duration: number): Promise<{ suc
   execAsync(`bash "${scriptPath}" "${vpnIp}"`, { timeout: 120000 }).catch(() => {});
   steps.push({
     id: 'jamf', label: 'Running JAMF Commands', success: true,
-    log: `JAMF policies triggered in background on ${vpnIp}\n> jamf manage + policy + recon`,
+    log: `JAMF manage + recon triggered in background on ${vpnIp}\n(jamf policy skipped — would undo access grant)`,
   });
 
   // Schedule revoke
