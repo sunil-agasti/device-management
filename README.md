@@ -6,7 +6,7 @@ A modern web portal for managing temporary admin access, GitHub access, hostname
 
 ## Why This Portal - Old vs New
 
-| Area | Old System | New AI Portal |
+| Area | Old System | New Portal |
 |------|-----------|---------------|
 | **Data Entry** | Every field manual every time, even for repeat users | Auto-populates from DB after first use via SSH + IP lookup |
 | **Intelligence** | Zero automation. Pure form-based, navigate multiple pages | Auto-populate via SSH, smart validation, one-click access |
