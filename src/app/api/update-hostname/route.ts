@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
+import { promisify } from 'util';
 import { validateVpnIp, validateHostname } from '@/lib/validation';
 import { sanitizeIp, sanitizeHostname } from '@/lib/sanitize';
 import { sshRunCommand, getSshCredentials } from '@/lib/ssh';
 import { isLocalIp, sendNotification } from '@/lib/notify';
 import { formatSSHError } from '@/lib/errors';
 import { addHostnameLog, upsertUser, logFailure } from '@/lib/db';
+import path from 'path';
+
+const execAsync = promisify(exec);
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,12 +62,20 @@ export async function POST(req: NextRequest) {
     });
 
     if (success) {
+      // Run jamf recon in background to reflect new hostname in JAMF
+      if (isLocalIp(safeIp)) {
+        execAsync('sudo /usr/local/bin/jamf recon', { timeout: 60000 }).catch(() => {});
+      } else {
+        const scriptPath = path.join(process.cwd(), 'scripts', 'jamf-policies.sh');
+        execAsync(`bash "${scriptPath}" "${safeIp}"`, { timeout: 120000 }).catch(() => {});
+      }
+
       const notifySent = await sendNotification(safeIp, 'Hostname Updated',
         `Hello ${username || 'User'}, your device hostname has been updated to ${safeHostname}. Please restart your terminal for the changes to take effect.`);
       if (!notifySent) {
         logFailure('hostname', 'notify', username || '', safeIp, 'FAILED', 'Hostname update notification failed to send');
       }
-      return NextResponse.json({ success: true, logId, message: `Hostname updated to ${safeHostname}.` });
+      return NextResponse.json({ success: true, logId, message: `Hostname updated to ${safeHostname}. JAMF inventory update triggered.` });
     }
     return NextResponse.json({ error: 'Failed to update hostname', logId }, { status: 500 });
   } catch (err) {
