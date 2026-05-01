@@ -54,3 +54,11 @@ data/backup/*.json
 AGENTS.md
 docs/screenshots/
 data/ip.log
+data/keepalive.log
+data/keepalive-stdout.log
+data/keepalive-stderr.log
+data/current_ip.txt
+data/server.log
+data/server.pid
+data/autostart.log
+data/autostart-error.log

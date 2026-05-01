@@ -273,7 +273,7 @@ export async function POST(req: NextRequest) {
       log: notifySent ? `Notification sent to ${vpnIp}` : `Notification delivery failed to ${vpnIp} — user may not see the alert`,
     });
     if (!notifySent) {
-      logFailure('github', 'notify', username || '', vpnIp, 'FAILED', 'Grant notification failed to send');
+      logFailure('github', 'notify', username || '', vpnIp, 'FAILED', 'Grant notification failed to send', hostname);
     }
 
     if (duration > 1) {

@@ -182,7 +182,7 @@ export function logsToCSV(logs: AccessLog[]): string {
   return [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
 }
 
-export function logFailure(type: string, action: string, username: string, ip: string, status: string, details: string) {
+export function logFailure(type: string, action: string, username: string, ip: string, status: string, details: string, hostname?: string) {
   const filePath = path.join(DATA_DIR, 'failure_logs.json');
   ensureFile(filePath);
   const raw = fs.readFileSync(filePath, 'utf-8').trim();
@@ -190,7 +190,7 @@ export function logFailure(type: string, action: string, username: string, ip: s
   try { if (raw) logs = JSON.parse(raw); } catch { logs = []; }
   logs.push({
     timestamp: new Date().toISOString(),
-    type, action, username, ip, status,
+    type, action, username, hostname: hostname || '', ip, status,
     details: details.slice(0, 500),
   });
   if (logs.length > 1000) logs = logs.slice(-500);

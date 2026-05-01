@@ -280,7 +280,7 @@ echo "SCHEDULE_OK"`;
             success: true, log: `Notification sent to ${vpnIp}`,
           });
         } else {
-          logFailure('admin', 'notify', username, vpnIp, 'FAILED', 'Grant notification failed to send');
+          logFailure('admin', 'notify', username, vpnIp, 'FAILED', 'Grant notification failed to send', hostname);
           streamStep(write, 'notify', 'Sending notification', 'completed', {
             success: false, log: `Notification delivery failed to ${vpnIp} — user may not see the alert`,
           });
