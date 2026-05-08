@@ -509,8 +509,8 @@ system-admin-portal/
 {
   "employeeId": "1255389",
   "email": "name@company.com",
-  "username": "abhishek",
-  "hostname": "02HW062504",
+  "username": "john",
+  "hostname": "02GW01234",
   "vpnIp": "17.233.8.2",
   "lastSeen": "2026-04-17T12:00:00Z",
   "createdAt": "2026-04-01T12:00:00Z"
@@ -522,8 +522,8 @@ system-admin-portal/
 {
   "id": "uuid",
   "type": "admin",
-  "hostname": "02HW062504",
-  "username": "abhishek",
+  "hostname": "02GW062504",
+  "username": "johndoe",
   "employeeId": "1255389",
   "email": "name@company.com",
   "vpnIp": "17.233.8.2",
@@ -531,7 +531,7 @@ system-admin-portal/
   "duration": 60,
   "revokedAt": null,
   "status": "GRANTED",
-  "requestedBy": "sunilkumaragasti (02HW067534)"
+  "requestedBy": "sunilkumaragasti (02GW01234)"
 }
 ```
 
