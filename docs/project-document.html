@@ -424,7 +424,7 @@ RootLayout (layout.tsx)
     <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Pre-check: Already Admin?</strong><span>Runs <code>dseditgroup -o checkmember</code> on target. If user is already admin, returns immediately &mdash; no grant, no log, no revoke scheduled</span></div></div>
     <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Grant Admin (streamed live)</strong><span>SSH &rarr; <code>echo $PASS | sudo -S dseditgroup -o edit -a $USER -t user admin</code> &rarr; verify with <code>checkmember</code> &rarr; real-time log streamed to UI via NDJSON</span></div></div>
     <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>JAMF Commands (streamed live)</strong><span>SSH &rarr; <code>jamf manage + jamf policy + jamf recon</code> &rarr; updates MDM inventory, enforces policies. Also runs via background script for reliability</span></div></div>
-    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Install Revoke LaunchDaemon</strong><span>Installs <code>/usr/local/bin/admin_revoke.sh</code> (root:wheel 700) + <code>com.tcs.admin.revoke.plist</code> (RunAtLoad + KeepAlive). Uses epoch timestamp, not sleep &mdash; survives reboot/shutdown/VPN disconnect</span></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Install Revoke LaunchDaemon</strong><span>Installs <code>/usr/local/bin/admin_revoke.sh</code> (root:wheel 700) + <code>com.company.admin.revoke.plist</code> (RunAtLoad + KeepAlive). Uses epoch timestamp, not sleep &mdash; survives reboot/shutdown/VPN disconnect</span></div></div>
     <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Notify User (dialog box)</strong><span>macOS dialog: &ldquo;Hello {user}, you have been granted temporary admin access for {N} minutes.&rdquo; with OK button. Gives up after 5 minutes if unacknowledged</span></div></div>
     <div class="flow-step"><div class="flow-num">7</div><div class="flow-content"><strong>Log &amp; Schedule Warning</strong><span>Writes GRANTED to admin_logs.json. Schedules 1-minute warning notification. Server-side backup revoke at duration+1 min (failsafe)</span></div></div>
   </div>
@@ -436,7 +436,7 @@ RootLayout (layout.tsx)
     <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>Verify Removal</strong><span><code>dseditgroup -o checkmember -m $USER admin</code> &mdash; confirms user is no longer admin</span></div></div>
     <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Force Retry (if still admin)</strong><span>Retries <code>dseditgroup -o edit -d</code> up to 5 times with 2-second intervals</span></div></div>
     <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Notify User (dialog box)</strong><span>&ldquo;** User Privileges Updated ** &mdash; Hello {user}, your admin privileges have been revoked and updated to Standard User.&rdquo;</span></div></div>
-    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Self-Cleanup</strong><span>Removes <code>/usr/local/bin/admin_revoke.sh</code>, unloads and removes <code>com.tcs.admin.revoke.plist</code></span></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><strong>Self-Cleanup</strong><span>Removes <code>/usr/local/bin/admin_revoke.sh</code>, unloads and removes <code>com.company.admin.revoke.plist</code></span></div></div>
   </div>
 
   <p><strong>Survives:</strong> Machine reboot, shutdown, VPN disconnect, network loss, portal server crash. Password stored securely in root-owned script (700 permissions). KeepAlive ensures launchd restarts the script if it's killed.</p>
@@ -446,7 +446,7 @@ RootLayout (layout.tsx)
     <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><strong>Pre-check: Already Accessible?</strong><span>Checks if <code>github.com</code> exists in <code>/etc/hosts</code>. If not blocked, returns immediately &mdash; no changes made</span></div></div>
     <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><strong>Unblock GitHub</strong><span>SSH &rarr; remove github.com entries from <code>/etc/hosts</code> &rarr; flush DNS (<code>dscacheutil -flushcache</code> + <code>killall -HUP mDNSResponder</code>)</span></div></div>
     <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><strong>JAMF Commands</strong><span>Background: <code>jamf manage + policy + recon</code></span></div></div>
-    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Install Revoke LaunchDaemon</strong><span><code>com.tcs.github.revoke.plist</code> (RunAtLoad + KeepAlive) with epoch-based timer. Survives reboot</span></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><strong>Install Revoke LaunchDaemon</strong><span><code>com.company.github.revoke.plist</code> (RunAtLoad + KeepAlive) with epoch-based timer. Survives reboot</span></div></div>
     <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><strong>Notify User</strong><span>&ldquo;Hello {user}, you have been granted public GitHub access for {N} minutes.&rdquo;</span></div></div>
   </div>
 
@@ -520,7 +520,7 @@ RootLayout (layout.tsx)
     <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
     <tbody>
       <tr><td><code>username</code></td><td>string</td><td><strong>Primary key.</strong> Console username from target Mac</td></tr>
-      <tr><td><code>employeeId</code></td><td>string</td><td>TCS employee ID (numeric)</td></tr>
+      <tr><td><code>employeeId</code></td><td>string</td><td>company employee ID (numeric)</td></tr>
       <tr><td><code>email</code></td><td>string</td><td>Apple email (@apple.com)</td></tr>
       <tr><td><code>hostname</code></td><td>string</td><td>Last known hostname</td></tr>
       <tr><td><code>vpnIp</code></td><td>string</td><td>Last known VPN IP (updated on every visit)</td></tr>
@@ -583,7 +583,7 @@ RootLayout (layout.tsx)
     <div class="flow-step"><div class="flow-num">&#128640;</div><div class="flow-content"><strong>Server Monitor</strong><span>Auto-restarts Next.js server if it crashes</span></div></div>
   </div>
 
-  <h3>LaunchAgent (com.tcs.admin-portal.keepalive.plist)</h3>
+  <h3>LaunchAgent (com.company.admin-portal.keepalive.plist)</h3>
   <p>A macOS LaunchAgent configuration that automatically starts the keepalive service when you log in. Installed to <code>~/Library/LaunchAgents/</code> via <code>install-service.sh</code>.</p>
   <table>
     <thead><tr><th>Property</th><th>Value</th><th>Purpose</th></tr></thead>
@@ -602,7 +602,7 @@ RootLayout (layout.tsx)
 <span class="keyword">bash</span> scripts/keepalive.sh status
 
 <span class="comment"># Stop service</span>
-<span class="keyword">launchctl</span> unload ~/Library/LaunchAgents/com.tcs.admin-portal.keepalive.plist</pre>
+<span class="keyword">launchctl</span> unload ~/Library/LaunchAgents/com.company.admin-portal.keepalive.plist</pre>
   </div>
 </section>
 
@@ -712,7 +712,7 @@ RootLayout (layout.tsx)
   <h3>Prerequisites</h3>
   <ul>
     <li>Node.js 18+ and npm</li>
-    <li>SSH access to managed MacBooks as <code>tcsadmin</code></li>
+    <li>SSH access to managed MacBooks as <code>companyadmin</code></li>
     <li>Apple VPN connection (IP starting with 17.)</li>
     <li><code>expect</code> (built into macOS at <code>/usr/bin/expect</code>)</li>
   </ul>
@@ -737,7 +737,7 @@ RootLayout (layout.tsx)
   <h3>Environment Configuration</h3>
   <p>Create a <code>.env</code> file in the project root with the following:</p>
   <div class="code-block"><pre><span class="comment"># SSH Credentials (REQUIRED)</span>
-<span class="keyword">SSH_USER</span>=<span class="string">tcsadmin</span>
+<span class="keyword">SSH_USER</span>=<span class="string">companyadmin</span>
 <span class="keyword">SSH_PRIMARY_PASS</span>=<span class="string">'your-primary-password'</span>
 <span class="keyword">SSH_BACKUP_PASS</span>=<span class="string">'your-backup-password'</span>
 
@@ -752,9 +752,9 @@ RootLayout (layout.tsx)
   <h3>at.apple.com Setup</h3>
   <ol>
     <li>Go to <strong>at.apple.com</strong> &#8594; Create redirect</li>
-    <li>Slug: <code>tcs-device-management-portal</code></li>
+    <li>Slug: <code>company-device-management-portal</code></li>
     <li>URL: <code>http://&lt;your-vpn-ip&gt;:3000/device-management-portal</code></li>
-    <li>Share <code>https://at.apple.com/tcs-device-management-portal</code> with your team</li>
+    <li>Share <code>https://at.apple.com/company-device-management-portal</code> with your team</li>
     <li>When VPN IP changes: <code>start.sh</code> copies new URL to clipboard &rarr; paste into at.apple.com</li>
   </ol>
 
@@ -787,7 +787,7 @@ RootLayout (layout.tsx)
     <tbody>
       <tr><td><strong>Admin (you)</strong></td><td><code>http://localhost:3000/device-management-portal</code></td></tr>
       <tr><td><strong>Others on VPN</strong></td><td><code>http://&lt;your-vpn-ip&gt;:3000/device-management-portal</code></td></tr>
-      <tr><td><strong>Short link</strong></td><td><code>https://at.apple.com/tcs-device-management-portal</code></td></tr>
+      <tr><td><strong>Short link</strong></td><td><code>https://at.apple.com/company-device-management-portal</code></td></tr>
     </tbody>
   </table>
   <p><strong>Note:</strong> You cannot access your own VPN IP from the same machine (VPN self-loop). Always use <code>localhost</code> for self-access. Check <code>data/ip.log</code> for current IP if you missed the notification.</p>
