@@ -69,7 +69,7 @@ Storybook - https://sunil-agasti.github.io/device-management/demo-playbook-stand
 3. Server streams real-time progress (NDJSON):
 
    [Step 1: Grant]
-   ├── SSH to target Mac as tcsadmin
+   ├── SSH to target Mac as sudoadmin
    ├── Run: sudo dseditgroup -o edit -a <user> -t user admin
    ├── Verify: dseditgroup -o checkmember -m <user> admin
    └── Result: "yes, <user> is a member of admin" ✓
@@ -80,7 +80,7 @@ Storybook - https://sunil-agasti.github.io/device-management/demo-playbook-stand
 
    [Step 3: Schedule Auto-Revoke]
    ├── Installs /usr/local/bin/admin_revoke.sh (root:wheel 700)
-   ├── Installs LaunchDaemon: com.tcs.admin.revoke (RunAtLoad + KeepAlive)
+   ├── Installs LaunchDaemon: com.sudo.admin.revoke (RunAtLoad + KeepAlive)
    ├── Script uses epoch timestamp (not sleep) — survives reboot
    └── LaunchDaemon auto-restarts if killed or machine reboots
 
@@ -109,11 +109,11 @@ When timer expires (epoch-based, checked every 30 seconds):
 
 5. Self-cleanup:
    ├── rm /usr/local/bin/admin_revoke.sh
-   ├── launchctl bootout system/com.tcs.admin.revoke
-   └── rm /Library/LaunchDaemons/com.tcs.admin.revoke.plist
+   ├── launchctl bootout system/com.sudo.admin.revoke
+   └── rm /Library/LaunchDaemons/com.sudo.admin.revoke.plist
 
 Survives: reboot, shutdown, VPN disconnect, network loss, server crash
-Password: uses tcsadmin password from .env via sudo -S
+Password: uses sudoadmin password from .env via sudo -S
 Security: revoke script is root:wheel 700 (only root can read)
 ```
 
@@ -135,7 +135,7 @@ Security: revoke script is root:wheel 700 (only root can read)
 
    [Step 3: Schedule Auto-Revoke]
    ├── Installs /usr/local/bin/github_revoke.sh (root:wheel 700)
-   ├── Installs LaunchDaemon: com.tcs.github.revoke (RunAtLoad + KeepAlive)
+   ├── Installs LaunchDaemon: com.sudo.github.revoke (RunAtLoad + KeepAlive)
    └── Epoch-based timer — survives reboot
 
    [Step 4: Notify User]
@@ -237,7 +237,7 @@ A macOS LaunchAgent that keeps the portal running 24/7 without manual interventi
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| LaunchAgent | `scripts/com.tcs.admin-portal.keepalive.plist` | macOS service config - starts on login, auto-restarts on crash |
+| LaunchAgent | `scripts/com.sudo.admin-portal.keepalive.plist` | macOS service config - starts on login, auto-restarts on crash |
 | Keepalive | `scripts/keepalive.sh` | Main watchdog script |
 | Installer | `scripts/install-service.sh` | One-time setup - copies plist to ~/Library/LaunchAgents |
 
@@ -339,7 +339,7 @@ Create a `.env` file in the project root:
 
 ```bash
 # SSH Credentials (REQUIRED - used to connect to managed MacBooks)
-SSH_USER=tcsadmin
+SSH_USER=sudoadmin
 SSH_PRIMARY_PASS='your-primary-password'
 SSH_BACKUP_PASS='your-backup-password'
 
@@ -353,7 +353,7 @@ IDMS_ENABLED=false
 ### Prerequisites
 
 - **Node.js** 18+ and npm
-- **SSH access** to managed MacBooks as `tcsadmin`
+- **SSH access** to managed MacBooks as `sudoadmin`
 - **company VPN** connection (IP starting with 17.)
 - **sshpass** (optional, SSH_ASKPASS is used by default): `brew install hudochenkov/sshpass/sshpass`
 - **expect** (built into macOS at `/usr/bin/expect`)
@@ -374,7 +374,7 @@ bash scripts/start.sh
 |-----|-----|
 | **You (admin)** | `http://localhost:3000/device-management-portal` |
 | **Others on VPN** | `http://<your-vpn-ip>:3000/device-management-portal` |
-| **Short link** | `https://at.company.com/tcs-device-management-portal` |
+| **Short link** | `https://at.company.com/sudo-device-management-portal` |
 
 > **Note:** You cannot access your own VPN IP from the same machine (VPN self-loop). Always use `localhost` for self-access.
 
@@ -389,7 +389,7 @@ company VPN assigns dynamic IPs that change on reconnect/restart. When your IP c
 
 **at.company.com setup:**
 ```
-Slug: tcs-device-management-portal
+Slug: sudo-device-management-portal
 URL:  http://<your-vpn-ip>:3000/device-management-portal
 ```
 
@@ -402,11 +402,11 @@ The portal can auto-start when you log in, and auto-restart if it crashes.
 bash scripts/install-autostart.sh
 
 # Uninstall
-launchctl unload ~/Library/LaunchAgents/com.tcs.device-management-portal.plist
-rm ~/Library/LaunchAgents/com.tcs.device-management-portal.plist
+launchctl unload ~/Library/LaunchAgents/com.sudo.device-management-portal.plist
+rm ~/Library/LaunchAgents/com.sudo.device-management-portal.plist
 
 # Check status
-launchctl list | grep com.tcs.device-management-portal
+launchctl list | grep com.sudo.device-management-portal
 ```
 
 **What happens automatically:**
@@ -537,4 +537,4 @@ system-admin-portal/
 
 ## License
 
-Internal use only - TCS company Operations Team.
+Internal use only - sudo company Operations Team.
