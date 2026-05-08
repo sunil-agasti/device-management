@@ -1,6 +1,6 @@
 # Device Management Portal - MacBook Management
 
-A modern web portal for managing temporary admin access, GitHub access, hostname updates, and system cleanup on managed Apple MacBooks. Built with Next.js, TypeScript, and Tailwind CSS.
+A modern web portal for managing temporary admin access, GitHub access, hostname updates, and system cleanup on managed company MacBooks. Built with Next.js, TypeScript, and Tailwind CSS.
 
 Storybook - https://sunil-agasti.github.io/device-management/demo-playbook-standalone.html
 
@@ -18,7 +18,7 @@ Storybook - https://sunil-agasti.github.io/device-management/demo-playbook-stand
 | **Notifications** | None. Users unaware of access status | macOS notifications: granted, 5-min warning, revoked |
 | **Logs** | Basic static table, no search/sort/export | Search, sort, lazy-load, CSV export, device tracking |
 | **UI** | Dated 2015 look, no dark mode | Modern dark/light theme, animations, glassmorphism |
-| **Validation** | Minimal. Could submit invalid data | Strict: IP 17.x, hostname prefix, @apple.com, 5-180 min |
+| **Validation** | Minimal. Could submit invalid data | Strict: IP 17.x, hostname prefix, @company.com, 5-180 min |
 | **Security** | No session timeout, no VPN gate, HTTP only | VPN-gated access, CSRF protection, 15-min idle timeout, device audit |
 | **Maintenance** | No cleanup. Orphaned entries accumulate | 4-task cleanup: fix expired, dedup, archive, detect orphans |
 | **Uptime** | Portal dies on sleep/VPN drop | Keepalive: caffeinate + VPN watchdog + server auto-restart |
@@ -199,7 +199,7 @@ Survives: reboot, shutdown, VPN disconnect, network loss
 ### Cleanup Utility
 Automated database maintenance that performs 4 tasks:
 1. **Fix Stuck Entries** - Finds access logs still marked "GRANTED" whose timer has expired (e.g. server restarted mid-session) and updates them to "EXPIRED"
-2. **Detect Incomplete Users** - Identifies users missing their Employee ID or Apple Email (auto-created via SSH probe but never completed profile)
+2. **Detect Incomplete Users** - Identifies users missing their Employee ID or company Email (auto-created via SSH probe but never completed profile)
 3. **Remove Duplicates** - Cleans up duplicate log entries caused by double-clicks or network retries
 4. **Archive Old Logs** - Moves logs older than 90 days to archive files, keeping active database fast while preserving audit history
 
@@ -244,7 +244,7 @@ A macOS LaunchAgent that keeps the portal running 24/7 without manual interventi
 **What the keepalive service does:**
 - **Caffeinate** - prevents Mac from sleeping (`caffeinate -dimsu`)
 - **VPN Watchdog** - checks every 30s, auto-reconnects via AnyConnect/GlobalProtect if dropped
-- **IP Tracker** - detects VPN IP changes, sends macOS desktop notification so you can update at.apple.com
+- **IP Tracker** - detects VPN IP changes, sends macOS desktop notification so you can update at.company.com
 - **Server Monitor** - auto-restarts the Next.js server if it crashes
 - **Logging** - all activity logged to `data/keepalive.log`
 
@@ -260,7 +260,7 @@ tail -f data/keepalive.log         # watch keepalive logs
 - Detects user VPN IP on page load
 - SSHs to target IP to retrieve username and hostname (read-only, cannot be edited)
 - Checks database for existing users to auto-fill employee ID and email (editable, can override if outdated)
-- First-time users must enter employee ID and Apple email (mandatory)
+- First-time users must enter employee ID and company email (mandatory)
 - Field behavior:
   - **Hostname / Username**: SSH only, read-only (locked after auto-detect)
   - **Employee ID / Email**: DB lookup, editable (user can update if data is stale)
@@ -295,7 +295,7 @@ tail -f data/keepalive.log         # watch keepalive logs
 | **CORS** | Blocked by default - no cross-origin access |
 | **Credentials** | SSH passwords in `.env.local` not source code |
 | **Session Timeout** | 15-min idle timeout with 2-min warning |
-| **Input Validation** | Strict patterns: IP 17.x, hostname prefixes, @apple.com email |
+| **Input Validation** | Strict patterns: IP 17.x, hostname prefixes, @company.com email |
 
 ## Tech Stack
 
@@ -314,7 +314,7 @@ tail -f data/keepalive.log         # watch keepalive logs
 - Node.js 18+
 - npm
 - `sshpass` installed (`brew install hudochenkov/sshpass/sshpass`)
-- Apple VPN connection (IP starting with 17.)
+- company VPN connection (IP starting with 17.)
 
 ### Installation
 
@@ -354,7 +354,7 @@ IDMS_ENABLED=false
 
 - **Node.js** 18+ and npm
 - **SSH access** to managed MacBooks as `tcsadmin`
-- **Apple VPN** connection (IP starting with 17.)
+- **company VPN** connection (IP starting with 17.)
 - **sshpass** (optional, SSH_ASKPASS is used by default): `brew install hudochenkov/sshpass/sshpass`
 - **expect** (built into macOS at `/usr/bin/expect`)
 
@@ -374,20 +374,20 @@ bash scripts/start.sh
 |-----|-----|
 | **You (admin)** | `http://localhost:3000/device-management-portal` |
 | **Others on VPN** | `http://<your-vpn-ip>:3000/device-management-portal` |
-| **Short link** | `https://at.apple.com/tcs-device-management-portal` |
+| **Short link** | `https://at.company.com/tcs-device-management-portal` |
 
 > **Note:** You cannot access your own VPN IP from the same machine (VPN self-loop). Always use `localhost` for self-access.
 
 ### VPN IP Changes
 
-Apple VPN assigns dynamic IPs that change on reconnect/restart. When your IP changes:
+company VPN assigns dynamic IPs that change on reconnect/restart. When your IP changes:
 
 1. `start.sh` detects the change within 30 seconds
 2. Copies the new portal URL to your clipboard
 3. Shows a dialog notification with the new URL
-4. You paste the new URL into `at.apple.com` to update the redirect (10 seconds)
+4. You paste the new URL into `at.company.com` to update the redirect (10 seconds)
 
-**at.apple.com setup:**
+**at.company.com setup:**
 ```
 Slug: tcs-device-management-portal
 URL:  http://<your-vpn-ip>:3000/device-management-portal
@@ -424,7 +424,7 @@ launchctl list | grep com.tcs.device-management-portal
 |--------|---------|
 | `scripts/start.sh` | Start portal with caffeinate + IP monitor + clipboard copy |
 | `scripts/install-autostart.sh` | Install LaunchAgent for auto-start on login |
-| `scripts/update-at-apple.sh` | Update at.apple.com redirect (opens browser) |
+| `scripts/update-at-company.sh` | Update at.company.com redirect (opens browser) |
 | `scripts/keepalive.sh` | Full keepalive daemon (VPN reconnect + server + caffeinate) |
 
 ## Project Structure
@@ -481,10 +481,10 @@ system-admin-portal/
 
 | Field | Rule |
 |-------|------|
-| VPN IP | Must start with `17.` (Apple VPN range) |
+| VPN IP | Must start with `17.` (company VPN range) |
 | Hostname | Must start with `02HW0`, `01HW0`, `34HW0`, `3HW0`, or `4HW0` |
 | Employee ID | Numeric only, mandatory for first-time users |
-| Email | Must end with `@apple.com`, mandatory for first-time users |
+| Email | Must end with `@company.com`, mandatory for first-time users |
 | Duration | 5-180 minutes (default: 60 for admin, 30 for GitHub) |
 
 ## API Endpoints
@@ -508,7 +508,7 @@ system-admin-portal/
 ```json
 {
   "employeeId": "1255389",
-  "email": "name@apple.com",
+  "email": "name@company.com",
   "username": "abhishek",
   "hostname": "02HW062504",
   "vpnIp": "17.233.8.2",
@@ -525,7 +525,7 @@ system-admin-portal/
   "hostname": "02HW062504",
   "username": "abhishek",
   "employeeId": "1255389",
-  "email": "name@apple.com",
+  "email": "name@company.com",
   "vpnIp": "17.233.8.2",
   "grantedAt": "2026-04-17T12:34:13Z",
   "duration": 60,
@@ -537,4 +537,4 @@ system-admin-portal/
 
 ## License
 
-Internal use only - TCS Apple Operations Team.
+Internal use only - TCS company Operations Team.
