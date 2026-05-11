@@ -2,7 +2,7 @@
 
 A modern web portal for managing temporary admin access, GitHub access, hostname updates, and system cleanup on managed company MacBooks. Built with Next.js, TypeScript, and Tailwind CSS.
 
-Storybook - https://sunil-agasti.github.io/device-management/demo-playbook-standalone.html
+Storybook - https://sunil-agasti.github.io/device-management/demo-playbook.html
 
 > **Full project documentation**: Open [docs/project-document.html](docs/project-document.html) in a browser for the complete interactive architecture guide with diagrams, data flows, API reference, and setup instructions.
 
